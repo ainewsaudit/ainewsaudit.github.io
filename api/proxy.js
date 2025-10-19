@@ -48,8 +48,8 @@ export default async function handler(req, res) {
     res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
     res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
     
-    // Cache for 1 hour
-    res.setHeader('Cache-Control', 'public, max-age=3600');
+    // Disable caching to ensure fresh data
+    res.setHeader('Cache-Control', 'no-cache, no-store, must-revalidate');
     
     // Set content type from backend
     const contentType = response.headers.get('content-type');

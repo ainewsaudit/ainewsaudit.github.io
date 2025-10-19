@@ -315,9 +315,11 @@
             });
         }
 
-        // Load recent_news by default
+        // Load dataset from URL query parameter
         document.addEventListener('DOMContentLoaded', () => {
-            loadDataset('recent_news');
+            const urlParams = new URLSearchParams(window.location.search);
+            const datasetType = urlParams.get('type') || 'recent_news';
+            loadDataset(datasetType);
         });
     </script>
 </body>
