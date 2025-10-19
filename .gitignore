@@ -1,0 +1,38 @@
+# Database files (DO NOT deploy to GitHub Pages)
+data/
+*.db
+
+# Server-only files (keep on your Linux server)
+app.py
+migrate_data_local.py
+start.sh
+requirements.txt
+
+# Documentation (not deploying yet)
+README.md
+DEPLOY_NOW.md
+FILE_STRUCTURE.md
+schema.sql
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+venv/
+env/
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+api.log

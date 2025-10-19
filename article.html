@@ -1,0 +1,408 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article - AI News Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-5xl">
+        <a href="/" class="text-blue-600 hover:underline mb-6 inline-block text-lg">← Back to Search</a>
+        
+        <div id="article-content" class="bg-white rounded-xl shadow-lg p-8">
+            <div id="loading" class="text-center text-gray-500 py-12">
+                <div class="animate-pulse">Loading article...</div>
+            </div>
+            
+            <div id="article-data" style="display:none;">
+                <!-- Title -->
+                <h1 id="title" class="text-4xl font-bold text-gray-900 mb-4 leading-tight"></h1>
+                
+                <!-- Metadata Bar -->
+                <div class="mb-6 pb-6 border-b border-gray-200">
+                    <div class="flex flex-wrap items-center gap-4 text-gray-600 mb-3">
+                        <span id="publish-date" class="flex items-center text-sm">
+                            📅 <span class="ml-1"></span>
+                        </span>
+                        <span id="authors" class="flex items-center text-sm">
+                            ✍️ <span class="ml-1 font-medium"></span>
+                        </span>
+                        <span id="dataset-badge" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium uppercase"></span>
+                    </div>
+                    <div class="flex flex-wrap items-center gap-2">
+                        <span id="topic" class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"></span>
+                        <span id="extraction-timestamp" class="text-xs text-gray-500"></span>
+                    </div>
+                </div>
+
+                <!-- Original Link Prominently -->
+                <div id="original-link-container" class="mb-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500" style="display:none;">
+                    <div class="flex items-center">
+                        <span class="text-blue-700 font-medium mr-3">🔗 Original Article:</span>
+                        <a id="original-link" href="#" target="_blank" class="text-blue-600 hover:underline flex-1 break-all"></a>
+                    </div>
+                </div>
+                
+                <!-- AI Analysis Dashboard -->
+                <div class="mb-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
+                        🤖 AI Analysis
+                        <span id="prediction-badge" class="ml-4 px-4 py-1 rounded-full text-white text-sm font-semibold"></span>
+                    </h2>
+                    
+                    <!-- Main Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div class="bg-white p-5 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-600 uppercase tracking-wide mb-1">AI Likelihood</div>
+                            <div id="ai-likelihood" class="text-4xl font-bold text-blue-600"></div>
+                            <div id="human-readable" class="text-sm text-gray-600 mt-2"></div>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-600 uppercase tracking-wide mb-1">Max AI (Chunks)</div>
+                            <div id="max-ai-likelihood" class="text-4xl font-bold text-purple-600"></div>
+                            <div class="text-xs text-gray-500 mt-2">Highest chunk score</div>
+                        </div>
+                        <div class="bg-white p-5 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-600 uppercase tracking-wide mb-1">Avg AI (Chunks)</div>
+                            <div id="avg-ai-likelihood" class="text-4xl font-bold text-green-600"></div>
+                            <div class="text-xs text-gray-500 mt-2">Average chunk score</div>
+                        </div>
+                    </div>
+
+                    <!-- Secondary Metrics -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="bg-white p-4 rounded-lg shadow-sm">
+                            <div class="text-xs text-gray-600 uppercase tracking-wide mb-1">AI Delta (Max - Avg)</div>
+                            <div id="ai-delta" class="text-2xl font-bold text-orange-600"></div>
+                            <div class="text-xs text-gray-500 mt-1">Variation in chunk scores</div>
+                        </div>
+                        <div class="bg-white p-4 rounded-lg shadow-sm" id="fraction-container" style="display:none;">
+                            <div class="text-xs text-gray-600 uppercase tracking-wide mb-1">AI Content Fraction</div>
+                            <div id="fraction-ai-content" class="text-2xl font-bold text-red-600"></div>
+                            <div class="text-xs text-gray-500 mt-1">Percentage of AI-generated content</div>
+                        </div>
+                    </div>
+
+                    <!-- Short Prediction -->
+                    <div id="short-prediction-container" class="mt-4 p-3 bg-yellow-50 rounded-lg" style="display:none;">
+                        <span class="text-xs text-yellow-800 font-medium">Detailed Prediction:</span>
+                        <span id="short-prediction" class="text-sm text-yellow-900 ml-2"></span>
+                    </div>
+                </div>
+
+                <!-- Article Preview (First 20 Words) -->
+                <div class="mb-6 p-6 bg-gradient-to-r from-indigo-50 to-blue-50 rounded-lg border-l-4 border-indigo-500">
+                    <h3 class="text-lg font-bold text-gray-900 mb-3">📝 Article Preview</h3>
+                    <p id="text-preview" class="text-lg text-gray-800 leading-relaxed italic"></p>
+                    <p class="text-sm text-gray-600 mt-3">Showing first 20 words only. <a id="read-full-link" href="#" target="_blank" class="text-blue-600 hover:underline font-medium">Read full article at source →</a></p>
+                </div>
+
+                <!-- Window Analysis -->
+                <div id="window-analysis-section" class="mb-6" style="display:none;">
+                    <div class="bg-indigo-50 rounded-lg p-6 border border-indigo-200">
+                        <h3 class="text-lg font-bold text-indigo-900 mb-4">🔍 Pangram Window Analysis</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+                            <div class="bg-white p-3 rounded-lg">
+                                <div class="text-xs text-indigo-800 font-medium">Chunks/Window</div>
+                                <div id="chunks-per-window" class="text-xl font-bold text-indigo-600">-</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg">
+                                <div class="text-xs text-indigo-800 font-medium">Max Chunk Length</div>
+                                <div id="max-chunk-length" class="text-xl font-bold text-indigo-600">-</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg">
+                                <div class="text-xs text-indigo-800 font-medium">Min Chunk Length</div>
+                                <div id="min-chunk-length" class="text-xl font-bold text-indigo-600">-</div>
+                            </div>
+                            <div class="bg-white p-3 rounded-lg">
+                                <div class="text-xs text-indigo-800 font-medium">Windows</div>
+                                <div id="window-count" class="text-xl font-bold text-indigo-600">-</div>
+                            </div>
+                        </div>
+                        <div id="window-likelihoods" class="bg-white p-4 rounded-lg">
+                            <div class="text-sm font-medium text-indigo-900 mb-2">Window AI Likelihoods:</div>
+                            <div id="window-details" class="flex flex-wrap gap-2"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Dataset-Specific Metadata -->
+                <div id="dataset-metadata" class="mb-6" style="display:none;"></div>
+            </div>
+            
+            <div id="error" style="display:none;" class="text-center text-red-600 py-12">
+                <p class="text-xl font-semibold mb-2">Article not found</p>
+                <p class="text-gray-600 mb-4">The article you're looking for doesn't exist or has been removed.</p>
+                <a href="/" class="text-blue-600 hover:underline font-medium">← Return to Search</a>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration
+        const API_BASE = 'http://shawshank.cs.umass.edu:8444';
+
+        // Get article ID from URL - it's already encoded in the URL path
+        const pathParts = window.location.pathname.split('/article/');
+        const articleId = pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : null;
+
+        // Get prediction color
+        function getPredictionColor(prediction) {
+            if (!prediction) return 'bg-gray-600';
+            const pred = prediction.toLowerCase();
+            
+            if (pred === 'human') {
+                return 'bg-green-600';
+            } else if (pred === 'mixed') {
+                return 'bg-yellow-500';
+            } else if (pred === 'ai') {
+                return 'bg-red-600';
+            }
+            return 'bg-gray-600';
+        }
+
+        // Get readable prediction label
+        function getPredictionLabel(prediction) {
+            if (!prediction) return 'Unknown';
+            return prediction;  // Now using full names directly
+        }
+
+        // Get first N words from text
+        function getFirstWords(text, n) {
+            if (!text) return '';
+            const words = text.trim().split(/\s+/);
+            return words.slice(0, n).join(' ') + (words.length > n ? '...' : '');
+        }
+
+        // Parse JSON safely
+        function safeParseJSON(jsonString) {
+            if (!jsonString || jsonString === 'null') return null;
+            try {
+                return JSON.parse(jsonString);
+            } catch (e) {
+                return null;
+            }
+        }
+
+        // Render dataset-specific metadata
+        function renderDatasetMetadata(article) {
+            const container = document.getElementById('dataset-metadata');
+            let html = '';
+
+            if (article.dataset_type === 'recent_news' && article.recent_news_data) {
+                const data = safeParseJSON(article.recent_news_data);
+                if (data) {
+                    html = `
+                        <div class="bg-green-50 rounded-lg p-6 border border-green-200">
+                            <h3 class="text-lg font-bold text-green-900 mb-4">📰 Publication Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${data.publisher ? `<div><span class="text-sm text-green-800 font-medium">Publisher:</span> <span class="text-green-900">${data.publisher}</span></div>` : ''}
+                                ${data.state ? `<div><span class="text-sm text-green-800 font-medium">State:</span> <span class="text-green-900">${data.state}</span></div>` : ''}
+                                ${data.circulation ? `<div><span class="text-sm text-green-800 font-medium">Circulation:</span> <span class="text-green-900">${data.circulation.toLocaleString()}</span></div>` : ''}
+                                ${data.lang ? `<div><span class="text-sm text-green-800 font-medium">Language:</span> <span class="text-green-900">${data.lang}</span></div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            } else if (article.dataset_type === 'opinions' && article.opinions_data) {
+                const data = safeParseJSON(article.opinions_data);
+                if (data && data.newspaper) {
+                    html = `
+                        <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
+                            <h3 class="text-lg font-bold text-purple-900 mb-4">💭 Opinion Information</h3>
+                            <div><span class="text-sm text-purple-800 font-medium">Newspaper:</span> <span class="text-purple-900">${data.newspaper}</span></div>
+                        </div>
+                    `;
+                }
+            } else if (article.dataset_type === 'reporters' && article.reporters_data) {
+                const data = safeParseJSON(article.reporters_data);
+                if (data) {
+                    html = `
+                        <div class="bg-orange-50 rounded-lg p-6 border border-orange-200">
+                            <h3 class="text-lg font-bold text-orange-900 mb-4">👤 Reporter Information</h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                ${data.author_name ? `<div><span class="text-sm text-orange-800 font-medium">Author:</span> <span class="text-orange-900">${data.author_name}</span></div>` : ''}
+                                ${data.newspaper_name ? `<div><span class="text-sm text-orange-800 font-medium">Newspaper:</span> <span class="text-orange-900">${data.newspaper_name}</span></div>` : ''}
+                                ${data.newspaper_state ? `<div><span class="text-sm text-orange-800 font-medium">State:</span> <span class="text-orange-900">${data.newspaper_state}</span></div>` : ''}
+                                ${data.city ? `<div><span class="text-sm text-orange-800 font-medium">City:</span> <span class="text-orange-900">${data.city}</span></div>` : ''}
+                            </div>
+                        </div>
+                    `;
+                }
+            }
+
+            if (html) {
+                container.innerHTML = html;
+                container.style.display = 'block';
+            }
+        }
+
+        // Load article
+        async function loadArticle() {
+            console.log('Current pathname:', window.location.pathname);
+            console.log('Extracted article ID:', articleId);
+            
+            if (!articleId) {
+                console.error('No article ID found in URL');
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+                return;
+            }
+
+            try {
+                const apiUrl = `${API_BASE}/api/article/${encodeURIComponent(articleId)}`;
+                console.log('Fetching from:', apiUrl);
+                const response = await fetch(apiUrl);
+                
+                if (!response.ok) {
+                    throw new Error('Article not found');
+                }
+
+                const article = await response.json();
+                
+                // Update title
+                document.getElementById('title').textContent = article.title || 'Untitled';
+                document.title = `${article.title || 'Article'} - AI News Audit`;
+                
+                // Update metadata
+                if (article.publish_date) {
+                    const date = new Date(article.publish_date).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'long',
+                        day: 'numeric',
+                        hour: '2-digit',
+                        minute: '2-digit'
+                    });
+                    document.querySelector('#publish-date span').textContent = date;
+                } else {
+                    document.getElementById('publish-date').style.display = 'none';
+                }
+                
+                if (article.authors) {
+                    document.querySelector('#authors span').textContent = article.authors;
+                } else {
+                    document.getElementById('authors').style.display = 'none';
+                }
+                
+                if (article.dataset_type) {
+                    const datasetNames = {
+                        'recent_news': 'Recent News',
+                        'opinions': 'Opinion',
+                        'reporters': 'Reporter'
+                    };
+                    document.getElementById('dataset-badge').textContent = datasetNames[article.dataset_type] || article.dataset_type;
+                }
+                
+                if (article.primary_topic) {
+                    document.getElementById('topic').textContent = `📂 ${article.primary_topic}`;
+                }
+
+                if (article.extraction_timestamp) {
+                    const extractDate = new Date(article.extraction_timestamp).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric'
+                    });
+                    document.getElementById('extraction-timestamp').textContent = `Extracted: ${extractDate}`;
+                }
+                
+                // Update AI analysis
+                document.getElementById('ai-likelihood').textContent = 
+                    article.ai_likelihood !== null ? article.ai_likelihood.toFixed(4) : 'N/A';
+                document.getElementById('max-ai-likelihood').textContent = 
+                    article.max_ai_likelihood !== null ? article.max_ai_likelihood.toFixed(4) : 'N/A';
+                document.getElementById('avg-ai-likelihood').textContent = 
+                    article.avg_ai_likelihood !== null ? article.avg_ai_likelihood.toFixed(4) : 'N/A';
+                
+                // Calculate delta
+                if (article.max_ai_likelihood !== null && article.avg_ai_likelihood !== null) {
+                    const delta = article.max_ai_likelihood - article.avg_ai_likelihood;
+                    document.getElementById('ai-delta').textContent = delta.toFixed(4);
+                }
+
+                // Fraction AI content
+                if (article.fraction_ai_content !== null) {
+                    document.getElementById('fraction-ai-content').textContent = 
+                        (article.fraction_ai_content * 100).toFixed(1) + '%';
+                    document.getElementById('fraction-container').style.display = 'block';
+                }
+                
+                // Update prediction badge
+                const predictionBadge = document.getElementById('prediction-badge');
+                predictionBadge.textContent = getPredictionLabel(article.prediction);
+                predictionBadge.className = `ml-4 px-4 py-1 rounded-full text-white text-sm font-semibold ${getPredictionColor(article.prediction)}`;
+                
+                // Human readable AI likelihood
+                if (article.human_readable_ai_likelihood) {
+                    document.getElementById('human-readable').textContent = article.human_readable_ai_likelihood;
+                }
+
+                // Short prediction
+                if (article.short_prediction && article.short_prediction.trim()) {
+                    document.getElementById('short-prediction').textContent = article.short_prediction;
+                    document.getElementById('short-prediction-container').style.display = 'block';
+                }
+
+                // Window analysis
+                const windowAnalysis = safeParseJSON(article.window_analysis);
+                if (windowAnalysis) {
+                    if (windowAnalysis.num_chunks_per_window) {
+                        document.getElementById('chunks-per-window').textContent = windowAnalysis.num_chunks_per_window;
+                    }
+                    if (windowAnalysis.max_chunk_length) {
+                        document.getElementById('max-chunk-length').textContent = windowAnalysis.max_chunk_length.toLocaleString();
+                    }
+                    if (windowAnalysis.min_chunk_length) {
+                        document.getElementById('min-chunk-length').textContent = windowAnalysis.min_chunk_length.toLocaleString();
+                    }
+                    
+                    if (windowAnalysis.window_likelihoods && Array.isArray(windowAnalysis.window_likelihoods)) {
+                        document.getElementById('window-count').textContent = windowAnalysis.window_likelihoods.length;
+                        const windowDetails = windowAnalysis.window_likelihoods.map((likelihood, idx) => {
+                            const color = likelihood > 0.7 ? 'bg-red-100 text-red-700' : 
+                                         likelihood > 0.3 ? 'bg-yellow-100 text-yellow-700' : 
+                                         'bg-green-100 text-green-700';
+                            return `<span class="${color} px-3 py-1 rounded-full text-sm font-medium">W${idx+1}: ${likelihood.toFixed(3)}</span>`;
+                        }).join('');
+                        document.getElementById('window-details').innerHTML = windowDetails;
+                        document.getElementById('window-analysis-section').style.display = 'block';
+                    }
+                }
+
+                // Article preview (first 20 words)
+                if (article.text) {
+                    const preview = getFirstWords(article.text, 20);
+                    document.getElementById('text-preview').textContent = preview;
+                }
+                
+                // Update original link (both locations)
+                if (article.article_id && article.article_id.startsWith('http')) {
+                    // Top prominent link
+                    document.getElementById('original-link').href = article.article_id;
+                    document.getElementById('original-link').textContent = article.article_id;
+                    document.getElementById('original-link-container').style.display = 'block';
+                    
+                    // Preview section link
+                    document.getElementById('read-full-link').href = article.article_id;
+                }
+
+                // Render dataset-specific metadata
+                renderDatasetMetadata(article);
+                
+                // Show article
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('article-data').style.display = 'block';
+                
+            } catch (error) {
+                console.error('Error loading article:', error);
+                document.getElementById('loading').style.display = 'none';
+                document.getElementById('error').style.display = 'block';
+            }
+        }
+
+        // Load on page load
+        document.addEventListener('DOMContentLoaded', loadArticle);
+    </script>
+</body>
+</html>
