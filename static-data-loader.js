@@ -14,18 +14,8 @@ class StaticDataLoader {
         this.allArticles = null;
     }
 
-    /** Map raw prediction labels into final normalized categories */
-    normalizePrediction(raw) {
-        if (!raw) return null;
-        const val = String(raw).trim().toLowerCase();
-        const human = new Set(['human', 'unlikely ai', 'unlikely_ai']);
-        const mixed = new Set(['mixed', 'possibly ai', 'possibly_ai', 'likely ai', 'likely_ai']);
-        const ai = new Set(['highly likely ai', 'highly_likely_ai', 'ai']);
-        if (human.has(val)) return 'Human';
-        if (mixed.has(val)) return 'Mixed';
-        if (ai.has(val)) return 'AI';
-        return raw; // fallback to original if unknown
-    }
+    // Normalization is done offline; keep a no-op for compatibility
+    normalizePrediction(raw) { return raw; }
 
     /**
      * Load a dataset from static JSON file
@@ -75,13 +65,12 @@ class StaticDataLoader {
                 }
                 
                 // Normalize and annotate each article
-                data.forEach(article => {
+                data.forEach((article, index) => {
                     article.dataset_type = datasetType;
 
-                    // Stable ID
-                    if (!article.id) {
-                        article.id = article.article_id;
-                    }
+                    // Generate stable numeric ID based on dataset and index
+                    const datasetPrefix = datasetType === 'recent_news' ? 1 : datasetType === 'opinions' ? 2 : 3;
+                    article.id = datasetPrefix * 1000000 + index; // e.g., 1000001, 2000001, 3000001
 
                     // Normalize numeric fields
                     const toNum = (val) => {
@@ -93,8 +82,7 @@ class StaticDataLoader {
                     article.max_ai_likelihood = toNum(article.max_ai_likelihood);
                     article.fraction_ai_content = toNum(article.fraction_ai_content);
 
-                    // Normalized final prediction
-                    article.final_prediction = this.normalizePrediction(article.prediction || article.short_prediction);
+                    // Prediction is already normalized offline
                 });
                 
                 this.data[datasetType] = data;
@@ -304,13 +292,14 @@ class StaticDataLoader {
     }
 
     /**
-     * Get a single article by ID
+     * Get a single article by numeric ID
      */
     async getArticle(articleId) {
         await this.loadAllDatasets();
 
-        // Search by article_id (URL)
-        return this.allArticles.find(a => a.article_id === articleId);
+        // Search by numeric ID
+        const id = parseInt(articleId);
+        return this.allArticles.find(a => a.id === id);
     }
 
     /**
@@ -402,10 +391,9 @@ class StaticDataLoader {
         // Prediction distribution
         const predictionDist = {};
         validArticles.forEach(a => {
-            const label = a.final_prediction || a.prediction;
+            const label = a.prediction;
             if (label) {
-                const norm = this.normalizePrediction(label);
-                predictionDist[norm] = (predictionDist[norm] || 0) + 1;
+                predictionDist[label] = (predictionDist[label] || 0) + 1;
             }
         });
 

@@ -35,6 +35,7 @@
                             ✍️ <span class="ml-1 font-medium"></span>
                         </span>
                         <span id="dataset-badge" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium uppercase"></span>
+                        <span id="state-badge" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium"></span>
                     </div>
                     <div class="flex flex-wrap items-center gap-2">
                         <span id="topic" class="px-3 py-1 bg-purple-100 text-purple-700 rounded-full text-sm font-medium"></span>
@@ -50,6 +51,9 @@
                     </div>
                 </div>
                 
+                <!-- Dataset-Specific Metadata -->
+                <div id="dataset-metadata" class="mb-6" style="display:none;"></div>
+
                 <!-- AI Analysis Dashboard -->
                 <div class="mb-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
                     <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
@@ -90,11 +94,7 @@
                         </div>
                     </div>
 
-                    <!-- Short Prediction -->
-                    <div id="short-prediction-container" class="mt-4 p-3 bg-yellow-50 rounded-lg" style="display:none;">
-                        <span class="text-xs text-yellow-800 font-medium">Detailed Prediction:</span>
-                        <span id="short-prediction" class="text-sm text-yellow-900 ml-2"></span>
-                    </div>
+                    <!-- Short Prediction removed to avoid conflicting labels -->
                 </div>
 
                 <!-- Article Preview (First 20 Words) -->
@@ -128,13 +128,14 @@
                         </div>
                         <div id="window-likelihoods" class="bg-white p-4 rounded-lg">
                             <div class="text-sm font-medium text-indigo-900 mb-2">Window AI Likelihoods:</div>
+                            <!-- Compact bar chart -->
+                            <div id="window-bar-chart" class="mb-3">
+                            </div>
                             <div id="window-details" class="flex flex-wrap gap-2"></div>
                         </div>
                     </div>
                 </div>
 
-                <!-- Dataset-Specific Metadata -->
-                <div id="dataset-metadata" class="mb-6" style="display:none;"></div>
             </div>
             
             <div id="error" style="display:none;" class="text-center text-red-600 py-12">
@@ -151,7 +152,7 @@
 
         // Get article ID from URL query parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const articleId = decodeURIComponent(urlParams.get('id') || '');
+        const articleId = urlParams.get('id') || '';
 
         // Get prediction color
         function getPredictionColor(prediction) {
@@ -191,47 +192,46 @@
             }
         }
 
-        // Render dataset-specific metadata
+        // Render dataset-specific metadata (top-level fields)
         function renderDatasetMetadata(article) {
             const container = document.getElementById('dataset-metadata');
             let html = '';
 
-            if (article.dataset_type === 'recent_news' && article.recent_news_data) {
-                const data = safeParseJSON(article.recent_news_data);
-                if (data) {
+            if (article.dataset_type === 'recent_news') {
+                const hasAny = article.publisher || article.circulation != null || article.lang || article.news_deserts_owner_name || article.url;
+                if (hasAny) {
                     html = `
                         <div class="bg-green-50 rounded-lg p-6 border border-green-200">
                             <h3 class="text-lg font-bold text-green-900 mb-4">📰 Publication Information</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${data.publisher ? `<div><span class="text-sm text-green-800 font-medium">Publisher:</span> <span class="text-green-900">${data.publisher}</span></div>` : ''}
-                                ${data.state ? `<div><span class="text-sm text-green-800 font-medium">State:</span> <span class="text-green-900">${data.state}</span></div>` : ''}
-                                ${data.circulation ? `<div><span class="text-sm text-green-800 font-medium">Circulation:</span> <span class="text-green-900">${data.circulation.toLocaleString()}</span></div>` : ''}
-                                ${data.lang ? `<div><span class="text-sm text-green-800 font-medium">Language:</span> <span class="text-green-900">${data.lang}</span></div>` : ''}
+                                ${article.publisher ? `<div><span class="text-sm text-green-800 font-medium">Publication:</span> <span class="text-green-900">${article.publisher}</span></div>` : ''}
+                                ${article.news_deserts_owner_name ? `<div><span class="text-sm text-green-800 font-medium">Owner:</span> <span class="text-green-900">${article.news_deserts_owner_name}</span></div>` : ''}
+                                ${article.circulation != null ? `<div><span class="text-sm text-green-800 font-medium">Circulation:</span> <span class="text-green-900">${Number(article.circulation).toLocaleString()}</span></div>` : ''}
+                                ${article.lang ? `<div><span class="text-sm text-green-800 font-medium">Language:</span> <span class="text-green-900">${article.lang}</span></div>` : ''}
                             </div>
                         </div>
                     `;
                 }
-            } else if (article.dataset_type === 'opinions' && article.opinions_data) {
-                const data = safeParseJSON(article.opinions_data);
-                if (data && data.newspaper) {
+            } else if (article.dataset_type === 'opinions') {
+                const publication = article.newspaper;
+                if (publication) {
                     html = `
                         <div class="bg-purple-50 rounded-lg p-6 border border-purple-200">
                             <h3 class="text-lg font-bold text-purple-900 mb-4">💭 Opinion Information</h3>
-                            <div><span class="text-sm text-purple-800 font-medium">Newspaper:</span> <span class="text-purple-900">${data.newspaper}</span></div>
+                            <div><span class="text-sm text-purple-800 font-medium">Publication:</span> <span class="text-purple-900">${publication}</span></div>
                         </div>
                     `;
                 }
-            } else if (article.dataset_type === 'reporters' && article.reporters_data) {
-                const data = safeParseJSON(article.reporters_data);
-                if (data) {
+            } else if (article.dataset_type === 'reporters') {
+                const publication = article.newspaper_name || article.newspaper;
+                const city = article.city;
+                if (publication || city) {
                     html = `
                         <div class="bg-orange-50 rounded-lg p-6 border border-orange-200">
                             <h3 class="text-lg font-bold text-orange-900 mb-4">👤 Reporter Information</h3>
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                ${data.author_name ? `<div><span class="text-sm text-orange-800 font-medium">Author:</span> <span class="text-orange-900">${data.author_name}</span></div>` : ''}
-                                ${data.newspaper_name ? `<div><span class="text-sm text-orange-800 font-medium">Newspaper:</span> <span class="text-orange-900">${data.newspaper_name}</span></div>` : ''}
-                                ${data.newspaper_state ? `<div><span class="text-sm text-orange-800 font-medium">State:</span> <span class="text-orange-900">${data.newspaper_state}</span></div>` : ''}
-                                ${data.city ? `<div><span class="text-sm text-orange-800 font-medium">City:</span> <span class="text-orange-900">${data.city}</span></div>` : ''}
+                                ${publication ? `<div><span class="text-sm text-orange-800 font-medium">Publication:</span> <span class="text-orange-900">${publication}</span></div>` : ''}
+                                ${city ? `<div><span class="text-sm text-orange-800 font-medium">City:</span> <span class="text-orange-900">${city}</span></div>` : ''}
                             </div>
                         </div>
                     `;
@@ -301,6 +301,15 @@
                     document.getElementById('topic').textContent = `📂 ${article.primary_topic}`;
                 }
 
+                // State badge (unified field)
+                if (article.state) {
+                    document.getElementById('state-badge').textContent = article.state;
+                } else if (article.newspaper_state) {
+                    document.getElementById('state-badge').textContent = article.newspaper_state;
+                } else {
+                    document.getElementById('state-badge').style.display = 'none';
+                }
+
                 if (article.extraction_timestamp) {
                     const extractDate = new Date(article.extraction_timestamp).toLocaleDateString('en-US', {
                         year: 'numeric',
@@ -336,10 +345,8 @@
                 predictionBadge.textContent = getPredictionLabel(article.prediction);
                 predictionBadge.className = `ml-4 px-4 py-1 rounded-full text-white text-sm font-semibold ${getPredictionColor(article.prediction)}`;
                 
-                // Human readable AI likelihood
-                if (article.human_readable_ai_likelihood) {
-                    document.getElementById('human-readable').textContent = article.human_readable_ai_likelihood;
-                }
+                // Replace any legacy human_readable message with normalized label to avoid conflicts
+                document.getElementById('human-readable').textContent = '';
 
                 // Short prediction
                 if (article.short_prediction && article.short_prediction.trim()) {
@@ -348,27 +355,38 @@
                 }
 
                 // Window analysis
-                const windowAnalysis = safeParseJSON(article.window_analysis);
-                if (windowAnalysis) {
-                    if (windowAnalysis.num_chunks_per_window) {
-                        document.getElementById('chunks-per-window').textContent = windowAnalysis.num_chunks_per_window;
+                // Prefer top-level window_likelihoods if present; otherwise parse window_analysis
+                let windowLikelihoods = Array.isArray(article.window_likelihoods) ? article.window_likelihoods : null;
+                const windowAnalysis = windowLikelihoods ? null : safeParseJSON(article.window_analysis);
+                if (windowLikelihoods || windowAnalysis) {
+                    if (!windowLikelihoods && windowAnalysis && Array.isArray(windowAnalysis.window_likelihoods)) {
+                        windowLikelihoods = windowAnalysis.window_likelihoods;
                     }
-                    if (windowAnalysis.max_chunk_length) {
-                        document.getElementById('max-chunk-length').textContent = windowAnalysis.max_chunk_length.toLocaleString();
-                    }
-                    if (windowAnalysis.min_chunk_length) {
-                        document.getElementById('min-chunk-length').textContent = windowAnalysis.min_chunk_length.toLocaleString();
-                    }
-                    
-                    if (windowAnalysis.window_likelihoods && Array.isArray(windowAnalysis.window_likelihoods)) {
-                        document.getElementById('window-count').textContent = windowAnalysis.window_likelihoods.length;
-                        const windowDetails = windowAnalysis.window_likelihoods.map((likelihood, idx) => {
+                    if (windowLikelihoods) {
+                        document.getElementById('window-count').textContent = windowLikelihoods.length;
+                        const windowDetails = windowLikelihoods.map((likelihood, idx) => {
                             const color = likelihood > 0.7 ? 'bg-red-100 text-red-700' : 
                                          likelihood > 0.3 ? 'bg-yellow-100 text-yellow-700' : 
                                          'bg-green-100 text-green-700';
                             return `<span class="${color} px-3 py-1 rounded-full text-sm font-medium">W${idx+1}: ${likelihood.toFixed(3)}</span>`;
                         }).join('');
                         document.getElementById('window-details').innerHTML = windowDetails;
+
+                        // Simple horizontal bar chart visualization
+                        const maxVal = Math.max(...windowLikelihoods, 1);
+                        const bars = windowLikelihoods.map((v, i) => {
+                            const pct = Math.max(2, Math.round((v / maxVal) * 100));
+                            const colorClass = v > 0.7 ? 'bg-red-500' : v > 0.3 ? 'bg-yellow-500' : 'bg-green-500';
+                            return `
+                                <div class="flex items-center gap-2 mb-1">
+                                    <div class="text-xs text-gray-600 w-10">W${i+1}</div>
+                                    <div class="flex-1 h-3 bg-gray-200 rounded">
+                                        <div class="h-3 ${colorClass} rounded" style="width:${pct}%"></div>
+                                    </div>
+                                    <div class="text-xs text-gray-700 w-14 text-right">${v.toFixed(3)}</div>
+                                </div>`;
+                        }).join('');
+                        document.getElementById('window-bar-chart').innerHTML = bars;
                         document.getElementById('window-analysis-section').style.display = 'block';
                     }
                 }

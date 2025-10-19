@@ -295,11 +295,7 @@
                 
                 totalArticles = data.total;
                 // Ensure we use normalized final_prediction when rendering
-                const normalized = data.articles.map(a => ({
-                    ...a,
-                    final_prediction: a.final_prediction || a.prediction
-                }));
-                renderArticles(normalized);
+                renderArticles(data.articles);
                 renderPagination();
                 
                 document.getElementById('results-count').textContent = 
@@ -340,14 +336,14 @@
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
-                                onclick="window.location.href='article.html?id=${encodeURIComponent(article.article_id)}'">
+                                onclick="window.location.href='article.html?id=${article.id}'">
                                 ${article.title}
                             </h3>
                             <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                                 <span>📅 ${date}</span>
                                 ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.final_prediction)}">
-                                    ${getPredictionLabel(article.final_prediction)}
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
+                                    ${getPredictionLabel(article.prediction)}
                                 </span>
                                 <span class="text-blue-600 font-medium">${article.dataset_type}</span>
                             </div>
@@ -495,6 +491,23 @@
         // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([loadStats(), loadFilterOptions()]);
+            
+            // Check for URL parameters and set filters
+            const urlParams = new URLSearchParams(window.location.search);
+            const datasetType = urlParams.get('dataset_type');
+            const topic = urlParams.get('topic');
+            const prediction = urlParams.get('prediction');
+            
+            if (datasetType) {
+                document.getElementById('dataset-filter').value = datasetType;
+            }
+            if (topic) {
+                document.getElementById('topic-filter').value = topic;
+            }
+            if (prediction) {
+                document.getElementById('prediction-filter').value = prediction;
+            }
+            
             searchArticles();
         });
     </script>
