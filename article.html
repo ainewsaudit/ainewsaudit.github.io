@@ -145,9 +145,9 @@
         const API_BASE = window.ApiConfig.getApiBase();
         console.log('Using API:', API_BASE);
 
-        // Get article ID from URL - it's already encoded in the URL path
-        const pathParts = window.location.pathname.split('/article/');
-        const articleId = pathParts.length > 1 ? decodeURIComponent(pathParts[1]) : null;
+        // Get article ID from URL query parameter
+        const urlParams = new URLSearchParams(window.location.search);
+        const articleId = urlParams.get('id');
 
         // Get prediction color
         function getPredictionColor(prediction) {
