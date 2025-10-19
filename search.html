@@ -184,7 +184,8 @@
         // Load stats on page load
         async function loadStats() {
             try {
-                const response = await fetch(`${API_BASE}/api/stats`);
+                const url = window.ApiConfig.buildApiUrl('/api/stats');
+                const response = await fetch(url);
                 const stats = await response.json();
                 
                 const total = Object.values(stats.datasets).reduce((sum, count) => sum + count, 0);
@@ -200,7 +201,8 @@
         // Load filter options
         async function loadFilterOptions() {
             try {
-                const response = await fetch(`${API_BASE}/api/filter_options`);
+                const url = window.ApiConfig.buildApiUrl('/api/filter_options');
+                const response = await fetch(url);
                 filterOptions = await response.json();
                 
                 // Populate topics
@@ -269,18 +271,25 @@
 
             const offset = (currentPage - 1) * pageSize;
             
-            let url = `${API_BASE}/api/articles?limit=${pageSize}&offset=${offset}&sort=${sort}`;
-            if (search) url += `&search=${encodeURIComponent(search)}`;
-            if (topic) url += `&topic=${encodeURIComponent(topic)}`;
-            if (dataset) url += `&dataset_type=${dataset}`;
-            if (prediction) url += `&prediction=${encodeURIComponent(prediction)}`;
-            if (startDate) url += `&start_date=${startDate}`;
-            if (endDate) url += `&end_date=${endDate}`;
-            if (author) url += `&author=${encodeURIComponent(author)}`;
-            if (aiMin !== '0') url += `&ai_min=${aiMin}`;
-            if (aiMax !== '1') url += `&ai_max=${aiMax}`;
-            if (maxAiMin !== '0') url += `&max_ai_min=${maxAiMin}`;
-            if (maxAiMax !== '1') url += `&max_ai_max=${maxAiMax}`;
+            // Build query parameters
+            const params = {
+                limit: pageSize,
+                offset: offset,
+                sort: sort
+            };
+            if (search) params.search = search;
+            if (topic) params.topic = topic;
+            if (dataset) params.dataset_type = dataset;
+            if (prediction) params.prediction = prediction;
+            if (startDate) params.start_date = startDate;
+            if (endDate) params.end_date = endDate;
+            if (author) params.author = author;
+            if (aiMin !== '0') params.ai_min = aiMin;
+            if (aiMax !== '1') params.ai_max = aiMax;
+            if (maxAiMin !== '0') params.max_ai_min = maxAiMin;
+            if (maxAiMax !== '1') params.max_ai_max = maxAiMax;
+            
+            const url = window.ApiConfig.buildApiUrl('/api/articles', params);
 
             try {
                 const response = await fetch(url);

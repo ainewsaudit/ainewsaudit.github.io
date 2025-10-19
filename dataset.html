@@ -127,7 +127,8 @@
             document.getElementById('charts-container').classList.add('hidden');
             
             try {
-                const response = await fetch(`${API_BASE}/api/dataset/${datasetType}/stats`);
+                const url = window.ApiConfig.buildApiUrl(`/api/dataset/${datasetType}/stats`);
+                const response = await fetch(url);
                 const data = await response.json();
                 
                 renderCharts(data);

@@ -253,7 +253,7 @@
             }
 
             try {
-                const apiUrl = `${API_BASE}/api/article/${encodeURIComponent(articleId)}`;
+                const apiUrl = window.ApiConfig.buildApiUrl(`/api/article/${encodeURIComponent(articleId)}`);
                 console.log('Fetching from:', apiUrl);
                 const response = await fetch(apiUrl);
                 
