@@ -1,0 +1,18 @@
+{
+  "name": "ainewsaudit-proxy",
+  "version": "1.0.0",
+  "description": "HTTPS proxy for AI News Audit API",
+  "main": "api/proxy.js",
+  "scripts": {
+    "dev": "vercel dev",
+    "deploy": "vercel --prod"
+  },
+  "keywords": [
+    "proxy",
+    "https",
+    "api"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+

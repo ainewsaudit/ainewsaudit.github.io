@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI News Audit - Search Articles</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/api-config.js"></script>
 </head>
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
@@ -37,18 +38,18 @@
                         <div class="text-3xl font-bold text-blue-700" id="stat-total">-</div>
                         <div class="text-sm text-blue-600">Total Articles</div>
                     </div>
-                    <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg">
+                    <a href="/dataset/recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
                         <div class="text-3xl font-bold text-green-700" id="stat-recent">-</div>
-                        <div class="text-sm text-green-600">Recent News</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg">
+                        <div class="text-sm text-green-600">Recent News →</div>
+                    </a>
+                    <a href="/dataset/opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
                         <div class="text-3xl font-bold text-purple-700" id="stat-opinions">-</div>
-                        <div class="text-sm text-purple-600">Opinions</div>
-                    </div>
-                    <div class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg">
+                        <div class="text-sm text-purple-600">Opinions →</div>
+                    </a>
+                    <a href="/dataset/reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
                         <div class="text-3xl font-bold text-orange-700" id="stat-reporters">-</div>
-                        <div class="text-sm text-orange-600">Reporters</div>
-                    </div>
+                        <div class="text-sm text-orange-600">Reporters →</div>
+                    </a>
                 </div>
             </div>
         </div>
@@ -172,8 +173,9 @@
     </div>
 
     <script>
-        // API Configuration
-        const API_BASE = 'http://shawshank.cs.umass.edu:8444';
+        // API Configuration - uses api-config.js helper
+        const API_BASE = window.ApiConfig.getApiBase();
+        console.log('Using API:', API_BASE);
         let currentPage = 1;
         const pageSize = 20;
         let totalArticles = 0;

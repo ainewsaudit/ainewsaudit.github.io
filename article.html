@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Article - AI News Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
+    <script src="/api-config.js"></script>
 </head>
 <body class="bg-gray-50 font-sans">
     <div class="container mx-auto px-4 py-8 max-w-5xl">
@@ -140,8 +141,9 @@
     </div>
 
     <script>
-        // API Configuration
-        const API_BASE = 'http://shawshank.cs.umass.edu:8444';
+        // API Configuration - uses api-config.js helper  
+        const API_BASE = window.ApiConfig.getApiBase();
+        console.log('Using API:', API_BASE);
 
         // Get article ID from URL - it's already encoded in the URL path
         const pathParts = window.location.pathname.split('/article/');

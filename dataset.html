@@ -1,0 +1,320 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dataset Analysis - AI News Audit</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="/api-config.js"></script>
+</head>
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="mb-6">
+            <a href="/" class="text-blue-600 hover:underline mb-4 inline-block">← Back to Search</a>
+            <h1 class="text-4xl font-bold text-gray-900 mb-2" id="dataset-title">Dataset Analysis</h1>
+            <p class="text-lg text-gray-600" id="dataset-description">Comprehensive statistics and trends</p>
+        </div>
+
+        <!-- Dataset Selector -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
+            <h2 class="text-xl font-bold text-gray-900 mb-4">Select Dataset</h2>
+            <div class="flex gap-4">
+                <button onclick="loadDataset('recent_news')" id="btn-recent_news" 
+                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                    📰 Recent News
+                </button>
+                <button onclick="loadDataset('opinions')" id="btn-opinions"
+                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                    💭 Opinions
+                </button>
+                <button onclick="loadDataset('reporters')" id="btn-reporters"
+                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                    👤 Reporters
+                </button>
+            </div>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading" class="text-center py-12 hidden">
+            <div class="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+            <p class="text-gray-600 mt-4">Loading dataset statistics...</p>
+        </div>
+
+        <!-- Charts Container -->
+        <div id="charts-container" class="hidden">
+            <!-- Summary Stats -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-stats"></div>
+
+            <!-- Charts Grid -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+                <!-- Prediction Distribution Pie Chart -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Prediction Distribution</h2>
+                    <div class="max-w-md mx-auto">
+                        <canvas id="predictionChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- Topic Distribution Pie Chart -->
+                <div class="bg-white rounded-xl shadow-lg p-6">
+                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Top Topics</h2>
+                    <canvas id="topicChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Time Series Line Chart (Full Width) -->
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">AI/Mixed Predictions Over Time</h2>
+                <canvas id="timeSeriesChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // API Configuration - uses api-config.js helper
+        const API_BASE = window.ApiConfig.getApiBase();
+        console.log('Using API:', API_BASE);
+        let currentDataset = null;
+        let charts = {
+            prediction: null,
+            topic: null,
+            timeSeries: null
+        };
+
+        const datasetInfo = {
+            'recent_news': {
+                title: 'Recent News Analysis',
+                description: 'Analysis of recent news articles',
+                color: '#3b82f6'
+            },
+            'opinions': {
+                title: 'Opinions Analysis',
+                description: 'Analysis of opinion pieces and editorials',
+                color: '#8b5cf6'
+            },
+            'reporters': {
+                title: 'Reporters Analysis',
+                description: 'Analysis of reporter-attributed articles',
+                color: '#f59e0b'
+            }
+        };
+
+        // Update button styles
+        function updateButtonStyles(activeDataset) {
+            ['recent_news', 'opinions', 'reporters'].forEach(dataset => {
+                const btn = document.getElementById(`btn-${dataset}`);
+                if (dataset === activeDataset) {
+                    btn.className = 'flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg';
+                } else {
+                    btn.className = 'flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300';
+                }
+            });
+        }
+
+        async function loadDataset(datasetType) {
+            currentDataset = datasetType;
+            updateButtonStyles(datasetType);
+            
+            // Update header
+            const info = datasetInfo[datasetType];
+            document.getElementById('dataset-title').textContent = info.title;
+            document.getElementById('dataset-description').textContent = info.description;
+            
+            // Show loading
+            document.getElementById('loading').classList.remove('hidden');
+            document.getElementById('charts-container').classList.add('hidden');
+            
+            try {
+                const response = await fetch(`${API_BASE}/api/dataset/${datasetType}/stats`);
+                const data = await response.json();
+                
+                renderCharts(data);
+                
+                document.getElementById('loading').classList.add('hidden');
+                document.getElementById('charts-container').classList.remove('hidden');
+            } catch (error) {
+                console.error('Error loading dataset stats:', error);
+                alert('Error loading dataset statistics. Please try again.');
+                document.getElementById('loading').classList.add('hidden');
+            }
+        }
+
+        function renderCharts(data) {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            
+            // Calculate summary stats
+            const totalArticles = data.prediction_distribution.reduce((sum, item) => sum + item.count, 0);
+            const aiCount = data.prediction_distribution.find(p => p.prediction === 'AI')?.count || 0;
+            const mixedCount = data.prediction_distribution.find(p => p.prediction === 'Mixed')?.count || 0;
+            const humanCount = data.prediction_distribution.find(p => p.prediction === 'Human')?.count || 0;
+            
+            // Render summary stats
+            document.getElementById('summary-stats').innerHTML = `
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
+                    <div class="text-4xl font-bold text-blue-700">${totalArticles.toLocaleString()}</div>
+                    <div class="text-sm text-blue-600">Total Articles</div>
+                </div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
+                    <div class="text-4xl font-bold text-green-700">${((humanCount / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="text-sm text-green-600">Human-Written</div>
+                </div>
+                <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg">
+                    <div class="text-4xl font-bold text-red-700">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="text-sm text-red-600">AI/Mixed Content</div>
+                </div>
+            `;
+            
+            // 1. Prediction Distribution Pie Chart
+            const predictionData = data.prediction_distribution;
+            
+            // Map colors based on prediction type
+            const predictionColors = predictionData.map(p => {
+                if (p.prediction === 'Human') return '#10b981'; // Green
+                if (p.prediction === 'Mixed') return '#f59e0b'; // Orange/Yellow
+                if (p.prediction === 'AI') return '#ef4444';    // Red
+                return '#6b7280'; // Gray fallback
+            });
+            
+            charts.prediction = new Chart(document.getElementById('predictionChart'), {
+                type: 'pie',
+                data: {
+                    labels: predictionData.map(p => p.prediction),
+                    datasets: [{
+                        data: predictionData.map(p => p.count),
+                        backgroundColor: predictionColors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                font: { size: 14 },
+                                padding: 20
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 2. Time Series Line Chart
+            const timeData = data.time_series;
+            charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
+                type: 'line',
+                data: {
+                    labels: timeData.map(t => t.month),
+                    datasets: [
+                        {
+                            label: 'AI Content %',
+                            data: timeData.map(t => ((t.ai_count / t.total) * 100).toFixed(2)),
+                            borderColor: '#ef4444',
+                            backgroundColor: 'rgba(239, 68, 68, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        },
+                        {
+                            label: 'Mixed Content %',
+                            data: timeData.map(t => ((t.mixed_count / t.total) * 100).toFixed(2)),
+                            borderColor: '#f59e0b',
+                            backgroundColor: 'rgba(245, 158, 11, 0.1)',
+                            tension: 0.4,
+                            fill: true
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Percentage (%)'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Month'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // 3. Topic Distribution Pie Chart
+            const topicData = data.topic_distribution;
+            const colors = [
+                '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
+                '#06b6d4', '#6366f1', '#a855f7', '#d946ef', '#f43f5e',
+                '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1'
+            ];
+            
+            charts.topic = new Chart(document.getElementById('topicChart'), {
+                type: 'pie',
+                data: {
+                    labels: topicData.map(t => t.primary_topic),
+                    datasets: [{
+                        data: topicData.map(t => t.count),
+                        backgroundColor: colors,
+                        borderWidth: 2,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                font: { size: 11 },
+                                padding: 10,
+                                boxWidth: 12
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const value = context.parsed;
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // Load recent_news by default
+        document.addEventListener('DOMContentLoaded', () => {
+            loadDataset('recent_news');
+        });
+    </script>
+</body>
+</html>
+
