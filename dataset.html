@@ -9,7 +9,8 @@
     <title>Dataset Analysis - AI News Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <script src="/api-config.js?v=3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js"></script>
 </head>
 <!-- Version: 2025-10-19-v3 -->
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
@@ -77,9 +78,8 @@
     </div>
 
     <script>
-        // API Configuration - uses api-config.js helper
-        const API_BASE = window.ApiConfig.getApiBase();
-        console.log('Using API:', API_BASE);
+        // Static data loader
+        console.log('Using static data loader');
         let currentDataset = null;
         let charts = {
             prediction: null,
@@ -131,9 +131,7 @@
             document.getElementById('charts-container').classList.add('hidden');
             
             try {
-                const url = window.ApiConfig.buildApiUrl(`/api/dataset/${datasetType}/stats`);
-                const response = await fetch(url);
-                const data = await response.json();
+                const data = await window.dataLoader.getDatasetStats(datasetType);
                 
                 renderCharts(data);
                 
@@ -152,11 +150,17 @@
                 if (chart) chart.destroy();
             });
             
-            // Calculate summary stats
-            const totalArticles = data.prediction_distribution.reduce((sum, item) => sum + item.count, 0);
-            const aiCount = data.prediction_distribution.find(p => p.prediction === 'AI')?.count || 0;
-            const mixedCount = data.prediction_distribution.find(p => p.prediction === 'Mixed')?.count || 0;
-            const humanCount = data.prediction_distribution.find(p => p.prediction === 'Human')?.count || 0;
+            // Calculate summary stats using only normalized categories (Human, Mixed, AI)
+            const predictionData = ['Human', 'Mixed', 'AI']
+                .map(label => ({
+                    prediction: label,
+                    count: data.prediction_distribution.find(p => p.prediction === label)?.count || 0
+                }));
+
+            const totalArticles = predictionData.reduce((sum, item) => sum + item.count, 0);
+            const humanCount = predictionData.find(p => p.prediction === 'Human')?.count || 0;
+            const mixedCount = predictionData.find(p => p.prediction === 'Mixed')?.count || 0;
+            const aiCount = predictionData.find(p => p.prediction === 'AI')?.count || 0;
             
             // Render summary stats
             document.getElementById('summary-stats').innerHTML = `
@@ -174,8 +178,7 @@
                 </div>
             `;
             
-            // 1. Prediction Distribution Pie Chart
-            const predictionData = data.prediction_distribution;
+            // 1. Prediction Distribution Pie Chart (using normalized order above)
             
             // Map colors based on prediction type
             const predictionColors = predictionData.map(p => {
@@ -198,6 +201,15 @@
                 },
                 options: {
                     responsive: true,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const prediction = predictionData[elementIndex].prediction;
+                            const datasetType = currentDataset;
+                            const url = `search.html?dataset_type=${datasetType}&prediction=${encodeURIComponent(prediction)}`;
+                            window.open(url, '_blank');
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: 'bottom',
@@ -209,10 +221,9 @@
                         tooltip: {
                             callbacks: {
                                 label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const value = context.parsed;
-                                    const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    const percentage = ((value / totalArticles) * 100).toFixed(1);
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%) - Click to view examples`;
                                 }
                             }
                         }
@@ -291,6 +302,15 @@
                 },
                 options: {
                     responsive: true,
+                    onClick: (event, elements) => {
+                        if (elements.length > 0) {
+                            const elementIndex = elements[0].index;
+                            const topic = topicData[elementIndex].primary_topic;
+                            const datasetType = currentDataset;
+                            const url = `search.html?dataset_type=${datasetType}&topic=${encodeURIComponent(topic)}`;
+                            window.open(url, '_blank');
+                        }
+                    },
                     plugins: {
                         legend: {
                             position: 'right',
@@ -306,7 +326,7 @@
                                     const total = context.dataset.data.reduce((a, b) => a + b, 0);
                                     const value = context.parsed;
                                     const percentage = ((value / total) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
+                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%) - Click to view examples`;
                                 }
                             }
                         }

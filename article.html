@@ -8,7 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <title>Article - AI News Audit</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/api-config.js?v=3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js"></script>
 </head>
 <!-- Version: 2025-10-19-v3 -->
 <body class="bg-gray-50 font-sans">
@@ -145,13 +146,12 @@
     </div>
 
     <script>
-        // API Configuration - uses api-config.js helper  
-        const API_BASE = window.ApiConfig.getApiBase();
-        console.log('Using API:', API_BASE);
+        // Static data loader
+        console.log('Using static data loader');
 
         // Get article ID from URL query parameter
         const urlParams = new URLSearchParams(window.location.search);
-        const articleId = urlParams.get('id');
+        const articleId = decodeURIComponent(urlParams.get('id') || '');
 
         // Get prediction color
         function getPredictionColor(prediction) {
@@ -257,15 +257,12 @@
             }
 
             try {
-                const apiUrl = window.ApiConfig.buildApiUrl(`/api/article/${encodeURIComponent(articleId)}`);
-                console.log('Fetching from:', apiUrl);
-                const response = await fetch(apiUrl);
+                console.log('Loading article:', articleId);
+                const article = await window.dataLoader.getArticle(articleId);
                 
-                if (!response.ok) {
+                if (!article) {
                     throw new Error('Article not found');
                 }
-
-                const article = await response.json();
                 
                 // Update title
                 document.getElementById('title').textContent = article.title || 'Untitled';

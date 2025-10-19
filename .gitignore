@@ -1,38 +1,18 @@
-# Database files (DO NOT deploy to GitHub Pages)
-data/
-*.db
-
-# Server-only files (keep on your Linux server)
-app.py
-migrate_data_local.py
-start.sh
-requirements.txt
-
-# Documentation (not deploying yet)
-README.md
-DEPLOY_NOW.md
-FILE_STRUCTURE.md
-schema.sql
-
-# Python
-__pycache__/
-*.py[cod]
-*$py.class
-*.so
-.Python
-venv/
-env/
-
-# Editor
-.vscode/
-.idea/
+# Development files
+.DS_Store
+*.log
 *.swp
 *.swo
+*~
 
-# OS
-.DS_Store
-Thumbs.db
+# IDE
+.vscode/
+.idea/
+*.sublime-*
 
-# Logs
-*.log
-api.log
+# Temporary files
+*.tmp
+.cache/
+
+# Don't ignore the compressed data files (they're essential)
+# All .gz files in static_data/ should be committed

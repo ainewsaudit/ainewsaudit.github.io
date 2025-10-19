@@ -8,7 +8,8 @@
     <meta http-equiv="Expires" content="0">
     <title>AI News Audit - Search Articles</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="/api-config.js?v=3"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js"></script>
 </head>
 <!-- Version: 2025-10-19-v3 -->
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
@@ -177,9 +178,8 @@
     </div>
 
     <script>
-        // API Configuration - uses api-config.js helper
-        const API_BASE = window.ApiConfig.getApiBase();
-        console.log('Using API:', API_BASE);
+        // Static data loader
+        console.log('Using static data loader');
         let currentPage = 1;
         const pageSize = 20;
         let totalArticles = 0;
@@ -188,9 +188,7 @@
         // Load stats on page load
         async function loadStats() {
             try {
-                const url = window.ApiConfig.buildApiUrl('/api/stats');
-                const response = await fetch(url);
-                const stats = await response.json();
+                const stats = await window.dataLoader.getStats();
                 
                 const total = Object.values(stats.datasets).reduce((sum, count) => sum + count, 0);
                 document.getElementById('stat-total').textContent = total.toLocaleString();
@@ -205,9 +203,7 @@
         // Load filter options
         async function loadFilterOptions() {
             try {
-                const url = window.ApiConfig.buildApiUrl('/api/filter_options');
-                const response = await fetch(url);
-                filterOptions = await response.json();
+                filterOptions = await window.dataLoader.getFilterOptions();
                 
                 // Populate topics
                 const topicSelect = document.getElementById('topic-filter');
@@ -218,9 +214,11 @@
                     topicSelect.appendChild(option);
                 });
                 
-                // Populate predictions
+                // Populate predictions (normalized)
                 const predictionSelect = document.getElementById('prediction-filter');
-                filterOptions.predictions.forEach(pred => {
+                // Force fixed order and labels
+                const finalPreds = ['Human', 'Mixed', 'AI'];
+                finalPreds.forEach(pred => {
                     const option = document.createElement('option');
                     option.value = pred;
                     option.textContent = pred;
@@ -235,7 +233,6 @@
         function getPredictionColor(prediction) {
             if (!prediction) return 'bg-gray-600';
             const pred = prediction.toLowerCase();
-            
             if (pred === 'human') {
                 return 'bg-green-600';
             } else if (pred === 'mixed') {
@@ -275,32 +272,34 @@
 
             const offset = (currentPage - 1) * pageSize;
             
-            // Build query parameters
-            const params = {
+            // Build query options
+            const options = {
                 limit: pageSize,
                 offset: offset,
                 sort: sort
             };
-            if (search) params.search = search;
-            if (topic) params.topic = topic;
-            if (dataset) params.dataset_type = dataset;
-            if (prediction) params.prediction = prediction;
-            if (startDate) params.start_date = startDate;
-            if (endDate) params.end_date = endDate;
-            if (author) params.author = author;
-            if (aiMin !== '0') params.ai_min = aiMin;
-            if (aiMax !== '1') params.ai_max = aiMax;
-            if (maxAiMin !== '0') params.max_ai_min = maxAiMin;
-            if (maxAiMax !== '1') params.max_ai_max = maxAiMax;
-            
-            const url = window.ApiConfig.buildApiUrl('/api/articles', params);
+            if (search) options.search = search;
+            if (topic) options.topic = topic;
+            if (dataset) options.dataset_type = dataset;
+            if (prediction) options.prediction = prediction;
+            if (startDate) options.start_date = startDate;
+            if (endDate) options.end_date = endDate;
+            if (author) options.author = author;
+            if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
+            if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
+            if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
+            if (maxAiMax !== '1') options.max_ai_max = parseFloat(maxAiMax);
 
             try {
-                const response = await fetch(url);
-                const data = await response.json();
+                const data = await window.dataLoader.getArticles(options);
                 
                 totalArticles = data.total;
-                renderArticles(data.articles);
+                // Ensure we use normalized final_prediction when rendering
+                const normalized = data.articles.map(a => ({
+                    ...a,
+                    final_prediction: a.final_prediction || a.prediction
+                }));
+                renderArticles(normalized);
                 renderPagination();
                 
                 document.getElementById('results-count').textContent = 
@@ -341,14 +340,14 @@
                     <div class="flex items-start justify-between">
                         <div class="flex-1">
                             <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
-                                onclick="window.location.href='article.html?id=${article.id}'">
+                                onclick="window.location.href='article.html?id=${encodeURIComponent(article.article_id)}'">
                                 ${article.title}
                             </h3>
                             <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                                 <span>📅 ${date}</span>
                                 ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
-                                    ${getPredictionLabel(article.prediction)}
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.final_prediction)}">
+                                    ${getPredictionLabel(article.final_prediction)}
                                 </span>
                                 <span class="text-blue-600 font-medium">${article.dataset_type}</span>
                             </div>
