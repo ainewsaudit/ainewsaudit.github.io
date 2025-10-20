@@ -11,7 +11,7 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js"></script>
 </head>
-<!-- Version: 2025-10-19-v3 -->
+<!-- Version: 2025-10-19-v5 -->
 <body class="bg-gray-50 font-sans">
     <div class="container mx-auto px-4 py-8 max-w-5xl">
         <a href="/" class="text-blue-600 hover:underline mb-6 inline-block text-lg">← Back to Search</a>
@@ -249,6 +249,10 @@
             console.log('Current pathname:', window.location.pathname);
             console.log('Extracted article ID:', articleId);
             
+            // Also get dataset hint from URL if provided
+            const datasetType = urlParams.get('dataset');
+            console.log('Dataset hint from URL:', datasetType);
+            
             if (!articleId) {
                 console.error('No article ID found in URL');
                 document.getElementById('loading').style.display = 'none';
@@ -257,8 +261,26 @@
             }
 
             try {
-                console.log('Loading article:', articleId);
-                const article = await window.dataLoader.getArticle(articleId);
+                let article = null;
+                
+                // First, try to load from sessionStorage cache (instant!)
+                const cachedArticle = sessionStorage.getItem('cachedArticle');
+                if (cachedArticle) {
+                    try {
+                        article = JSON.parse(cachedArticle);
+                        console.log('✅ Loaded article from cache (instant!)');
+                        // Clear the cache after use
+                        sessionStorage.removeItem('cachedArticle');
+                    } catch (e) {
+                        console.warn('Failed to parse cached article:', e);
+                    }
+                }
+                
+                // If not in cache, load from dataset
+                if (!article) {
+                    console.log('Loading article:', articleId, 'from dataset:', datasetType || 'auto-detect');
+                    article = await window.dataLoader.getArticle(articleId, datasetType);
+                }
                 
                 if (!article) {
                     throw new Error('Article not found');
@@ -297,8 +319,10 @@
                     document.getElementById('dataset-badge').textContent = datasetNames[article.dataset_type] || article.dataset_type;
                 }
                 
-                if (article.primary_topic) {
+                if (article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown') {
                     document.getElementById('topic').textContent = `📂 ${article.primary_topic}`;
+                } else {
+                    document.getElementById('topic').style.display = 'none';
                 }
 
                 // State badge (unified field)

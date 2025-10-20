@@ -2,15 +2,798 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta http-equiv="refresh" content="0; url=search.html">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>AI News Audit - Redirecting...</title>
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AI News Audit - Search Articles</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js?v=1760922767"></script>
+
     <script>
-        window.location.href = 'search.html';
+        console.log('🚀 INDEX.HTML SCRIPT STARTING... - Version 2025-10-20-v7 - Background loading enabled');
+        
+        // Test basic functionality
+        try {
+            console.log('Script is running!');
+            console.log('dataLoader available?', typeof window.dataLoader);
+        } catch (error) {
+            console.error('Error in script:', error);
+        }
+        
+        // Global variables
+        let currentPage = 1;
+        const pageSize = 20;
+        let totalArticles = 0;
+        let filterOptions = {};
+
+        // Save current state to history
+        function saveState() {
+            const state = {
+                search: document.getElementById('search-input').value,
+                topic: document.getElementById('topic-filter').value,
+                dataset: document.getElementById('dataset-filter').value,
+                prediction: document.getElementById('prediction-filter').value,
+                sort: document.getElementById('sort-filter').value,
+                startDate: document.getElementById('start-date').value,
+                endDate: document.getElementById('end-date').value,
+                author: document.getElementById('author-filter').value,
+                newspaper: document.getElementById('newspaper-filter').value,
+                aiMin: document.getElementById('ai-min').value,
+                aiMax: document.getElementById('ai-max').value,
+                maxAiMin: document.getElementById('max-ai-min').value,
+                maxAiMax: document.getElementById('max-ai-max').value,
+                currentPage: currentPage,
+                totalArticles: totalArticles
+            };
+            history.replaceState(state, '', window.location.href);
+            console.log('💾 Saved state:', state);
+        }
+
+        // Restore state from history
+        function restoreState(state) {
+            if (!state) return false;
+            
+            console.log('📂 Restoring state:', state);
+            document.getElementById('search-input').value = state.search || '';
+            document.getElementById('topic-filter').value = state.topic || '';
+            document.getElementById('dataset-filter').value = state.dataset || '';
+            document.getElementById('prediction-filter').value = state.prediction || '';
+            document.getElementById('sort-filter').value = state.sort || 'date';
+            document.getElementById('start-date').value = state.startDate || '';
+            document.getElementById('end-date').value = state.endDate || '';
+            document.getElementById('author-filter').value = state.author || '';
+            document.getElementById('newspaper-filter').value = state.newspaper || '';
+            document.getElementById('ai-min').value = state.aiMin || 0;
+            document.getElementById('ai-max').value = state.aiMax || 1;
+            document.getElementById('max-ai-min').value = state.maxAiMin || 0;
+            document.getElementById('max-ai-max').value = state.maxAiMax || 1;
+            
+            // Update slider displays
+            document.getElementById('ai-min-value').textContent = parseFloat(state.aiMin || 0).toFixed(2);
+            document.getElementById('ai-max-value').textContent = parseFloat(state.aiMax || 1).toFixed(2);
+            document.getElementById('max-ai-min-value').textContent = parseFloat(state.maxAiMin || 0).toFixed(2);
+            document.getElementById('max-ai-max-value').textContent = parseFloat(state.maxAiMax || 1).toFixed(2);
+            
+            currentPage = state.currentPage || 1;
+            totalArticles = state.totalArticles || 0;
+            
+            return true;
+        }
+
+        // Search articles
+        async function searchArticles() {
+            // Show loading indicator
+            document.getElementById('loading-indicator').classList.remove('hidden');
+            document.getElementById('article-list').innerHTML = '';
+            document.getElementById('pagination').innerHTML = '';
+            document.getElementById('results-count').textContent = 'Searching...';
+            
+            const search = document.getElementById('search-input').value;
+            const topic = document.getElementById('topic-filter').value;
+            const dataset = document.getElementById('dataset-filter').value;
+            const prediction = document.getElementById('prediction-filter').value;
+            const sort = document.getElementById('sort-filter').value;
+            const startDate = document.getElementById('start-date').value;
+            const endDate = document.getElementById('end-date').value;
+            const author = document.getElementById('author-filter').value;
+            const newspaper = document.getElementById('newspaper-filter').value;
+            const aiMin = document.getElementById('ai-min').value;
+            const aiMax = document.getElementById('ai-max').value;
+            const maxAiMin = document.getElementById('max-ai-min').value;
+            const maxAiMax = document.getElementById('max-ai-max').value;
+
+            const offset = (currentPage - 1) * pageSize;
+            
+            // Build query options
+            const options = {
+                limit: pageSize,
+                offset: offset,
+                sort: sort
+            };
+            if (search) options.search = search;
+            if (newspaper) options.newspaper = newspaper;
+            if (topic) options.topic = topic;
+            if (dataset) options.dataset_type = dataset;
+            if (prediction) options.prediction = prediction;
+            if (startDate) options.start_date = startDate;
+            if (endDate) options.end_date = endDate;
+            if (author) options.author = author;
+            if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
+            if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
+            if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
+            if (maxAiMax !== '1') options.max_ai_max = parseFloat(maxAiMax);
+
+            try {
+                const data = await window.dataLoader.getArticles(options);
+                
+                totalArticles = data.total;
+                // Ensure we use normalized final_prediction when rendering
+                renderArticles(data.articles);
+                renderPagination();
+                
+                document.getElementById('results-count').textContent = 
+                    `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
+                
+                // Save state for browser back button
+                saveState();
+                
+                // Start background loading of other datasets after first successful search
+                startBackgroundLoading();
+            } catch (error) {
+                console.error('Error searching articles:', error);
+                document.getElementById('article-list').innerHTML = 
+                    '<div class="bg-red-50 text-red-700 p-4 rounded-lg">Error loading articles. Please try again.</div>';
+            } finally {
+                // Hide loading indicator when done
+                document.getElementById('loading-indicator').classList.add('hidden');
+            }
+        }
+
+        // Store articles for quick access
+        let currentArticles = [];
+        let backgroundLoadingStarted = false;
+
+        // Start background loading of other datasets
+        function startBackgroundLoading() {
+            if (backgroundLoadingStarted) {
+                console.log('📊 Background loading already started, skipping');
+                return;
+            }
+            backgroundLoadingStarted = true;
+            
+            console.log('🔄 Starting background loading of remaining datasets...');
+            
+            // Enable multi-dataset mode so we don't clear datasets
+            window.dataLoader.enableMultiDatasetMode();
+            
+            // Get the currently loaded dataset
+            const currentDataset = document.getElementById('dataset-filter').value;
+            const datasetsToLoad = ['recent_news', 'opinions', 'reporters'].filter(ds => ds !== currentDataset);
+            
+            // Load them one at a time in the background
+            setTimeout(async () => {
+                for (const dataset of datasetsToLoad) {
+                    try {
+                        console.log(`📦 Background loading ${dataset}...`);
+                        await window.dataLoader.loadDataset(dataset);
+                        console.log(`✅ ${dataset} loaded in background and kept in memory`);
+                    } catch (error) {
+                        console.warn(`Failed to background load ${dataset}:`, error);
+                    }
+                }
+                console.log('🎉 All datasets loaded in background and cached!');
+            }, 2000); // Wait 2 seconds before starting background load
+        }
+
+        // Open article with cached data
+        function openArticle(articleId, datasetType) {
+            // Find the article in our current results
+            const article = currentArticles.find(a => a.id === articleId);
+            if (article) {
+                // Store the full article data
+                sessionStorage.setItem('cachedArticle', JSON.stringify(article));
+                console.log('💾 Cached article data for instant loading');
+            }
+            window.location.href = `article.html?id=${articleId}&dataset=${datasetType}`;
+        }
+
+        // Render articles
+        function renderArticles(articles) {
+            console.log('Rendering articles. First article:', articles[0]);
+            console.log('First article has id?', articles[0] && 'id' in articles[0]);
+            currentArticles = articles; // Store for quick access
+            const container = document.getElementById('article-list');
+            container.innerHTML = '';
+
+            if (articles.length === 0) {
+                container.innerHTML = '<div class="bg-yellow-50 text-yellow-700 p-8 rounded-lg text-center text-lg">No articles found matching your criteria.</div>';
+                return;
+            }
+
+            articles.forEach(article => {
+                const div = document.createElement('div');
+                div.className = "bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-6";
+                
+                const date = new Date(article.publish_date).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric'
+                });
+
+                div.innerHTML = `
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
+                                onclick="openArticle(${article.id}, '${article.dataset_type}')">
+                                ${article.title}
+                            </h3>
+                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
+                                <span>📅 ${date}</span>
+                                ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
+                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
+                                    ${getPredictionLabel(article.prediction)}
+                                </span>
+                                <span class="text-blue-600 font-medium">${article.dataset_type}</span>
+                            </div>
+                            <p class="text-gray-700 mb-3 leading-relaxed">${article.text_preview}</p>
+                            <div class="flex items-center gap-4 text-sm">
+                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">📂 ${article.primary_topic}</span>` : ''}
+                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? article.ai_likelihood.toFixed(3) : 'N/A'}</span></span>
+                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${article.max_ai_likelihood.toFixed(3)}</span></span>` : ''}
+                            </div>
+                        </div>
+                    </div>
+                `;
+                container.appendChild(div);
+            });
+        }
+
+        // Get prediction color
+        function getPredictionColor(prediction) {
+            if (!prediction) return 'bg-gray-600';
+            const pred = prediction.toLowerCase();
+            if (pred === 'human') {
+                return 'bg-green-600';
+            } else if (pred === 'mixed') {
+                return 'bg-yellow-500';
+            } else if (pred === 'ai') {
+                return 'bg-red-600';
+            }
+            return 'bg-gray-600';
+        }
+
+        // Get readable prediction label
+        function getPredictionLabel(prediction) {
+            if (!prediction) return 'Unknown';
+            return prediction;  // Now using full names directly
+        }
+
+        // Render pagination
+        function renderPagination() {
+            const container = document.getElementById('pagination');
+            container.innerHTML = '';
+            
+            const totalPages = Math.ceil(totalArticles / pageSize);
+            if (totalPages <= 1) return;
+
+            // Previous button
+            if (currentPage > 1) {
+                const prevBtn = document.createElement('button');
+                prevBtn.textContent = '← Previous';
+                prevBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                prevBtn.onclick = () => {
+                    currentPage--;
+                    searchArticles();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                container.appendChild(prevBtn);
+            }
+
+            // Page numbers
+            const maxPages = 5;
+            let startPage = Math.max(1, currentPage - 2);
+            let endPage = Math.min(totalPages, startPage + maxPages - 1);
+            
+            if (endPage - startPage < maxPages - 1) {
+                startPage = Math.max(1, endPage - maxPages + 1);
+            }
+
+            for (let i = startPage; i <= endPage; i++) {
+                const pageBtn = document.createElement('button');
+                pageBtn.textContent = i;
+                pageBtn.className = i === currentPage
+                    ? 'mx-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold'
+                    : 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                pageBtn.onclick = () => {
+                    currentPage = i;
+                    searchArticles();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                container.appendChild(pageBtn);
+            }
+
+            // Next button
+            if (currentPage < totalPages) {
+                const nextBtn = document.createElement('button');
+                nextBtn.textContent = 'Next →';
+                nextBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                nextBtn.onclick = () => {
+                    currentPage++;
+                    searchArticles();
+                    window.scrollTo({ top: 0, behavior: 'smooth' });
+                };
+                container.appendChild(nextBtn);
+            }
+        }
+
+        // Load filter options
+        async function loadFilterOptions() {
+            try {
+                filterOptions = await window.dataLoader.getFilterOptions();
+                
+                // Populate topics
+                const topicSelect = document.getElementById('topic-filter');
+                filterOptions.topics.forEach(topic => {
+                    const option = document.createElement('option');
+                    option.value = topic;
+                    option.textContent = topic;
+                    topicSelect.appendChild(option);
+                });
+                
+                // Populate predictions (normalized)
+                const predictionSelect = document.getElementById('prediction-filter');
+                // Force fixed order and labels
+                const finalPreds = ['Human', 'Mixed', 'AI'];
+                finalPreds.forEach(pred => {
+                    const option = document.createElement('option');
+                    option.value = pred;
+                    option.textContent = pred;
+                    predictionSelect.appendChild(option);
+                });
+
+                // Load authors and newspapers for datalists (in background)
+                loadAuthorsAndNewspapers();
+            } catch (error) {
+                console.error('Error loading filter options:', error);
+            }
+        }
+
+        async function loadAuthorsAndNewspapers() {
+            try {
+                console.log('📚 Loading authors and newspapers from opinions (Aug-Sep 2025)...');
+                
+                const options = {
+                    datasets: ['opinions'],
+                    limit: 500,
+                    startDate: '2025-08-01',
+                    endDate: '2025-09-30'
+                };
+                
+                // Load authors
+                const authors = await window.dataLoader.getUniqueAuthors(options);
+                const authorList = document.getElementById('author-list');
+                authors.forEach(author => {
+                    const option = document.createElement('option');
+                    option.value = author;
+                    authorList.appendChild(option);
+                });
+                console.log(`✅ Loaded ${authors.length} unique authors from opinions (Aug-Sep 2025)`);
+                
+                // Load newspapers
+                const newspapers = await window.dataLoader.getUniqueNewspapers(options);
+                const newspaperList = document.getElementById('newspaper-list');
+                newspapers.forEach(newspaper => {
+                    const option = document.createElement('option');
+                    option.value = newspaper;
+                    newspaperList.appendChild(option);
+                });
+                console.log(`✅ Loaded ${newspapers.length} unique newspapers from opinions (Aug-Sep 2025)`);
+            } catch (error) {
+                console.error('Error loading authors/newspapers:', error);
+            }
+        }
+
+        // Reset function shared by both reset buttons
+        function resetFilters() {
+            document.getElementById('search-input').value = '';
+            document.getElementById('topic-filter').value = '';
+            document.getElementById('dataset-filter').value = '';
+            document.getElementById('prediction-filter').value = '';
+            document.getElementById('sort-filter').value = 'date';
+            document.getElementById('start-date').value = '';
+            document.getElementById('end-date').value = '';
+            document.getElementById('author-filter').value = '';
+            document.getElementById('newspaper-filter').value = '';
+            document.getElementById('ai-min').value = 0;
+            document.getElementById('ai-max').value = 1;
+            document.getElementById('max-ai-min').value = 0;
+            document.getElementById('max-ai-max').value = 1;
+            document.getElementById('ai-min-value').textContent = '0.00';
+            document.getElementById('ai-max-value').textContent = '1.00';
+            document.getElementById('max-ai-min-value').textContent = '0.00';
+            document.getElementById('max-ai-max-value').textContent = '1.00';
+            currentPage = 1;
+            searchArticles();
+        }
+
+        // Quick filter functions
+        function applyQuickFilter(filterType) {
+            // Reset all filters first
+            resetFilters();
+            
+            switch(filterType) {
+                case 'ai':
+                    document.getElementById('prediction-filter').value = 'AI';
+                    break;
+                case 'ai-mixed':
+                    // Set a special value that the backend will handle
+                    document.getElementById('prediction-filter').value = 'Mixed+AI';
+                    break;
+                case 'human':
+                    document.getElementById('prediction-filter').value = 'Human';
+                    break;
+                case 'recent-news':
+                    document.getElementById('dataset-filter').value = 'recent_news';
+                    break;
+                case 'opinions':
+                    document.getElementById('dataset-filter').value = 'opinions';
+                    break;
+                case 'reporters':
+                    document.getElementById('dataset-filter').value = 'reporters';
+                    break;
+            }
+            
+            currentPage = 1;
+            searchArticles();
+        }
+
+        // Newspaper search function
+        // Initialize when DOM is ready
+        document.addEventListener('DOMContentLoaded', async () => {
+            console.log('🚀 Page loaded, initializing...');
+            console.log('📋 Using hardcoded article counts for instant display');
+            
+            // Test basic page elements
+            console.log('Testing page elements:');
+            console.log('Search button:', document.getElementById('search-button'));
+            console.log('Search input:', document.getElementById('search-input'));
+            console.log('Stat total:', document.getElementById('stat-total'));
+            console.log('Stat recent:', document.getElementById('stat-recent'));
+            
+            // Test dataLoader availability again
+            console.log('dataLoader available in DOMContentLoaded?', typeof window.dataLoader);
+            
+            // Load filter options
+            try {
+                await loadFilterOptions();
+                console.log('✅ Filter options loaded successfully');
+            } catch (error) {
+                console.error('❌ Error loading filter options:', error);
+            }
+            
+            // Check if we're restoring state from history (back button)
+            const historyState = history.state;
+            let shouldSearch = true;
+            
+            if (historyState) {
+                // Restore state from history
+                console.log('🔙 Back button detected, restoring previous state');
+                const restored = restoreState(historyState);
+                if (restored) {
+                    shouldSearch = true; // Trigger search with restored state
+                }
+            } else {
+                // Check for URL parameters and set filters
+                const urlParams = new URLSearchParams(window.location.search);
+                const datasetType = urlParams.get('dataset_type');
+                const topic = urlParams.get('topic');
+                const prediction = urlParams.get('prediction');
+                
+                if (datasetType) {
+                    document.getElementById('dataset-filter').value = datasetType;
+                } else {
+                    // Default to opinions dataset
+                    document.getElementById('dataset-filter').value = 'opinions';
+                }
+                
+                if (topic) {
+                    document.getElementById('topic-filter').value = topic;
+                }
+                if (prediction) {
+                    document.getElementById('prediction-filter').value = prediction;
+                }
+                
+                // Set default date range to August-September 2025
+                if (!urlParams.has('start_date')) {
+                    document.getElementById('start-date').value = '2025-08-01';
+                }
+                if (!urlParams.has('end_date')) {
+                    document.getElementById('end-date').value = '2025-09-30';
+                }
+            }
+            
+            // Set up event listeners for UI elements
+            document.getElementById('search-button').addEventListener('click', () => {
+                currentPage = 1;
+                searchArticles();
+            });
+
+            document.getElementById('search-input').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    currentPage = 1;
+                    searchArticles();
+                }
+            });
+
+            document.getElementById('apply-filters').addEventListener('click', () => {
+                currentPage = 1;
+                searchArticles();
+            });
+
+            document.getElementById('reset-filters').addEventListener('click', resetFilters);
+            document.getElementById('main-reset-button').addEventListener('click', resetFilters);
+
+            // Quick filter button event listeners
+            document.getElementById('filter-ai').addEventListener('click', () => applyQuickFilter('ai'));
+            document.getElementById('filter-ai-mixed').addEventListener('click', () => applyQuickFilter('ai-mixed'));
+            document.getElementById('filter-human').addEventListener('click', () => applyQuickFilter('human'));
+            document.getElementById('filter-recent-news').addEventListener('click', () => applyQuickFilter('recent-news'));
+            document.getElementById('filter-opinions').addEventListener('click', () => applyQuickFilter('opinions'));
+            document.getElementById('filter-reporters').addEventListener('click', () => applyQuickFilter('reporters'));
+
+        // Toggle filters
+        document.getElementById('toggle-filters').addEventListener('click', () => {
+            const content = document.getElementById('filters-content');
+            const button = document.getElementById('toggle-filters');
+            if (content.classList.contains('hidden')) {
+                content.classList.remove('hidden');
+                button.textContent = 'Hide Filters';
+            } else {
+                content.classList.add('hidden');
+                button.textContent = 'Show Filters';
+            }
+        });
+
+        // Range slider updates
+        document.getElementById('ai-min').addEventListener('input', function() {
+            document.getElementById('ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+        document.getElementById('ai-max').addEventListener('input', function() {
+            document.getElementById('ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+        document.getElementById('max-ai-min').addEventListener('input', function() {
+            document.getElementById('max-ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+        document.getElementById('max-ai-max').addEventListener('input', function() {
+            document.getElementById('max-ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+        });
+
+            console.log('✅ All event listeners set up successfully');
+            
+            // Trigger initial search with default filters (or restored state)
+            if (shouldSearch) {
+                if (!historyState) {
+                    currentPage = 1; // Only reset page if not restoring
+                }
+                searchArticles();
+            }
+        });
+        
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', (event) => {
+            console.log('🔙 Popstate event:', event.state);
+            if (event.state) {
+                restoreState(event.state);
+                searchArticles();
+            }
+        });
     </script>
 </head>
-<body>
-    <p>Redirecting to search page...</p>
-    <p>If you are not redirected, <a href="search.html">click here</a>.</p>
+<!-- Version: 2025-10-20-v7 - Background loading -->
+<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
+    <div class="container mx-auto px-4 py-8 max-w-7xl">
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-5xl font-bold text-gray-900 mb-3">🔍 AI News Audit</h1>
+            <p class="text-xl text-gray-600">Search and analyze 251,446 news articles for AI-generated content</p>
+        </div>
+
+        <!-- Search Bar -->
+        <div class="mb-8">
+            <div class="bg-white rounded-2xl shadow-2xl p-8">
+                <div class="flex items-center space-x-4">
+                    <input type="text" id="search-input" 
+                           placeholder="Search articles by title, content, author, or newspaper..." 
+                           class="flex-1 p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <button id="search-button" 
+                            class="bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
+                        Search
+                    </button>
+                    <button id="main-reset-button" 
+                            class="bg-gray-500 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
+                        Reset
+                    </button>
+                </div>
+                
+                <!-- Quick Stats -->
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6" id="quick-stats">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
+                        <div class="text-3xl font-bold text-blue-700" id="stat-total">251,446</div>
+                        <div class="text-sm text-blue-600">Total Articles</div>
+                    </div>
+                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-3xl font-bold text-green-700" id="stat-recent">186,512</div>
+                        <div class="text-sm text-green-600">Recent News →</div>
+                    </a>
+                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-3xl font-bold text-purple-700" id="stat-opinions">44,803</div>
+                        <div class="text-sm text-purple-600">Opinions →</div>
+                    </a>
+                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-3xl font-bold text-orange-700" id="stat-reporters">20,131</div>
+                        <div class="text-sm text-orange-600">Reporters →</div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <!-- Quick Filter Buttons -->
+        <div class="mb-6">
+            <div class="bg-white rounded-xl shadow-lg p-6">
+                <h2 class="text-xl font-bold text-gray-800 mb-4">🎯 Quick Filters</h2>
+                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
+                    <button id="filter-ai" class="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        🤖 AI
+                    </button>
+                    <button id="filter-ai-mixed" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        ⚡ AI + Mixed
+                    </button>
+                    <button id="filter-human" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        👤 Human
+                    </button>
+                    <button id="filter-recent-news" class="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        📰 Recent News
+                    </button>
+                    <button id="filter-opinions" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        💭 Opinions
+                    </button>
+                    <button id="filter-reporters" class="bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                        📝 Reporters
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="bg-white rounded-xl shadow-lg p-6 mb-6" id="filters-section">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-bold text-gray-800">🎯 Advanced Filters</h2>
+                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium">
+                    Show Filters
+                </button>
+            </div>
+            
+            <div id="filters-content" class="hidden space-y-4">
+                <!-- Row 1: Basic Filters -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
+                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Topics</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Dataset</label>
+                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Datasets</option>
+                            <option value="recent_news">Recent News</option>
+                            <option value="opinions">Opinions</option>
+                            <option value="reporters">Reporters</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Prediction</label>
+                        <select id="prediction-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                            <option value="">All Predictions</option>
+                        </select>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
+                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                            <option value="date">Date (Newest)</option>
+                            <option value="ai_likelihood">AI Likelihood</option>
+                            <option value="title">Title (A-Z)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Row 2: Date Range and Author -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                            <span class="text-gray-400">to</span>
+                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Author</label>
+                        <input type="text" id="author-filter" list="author-list" placeholder="Search for author..." 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <datalist id="author-list">
+                            <!-- Will be populated dynamically -->
+                        </datalist>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Newspaper</label>
+                        <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search for newspaper..." 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <datalist id="newspaper-list">
+                            <!-- Will be populated dynamically -->
+                        </datalist>
+                    </div>
+                </div>
+
+                <!-- Row 3: AI Likelihood Sliders -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Likelihood Range</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                            <span id="ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
+                            <span class="text-gray-400">to</span>
+                            <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                            <span id="ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Max AI Likelihood (Chunks)</label>
+                        <div class="flex items-center space-x-2">
+                            <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                            <span id="max-ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
+                            <span class="text-gray-400">to</span>
+                            <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                            <span id="max-ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="flex items-center space-x-2 pt-4">
+                    <button id="apply-filters" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-medium">
+                        Apply Filters
+                    </button>
+                    <button id="reset-filters" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-medium">
+                        Reset
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Count -->
+        <div class="mb-4">
+            <p class="text-gray-700 font-medium" id="results-count">Loading articles...</p>
+        </div>
+
+        <!-- Loading Indicator -->
+        <div id="loading-indicator" class="hidden bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
+            <div class="flex items-center">
+                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
+                <div>
+                    <p class="text-blue-900 font-semibold text-lg">🔍 Searching...</p>
+                    <p class="text-blue-700 text-sm">Finding articles that match your criteria</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Article List -->
+        <div id="article-list" class="space-y-4"></div>
+
+        <!-- Pagination -->
+        <div class="flex justify-center mt-8" id="pagination"></div>
+    </div>
+
 </body>
 </html>
