@@ -18,6 +18,128 @@ class StaticDataLoader {
         this.isLoading = false;
         this.currentDataset = null; // Track which dataset is currently loaded
         this.keepAllDatasets = false; // Flag to keep all datasets in memory
+        
+        // IndexedDB caching
+        this.DB_NAME = 'news-cache-v2'; // Bump version to bust cache after text truncation
+        this.STORE_NAME = 'datasets';
+        this.DATA_VERSION = null; // Will be loaded from dataset_counts.json
+        this.dbReady = this.initDB();
+    }
+
+    /**
+     * Initialize IndexedDB
+     */
+    async initDB() {
+        if (!window.indexedDB) {
+            console.warn('IndexedDB not available, caching disabled');
+            return null;
+        }
+
+        try {
+            const request = indexedDB.open(this.DB_NAME, 1);
+            
+            return new Promise((resolve, reject) => {
+                request.onerror = () => {
+                    console.warn('IndexedDB init failed:', request.error);
+                    resolve(null);
+                };
+                
+                request.onsuccess = () => {
+                    resolve(request.result);
+                };
+                
+                request.onupgradeneeded = (event) => {
+                    const db = event.target.result;
+                    if (!db.objectStoreNames.contains(this.STORE_NAME)) {
+                        db.createObjectStore(this.STORE_NAME);
+                    }
+                };
+            });
+        } catch (error) {
+            console.warn('IndexedDB not supported:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Get dataset from IndexedDB
+     */
+    async getFromIndexedDB(key, version) {
+        try {
+            const db = await this.dbReady;
+            if (!db) return null;
+
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.STORE_NAME], 'readonly');
+                const store = transaction.objectStore(this.STORE_NAME);
+                const request = store.get(key);
+
+                request.onsuccess = () => {
+                    const record = request.result;
+                    if (record && record.version === version) {
+                        resolve(record.payload);
+                    } else {
+                        resolve(null);
+                    }
+                };
+
+                request.onerror = () => {
+                    console.warn('IndexedDB get failed:', request.error);
+                    resolve(null);
+                };
+            });
+        } catch (error) {
+            console.warn('IndexedDB get error:', error);
+            return null;
+        }
+    }
+
+    /**
+     * Save dataset to IndexedDB
+     */
+    async putInIndexedDB(key, version, payload) {
+        try {
+            const db = await this.dbReady;
+            if (!db) return;
+
+            return new Promise((resolve, reject) => {
+                const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(this.STORE_NAME);
+                const request = store.put({ version, payload }, key);
+
+                request.onsuccess = () => resolve();
+                request.onerror = () => {
+                    console.warn('IndexedDB put failed:', request.error);
+                    resolve();
+                };
+            });
+        } catch (error) {
+            console.warn('IndexedDB put error:', error);
+        }
+    }
+
+    /**
+     * Load data version from metadata
+     */
+    async loadDataVersion() {
+        if (this.DATA_VERSION) return this.DATA_VERSION;
+        
+        try {
+            const response = await fetch('/static_data/dataset_counts.json', {
+                cache: 'force-cache'
+            });
+            
+            if (response.ok) {
+                const metadata = await response.json();
+                this.DATA_VERSION = metadata.last_updated || 'v1';
+                return this.DATA_VERSION;
+            }
+        } catch (error) {
+            console.warn('Failed to load data version:', error);
+        }
+        
+        this.DATA_VERSION = 'v1'; // fallback
+        return this.DATA_VERSION;
     }
 
     // Normalization is done offline; keep a no-op for compatibility
@@ -83,7 +205,198 @@ class StaticDataLoader {
     }
 
     /**
-     * Load a dataset from static JSON file - with performance monitoring
+     * Load NDJSON file with streaming and progressive rendering
+     * @param {string} url - URL to the NDJSON file
+     * @param {function} onRow - Callback for each parsed row
+     * @param {function} onProgress - Optional progress callback
+     */
+    async loadNDJSON(url, onRow, onProgress = null) {
+        const response = await fetch(url, { cache: 'force-cache' });
+        
+        if (!response.ok) {
+            throw new Error(`Failed to load ${url}: ${response.statusText}`);
+        }
+
+        const reader = response.body
+            .pipeThrough(new TextDecoderStream())
+            .getReader();
+
+        let buffer = '';
+        let rowCount = 0;
+        const batchSize = 100; // Process in batches for better performance
+        let batch = [];
+
+        try {
+            for (;;) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                
+                buffer += value;
+                let idx;
+                
+                while ((idx = buffer.indexOf('\n')) >= 0) {
+                    const line = buffer.slice(0, idx);
+                    buffer = buffer.slice(idx + 1);
+                    
+                    if (line.trim()) {
+                        try {
+                            const row = JSON.parse(line);
+                            batch.push(row);
+                            rowCount++;
+                            
+                            // Process in batches for better performance
+                            if (batch.length >= batchSize) {
+                                for (const item of batch) {
+                                    onRow(item);
+                                }
+                                batch = [];
+                                
+                                if (onProgress) {
+                                    onProgress({ loaded: rowCount });
+                                }
+                            }
+                        } catch (e) {
+                            console.warn('Failed to parse NDJSON line:', e);
+                        }
+                    }
+                }
+            }
+            
+            // Process remaining buffer
+            if (buffer.trim()) {
+                try {
+                    const row = JSON.parse(buffer);
+                    batch.push(row);
+                    rowCount++;
+                } catch (e) {
+                    console.warn('Failed to parse final NDJSON line:', e);
+                }
+            }
+            
+            // Process remaining batch
+            if (batch.length > 0) {
+                for (const item of batch) {
+                    onRow(item);
+                }
+            }
+            
+            if (onProgress) {
+                onProgress({ loaded: rowCount, complete: true });
+            }
+            
+            return rowCount;
+        } catch (error) {
+            console.error('NDJSON streaming error:', error);
+            throw error;
+        }
+    }
+
+    /**
+     * Load dataset with streaming support (NDJSON) for progressive rendering
+     */
+    async loadDatasetStreaming(datasetType, options = {}) {
+        const { onProgress = null, onBatch = null } = options;
+        
+        // Check memory cache first
+        if (this.data[datasetType]) {
+            console.log(`✅ Using cached ${datasetType} dataset (${this.data[datasetType].length} articles)`);
+            if (onBatch) {
+                onBatch(this.data[datasetType], true);
+            }
+            return this.data[datasetType];
+        }
+
+        // Check if another request is already loading this dataset
+        if (this.loadPromises[datasetType]) {
+            console.log(`⏳ Waiting for ${datasetType} dataset to finish loading...`);
+            return this.loadPromises[datasetType];
+        }
+
+        // Check IndexedDB cache
+        const version = await this.loadDataVersion();
+        const cachedData = await this.getFromIndexedDB(datasetType, version);
+        if (cachedData) {
+            console.log(`💾 Loaded ${datasetType} from IndexedDB (${cachedData.length} articles) - instant!`);
+            this.data[datasetType] = cachedData;
+            if (onBatch) {
+                onBatch(cachedData, true);
+            }
+            return cachedData;
+        }
+
+        console.log(`🌊 Streaming ${datasetType} dataset from network...`);
+
+        const ndjsonUrl = `/static_data/${datasetType}_data.ndjson`;
+        const startTime = performance.now();
+        const articles = [];
+        
+        const datasetPrefix = datasetType === 'recent_news' ? 1 : datasetType === 'opinions' ? 2 : 3;
+        const toNum = (val) => {
+            const n = typeof val === 'number' ? val : parseFloat(val);
+            return Number.isFinite(n) ? n : null;
+        };
+
+        let batchBuffer = [];
+        const RENDER_BATCH_SIZE = 50; // Send batches to UI
+
+        this.loadPromises[datasetType] = (async () => {
+            try {
+                await this.loadNDJSON(ndjsonUrl, (article) => {
+                    // Process article
+                    article.dataset_type = datasetType;
+                    article.id = datasetPrefix * 1000000 + articles.length;
+                    
+                    // Normalize numeric fields
+                    if (article.ai_likelihood !== undefined) article.ai_likelihood = toNum(article.ai_likelihood);
+                    if (article.avg_ai_likelihood !== undefined) article.avg_ai_likelihood = toNum(article.avg_ai_likelihood);
+                    if (article.max_ai_likelihood !== undefined) article.max_ai_likelihood = toNum(article.max_ai_likelihood);
+                    if (article.fraction_ai_content !== undefined) article.fraction_ai_content = toNum(article.fraction_ai_content);
+                    
+                    articles.push(article);
+                    batchBuffer.push(article);
+                    
+                    // Send batches to UI for progressive rendering
+                    if (batchBuffer.length >= RENDER_BATCH_SIZE && onBatch) {
+                        onBatch([...batchBuffer], false);
+                        batchBuffer = [];
+                    }
+                }, (progress) => {
+                    if (onProgress) {
+                        onProgress({
+                            loaded: progress.loaded,
+                            complete: progress.complete || false
+                        });
+                    }
+                });
+                
+                // Send final batch
+                if (batchBuffer.length > 0 && onBatch) {
+                    onBatch([...batchBuffer], true);
+                }
+                
+                this.data[datasetType] = articles;
+                
+                // Save to IndexedDB
+                this.putInIndexedDB(datasetType, version, articles).catch(err => {
+                    console.warn('Failed to cache in IndexedDB:', err);
+                });
+                
+                const endTime = performance.now();
+                console.log(`✅ Streamed ${datasetType}: ${articles.length} articles in ${(endTime - startTime).toFixed(2)}ms`);
+                
+                return articles;
+            } catch (error) {
+                console.warn(`NDJSON not available for ${datasetType}, falling back to JSON.gz`);
+                delete this.loadPromises[datasetType];
+                return this.loadDataset(datasetType);
+            }
+        })();
+
+        return this.loadPromises[datasetType];
+    }
+
+    /**
+     * Load a dataset from static JSON file - with performance monitoring and IndexedDB caching
      */
     async loadDataset(datasetType) {
         // Check memory cache first
@@ -98,9 +411,16 @@ class StaticDataLoader {
             return this.loadPromises[datasetType];
         }
 
-        // SessionStorage caching disabled to prevent quota errors and memory issues
+        // Check IndexedDB cache
+        const version = await this.loadDataVersion();
+        const cachedData = await this.getFromIndexedDB(datasetType, version);
+        if (cachedData) {
+            console.log(`💾 Loaded ${datasetType} from IndexedDB (${cachedData.length} articles) - instant!`);
+            this.data[datasetType] = cachedData;
+            return cachedData;
+        }
 
-        console.log(`🔄 Loading ${datasetType} dataset from file...`);
+        console.log(`🔄 Loading ${datasetType} dataset from network...`);
 
         const filename = `${datasetType}_data.json.gz`;
         const url = `/static_data/${filename}`;
@@ -175,8 +495,10 @@ class StaticDataLoader {
                 
                 this.data[datasetType] = data;
                 
-                // Disabled sessionStorage caching to prevent quota errors and save memory
-                // The data files are already gzipped and load reasonably fast
+                // Save to IndexedDB for instant loading on next visit
+                this.putInIndexedDB(datasetType, version, data).catch(err => {
+                    console.warn('Failed to cache in IndexedDB:', err);
+                });
                 
                 const endTime = performance.now();
                 console.log(`Loaded ${datasetType} dataset: ${data.length} articles in ${(endTime - startTime).toFixed(2)}ms`);
@@ -271,9 +593,9 @@ class StaticDataLoader {
     }
 
     /**
-     * Clear cache and force reload
+     * Clear cache and force reload (including IndexedDB)
      */
-    clearCache() {
+    async clearCache() {
         this.data = {
             recent_news: null,
             opinions: null,
@@ -284,7 +606,22 @@ class StaticDataLoader {
         this.cachedStats = null;
         this.datasetCounts = {};
         this.statsPromises = {};
-        console.log('Cache cleared');
+        
+        // Clear IndexedDB
+        try {
+            const db = await this.dbReady;
+            if (db) {
+                const transaction = db.transaction([this.STORE_NAME], 'readwrite');
+                const store = transaction.objectStore(this.STORE_NAME);
+                await store.clear();
+                console.log('Cache cleared (memory + IndexedDB)');
+            } else {
+                console.log('Cache cleared (memory only)');
+            }
+        } catch (error) {
+            console.warn('Failed to clear IndexedDB:', error);
+            console.log('Cache cleared (memory only)');
+        }
     }
 
     /**
@@ -993,12 +1330,19 @@ class StaticDataLoader {
             filtered = filtered.filter(a => {
                 if (topic && a.primary_topic !== topic) return false;
                 if (author && (!a.authors || !a.authors.toLowerCase().includes(author.toLowerCase()))) return false;
-                if (prediction) {
-                    // Handle special case for mixed+AI filter
-                    if (prediction === 'Mixed+AI') {
-                        if (a.prediction !== 'Mixed' && a.prediction !== 'AI') return false;
-                    } else {
-                        if (a.prediction !== prediction) return false;
+                if (prediction && prediction.length > 0) {
+                    // Handle array of predictions (from checkboxes)
+                    const normalize = (val) => (val || '').toString().trim();
+                    const articleLabelRaw = a.final_prediction || a.prediction || '';
+                    const articleLabel = normalize(articleLabelRaw);
+                    const articleLower = articleLabel.toLowerCase();
+                    
+                    // Convert prediction array to lowercase for comparison
+                    const predLower = prediction.map(p => normalize(p).toLowerCase());
+                    
+                    // Check if article's prediction is in the selected list
+                    if (!predLower.includes(articleLower)) {
+                        return false;
                     }
                 }
                 if (start_date && (!a.publish_date || a.publish_date < start_date)) return false;
@@ -1262,7 +1606,7 @@ class StaticDataLoader {
 window.dataLoader = new StaticDataLoader();
 
 // Log version for debugging
-console.log('🔄 Data loader version 2025-10-20-v5 - Smart caching with background loading');
+console.log('🔄 Data loader version 2025-10-20-v7 - Text truncated, cache busted');
 
 // Auto-preload basic stats for faster initial access (using metadata first)
 // Add a small delay to ensure event listeners are set up
@@ -1290,5 +1634,53 @@ window.triggerStatsPreload = () => {
 window.triggerDatasetPreload = () => {
     console.log('Manually triggering dataset preload...');
     return window.dataLoader.preloadForDatasetPages();
+};
+
+// Manual cache clear function
+window.clearAllCaches = async () => {
+    console.log('🧹 Clearing all caches...');
+    await window.dataLoader.clearCache();
+    
+    // Also clear old cache database
+    try {
+        const deleteReq = indexedDB.deleteDatabase('news-cache-v1');
+        deleteReq.onsuccess = () => console.log('✅ Cleared old cache database');
+        deleteReq.onerror = () => console.log('⚠️ Old cache database not found');
+    } catch (e) {
+        console.log('⚠️ Could not clear old cache:', e);
+    }
+    
+    console.log('✅ All caches cleared. Refresh the page to reload data.');
+};
+
+// Test the AI+Mixed filter with new checkbox logic
+window.testAIMixedFilter = async () => {
+    console.log('🧪 Testing AI+Mixed filter with checkboxes...');
+    
+    // Load a small sample
+    const articles = await window.dataLoader.loadSpecificDatasets(['opinions']);
+    const sample = articles.slice(0, 100);
+    
+    console.log('Sample predictions:', [...new Set(sample.map(a => a.prediction))]);
+    
+    // Test the new filter logic (AI + Mixed)
+    const prediction = ['AI', 'Mixed'];
+    const filtered = sample.filter(a => {
+        const normalize = (val) => (val || '').toString().trim();
+        const articleLabelRaw = a.final_prediction || a.prediction || '';
+        const articleLabel = normalize(articleLabelRaw);
+        const articleLower = articleLabel.toLowerCase();
+        
+        // Convert prediction array to lowercase for comparison
+        const predLower = prediction.map(p => normalize(p).toLowerCase());
+        
+        // Check if article's prediction is in the selected list
+        return predLower.includes(articleLower);
+    });
+    
+    console.log('Filtered predictions:', [...new Set(filtered.map(a => a.prediction))]);
+    console.log(`Filtered ${filtered.length} out of ${sample.length} articles`);
+    
+    return filtered;
 };
 

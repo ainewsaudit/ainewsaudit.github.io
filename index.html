@@ -28,13 +28,31 @@
         let totalArticles = 0;
         let filterOptions = {};
 
+        // Helper functions for prediction checkboxes
+        function getSelectedPredictions() {
+            const checkboxes = document.querySelectorAll('.prediction-checkbox:checked');
+            return Array.from(checkboxes).map(cb => cb.value);
+        }
+        
+        function setSelectedPredictions(predictions) {
+            // Clear all first
+            document.querySelectorAll('.prediction-checkbox').forEach(cb => cb.checked = false);
+            // Check the specified ones
+            if (predictions && predictions.length > 0) {
+                predictions.forEach(pred => {
+                    const checkbox = document.querySelector(`.prediction-checkbox[value="${pred}"]`);
+                    if (checkbox) checkbox.checked = true;
+                });
+            }
+        }
+
         // Save current state to history
         function saveState() {
             const state = {
                 search: document.getElementById('search-input').value,
                 topic: document.getElementById('topic-filter').value,
                 dataset: document.getElementById('dataset-filter').value,
-                prediction: document.getElementById('prediction-filter').value,
+                prediction: getSelectedPredictions(),
                 sort: document.getElementById('sort-filter').value,
                 startDate: document.getElementById('start-date').value,
                 endDate: document.getElementById('end-date').value,
@@ -59,7 +77,7 @@
             document.getElementById('search-input').value = state.search || '';
             document.getElementById('topic-filter').value = state.topic || '';
             document.getElementById('dataset-filter').value = state.dataset || '';
-            document.getElementById('prediction-filter').value = state.prediction || '';
+            setSelectedPredictions(state.prediction || []);
             document.getElementById('sort-filter').value = state.sort || 'date';
             document.getElementById('start-date').value = state.startDate || '';
             document.getElementById('end-date').value = state.endDate || '';
@@ -93,7 +111,7 @@
             const search = document.getElementById('search-input').value;
             const topic = document.getElementById('topic-filter').value;
             const dataset = document.getElementById('dataset-filter').value;
-            const prediction = document.getElementById('prediction-filter').value;
+            const prediction = getSelectedPredictions();
             const sort = document.getElementById('sort-filter').value;
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
@@ -342,16 +360,7 @@
                     topicSelect.appendChild(option);
                 });
                 
-                // Populate predictions (normalized)
-                const predictionSelect = document.getElementById('prediction-filter');
-                // Force fixed order and labels
-                const finalPreds = ['Human', 'Mixed', 'AI'];
-                finalPreds.forEach(pred => {
-                    const option = document.createElement('option');
-                    option.value = pred;
-                    option.textContent = pred;
-                    predictionSelect.appendChild(option);
-                });
+                // Prediction checkboxes are already in HTML, no need to populate
 
                 // Load authors and newspapers for datalists (in background)
                 loadAuthorsAndNewspapers();
@@ -400,7 +409,7 @@
             document.getElementById('search-input').value = '';
             document.getElementById('topic-filter').value = '';
             document.getElementById('dataset-filter').value = '';
-            document.getElementById('prediction-filter').value = '';
+            setSelectedPredictions([]);
             document.getElementById('sort-filter').value = 'date';
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
@@ -425,14 +434,14 @@
             
             switch(filterType) {
                 case 'ai':
-                    document.getElementById('prediction-filter').value = 'AI';
+                    setSelectedPredictions(['AI']);
                     break;
                 case 'ai-mixed':
-                    // Set a special value that the backend will handle
-                    document.getElementById('prediction-filter').value = 'Mixed+AI';
+                    // Select both AI and Mixed
+                    setSelectedPredictions(['AI', 'Mixed']);
                     break;
                 case 'human':
-                    document.getElementById('prediction-filter').value = 'Human';
+                    setSelectedPredictions(['Human']);
                     break;
                 case 'recent-news':
                     document.getElementById('dataset-filter').value = 'recent_news';
@@ -502,7 +511,9 @@
                     document.getElementById('topic-filter').value = topic;
                 }
                 if (prediction) {
-                    document.getElementById('prediction-filter').value = prediction;
+                    // Handle both string and array formats for backward compatibility
+                    const predArray = Array.isArray(prediction) ? prediction : [prediction];
+                    setSelectedPredictions(predArray);
                 }
                 
                 // Set default date range to August-September 2025
@@ -642,7 +653,7 @@
         <!-- Quick Filter Buttons -->
         <div class="mb-6">
             <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">🎯 Quick Filters</h2>
+                <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Filters</h2>
                 <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
                     <button id="filter-ai" class="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg font-medium transition-colors">
                         🤖 AI
@@ -669,7 +680,7 @@
         <!-- Filters -->
         <div class="bg-white rounded-xl shadow-lg p-6 mb-6" id="filters-section">
             <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">🎯 Advanced Filters</h2>
+                <h2 class="text-xl font-bold text-gray-800">Advanced Filters</h2>
                 <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium">
                     Show Filters
                 </button>
@@ -695,9 +706,20 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">AI Prediction</label>
-                        <select id="prediction-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                            <option value="">All Predictions</option>
-                        </select>
+                        <div id="prediction-filters" class="space-y-2 p-3 border border-gray-300 rounded-md bg-gray-50">
+                            <label class="flex items-center">
+                                <input type="checkbox" value="Human" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Human</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="Mixed" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">Mixed</span>
+                            </label>
+                            <label class="flex items-center">
+                                <input type="checkbox" value="AI" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
+                                <span class="text-sm text-gray-700">AI</span>
+                            </label>
+                        </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
