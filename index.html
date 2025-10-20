@@ -371,11 +371,11 @@
 
         async function loadAuthorsAndNewspapers() {
             try {
-                console.log('📚 Loading authors and newspapers from opinions (Aug-Sep 2025)...');
+                console.log('📚 Loading authors and newspapers from all datasets...');
                 
                 const options = {
-                    datasets: ['opinions'],
-                    limit: 500,
+                    datasets: ['recent_news', 'opinions', 'reporters'],
+                    limit: 1000,
                     startDate: '2025-08-01',
                     endDate: '2025-09-30'
                 };
@@ -383,22 +383,26 @@
                 // Load authors
                 const authors = await window.dataLoader.getUniqueAuthors(options);
                 const authorList = document.getElementById('author-list');
+                console.log('👤 Authors loaded:', authors.slice(0, 5)); // Debug: show first 5 authors
                 authors.forEach(author => {
                     const option = document.createElement('option');
                     option.value = author;
                     authorList.appendChild(option);
                 });
-                console.log(`✅ Loaded ${authors.length} unique authors from opinions (Aug-Sep 2025)`);
+                console.log(`✅ Loaded ${authors.length} unique authors from all datasets (Aug-Sep 2025)`);
+                console.log('👤 Author datalist options count:', authorList.children.length); // Debug: verify options were added
                 
                 // Load newspapers
                 const newspapers = await window.dataLoader.getUniqueNewspapers(options);
                 const newspaperList = document.getElementById('newspaper-list');
+                console.log('📰 Newspapers loaded:', newspapers.slice(0, 5)); // Debug: show first 5 newspapers
                 newspapers.forEach(newspaper => {
                     const option = document.createElement('option');
                     option.value = newspaper;
                     newspaperList.appendChild(option);
                 });
-                console.log(`✅ Loaded ${newspapers.length} unique newspapers from opinions (Aug-Sep 2025)`);
+                console.log(`✅ Loaded ${newspapers.length} unique newspapers from all datasets (Aug-Sep 2025)`);
+                console.log('📰 Newspaper datalist options count:', newspaperList.children.length); // Debug: verify options were added
             } catch (error) {
                 console.error('Error loading authors/newspapers:', error);
             }
