@@ -4,12 +4,18 @@
 
 This repo hosts `AI News Audit` ([AI use in American newspapers is widespread, uneven, and rarely disclosed]()), a comprehensive analysis platform that examines **250,000+ news articles** to detect and track AI-generated content across different media sources.
 
-`Authors`: Jenna Russell, Marzena Karpinska, Destiny Akinode, Katherine Thai, Bradley Emi, Max Spero, and Mohit Iyyer
+`Authors`: [Jenna Russell](https://jenna-russell.github.io/), [Marzena Karpinska](https://marzenakrp.github.io/), [Destiny Akinode](https://www.linkedin.com/in/destiny-akinode/), [Katherine Thai](https://katherinethai.github.io/), [Bradley Emi](https://www.bradleyemi.com/), [Max Spero](https://www.pangram.com/about-us), and [Mohit Iyyer](https://www.cs.umd.edu/~miyyer/)
+
+🌐 **Website**: [https://ainewsaudit.github.io/](https://ainewsaudit.github.io/)
 
 ## Introduction 
 
 AI is rapidly transforming journalism, but the extent of its use in published U.S. newspaper articles remains unclear. We address this gap by auditing a large-scale dataset of 186K articles from 1.5K American newspapers published in the summer of 2025. Using Pangram, a state-of-the-art AI detector, we discover that approximately 9\% of newly-published articles are either partially or fully AI-generated. This AI use is unevenly distributed, appearing more frequently in smaller, local outlets, in specific topics such as weather and technology, and within certain ownership groups. We also analyze 45K opinion pieces from **Washington Post**, **New York Times**, and  **Wall Street Journal**, finding that they are 6.4 times more likely to contain AI-generated content than news articles from the same publications, with many AI-flagged op-eds authored by prominent public figures. 
 Despite this prevalence, we find that AI use is rarely disclosed: a manual audit of 100 AI-flagged articles found only five disclosures of AI use. Overall, our audit highlights the immediate need for greater transparency and updated editorial standards regarding the use of AI in journalism to maintain public trust.
+
+## 💻 Code
+
+**Code coming soon!** The source code for this analysis platform will be released shortly.
 
 ## 🔍 What This Site Does
 
