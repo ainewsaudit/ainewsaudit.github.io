@@ -51,6 +51,9 @@
                         <span id="authors" class="flex items-center text-sm">
                             ✍️ <span class="ml-1 font-medium"></span>
                         </span>
+                        <span id="newspaper" class="flex items-center text-sm" style="display:none;">
+                            📰 <span class="ml-1 font-medium"></span>
+                        </span>
                         <span id="dataset-badge" class="px-3 py-1 bg-blue-100 text-blue-700 rounded-full text-xs font-medium uppercase"></span>
                         <span id="state-badge" class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium"></span>
                     </div>
@@ -250,7 +253,7 @@
                     `;
                 }
             } else if (article.dataset_type === 'reporters') {
-                const publication = article.newspaper_name || article.newspaper;
+                const publication = article.newspaper;
                 const city = article.city;
                 if (publication || city) {
                     html = `
@@ -335,6 +338,13 @@
                     document.querySelector('#authors span').textContent = article.authors;
                 } else {
                     document.getElementById('authors').style.display = 'none';
+                }
+                
+                if (article.newspaper) {
+                    document.querySelector('#newspaper span').textContent = article.newspaper;
+                    document.getElementById('newspaper').style.display = 'flex';
+                } else {
+                    document.getElementById('newspaper').style.display = 'none';
                 }
                 
                 if (article.dataset_type) {

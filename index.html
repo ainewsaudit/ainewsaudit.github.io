@@ -251,6 +251,7 @@
                             <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                                 <span>📅 ${date}</span>
                                 ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
+                                ${article.newspaper ? `<span>📰 ${article.newspaper}</span>` : ''}
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
                                     ${getPredictionLabel(article.prediction)}
                                 </span>
@@ -376,7 +377,7 @@
                 
                 const options = {
                     datasets: ['recent_news', 'opinions', 'reporters'],
-                    limit: 1000
+                    limit: 10000
                 };
                 
                 // Load authors
@@ -394,7 +395,8 @@
                 // Load newspapers
                 const newspapers = await window.dataLoader.getUniqueNewspapers(options);
                 const newspaperList = document.getElementById('newspaper-list');
-                console.log('📰 Newspapers loaded:', newspapers.slice(0, 5)); // Debug: show first 5 newspapers
+                console.log('📰 Newspapers loaded:', newspapers.slice(0, 10)); // Debug: show first 10 newspapers
+                console.log('📰 Total newspapers found:', newspapers.length); // Debug: show total count
                 newspapers.forEach(newspaper => {
                     const option = document.createElement('option');
                     option.value = newspaper;

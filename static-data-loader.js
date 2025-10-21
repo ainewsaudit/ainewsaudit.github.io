@@ -20,7 +20,7 @@ class StaticDataLoader {
         this.keepAllDatasets = false; // Flag to keep all datasets in memory
         
         // IndexedDB caching
-        this.DB_NAME = 'news-cache-v2'; // Bump version to bust cache after text truncation
+        this.DB_NAME = 'news-cache-v4'; // Bump version to bust cache after restoring correct newspaper names
         this.STORE_NAME = 'datasets';
         this.DATA_VERSION = null; // Will be loaded from dataset_counts.json
         this.dbReady = this.initDB();
@@ -541,6 +541,8 @@ class StaticDataLoader {
      * Load only specific datasets (lazy loading)
      */
     async loadSpecificDatasets(datasetTypes) {
+        console.log(`📦 Loading specific datasets:`, datasetTypes);
+        
         // Clear other datasets to save memory
         if (datasetTypes.length === 1) {
             this.clearOtherDatasets(datasetTypes[0]);
@@ -554,12 +556,14 @@ class StaticDataLoader {
         results.forEach((result, index) => {
             if (result.status === 'fulfilled') {
                 datasets.push(result.value);
+                console.log(`✅ Loaded dataset ${datasetTypes[index]}: ${result.value.length} articles`);
             } else {
                 console.error(`Failed to load dataset ${datasetTypes[index]}:`, result.reason);
                 datasets.push([]);
             }
         });
 
+        console.log(`📦 Final dataset status:`, Object.keys(this.data).map(ds => ({ dataset: ds, count: this.data[ds] ? this.data[ds].length : 0 })));
         return datasets.flat();
     }
 
@@ -1159,17 +1163,35 @@ class StaticDataLoader {
         
         // Get articles from specified datasets
         const articles = datasets.flatMap(ds => this.data[ds] || []);
+        console.log(`📰 Dataset loading status:`, datasets.map(ds => ({ dataset: ds, loaded: this.data[ds] ? this.data[ds].length : 0 })));
         
         articles.forEach(article => {
             // Apply date filter if specified
             if (startDate && article.publish_date && article.publish_date < startDate) return;
             if (endDate && article.publish_date && article.publish_date > endDate) return;
             
-            const newspaper = article.newspaper || article.newspaper_name;
+            // Use the newspaper column that was added to the datasets
+            const newspaper = article.newspaper;
+            
             if (newspaper && newspaper.trim() !== '') {
                 newspaperSet.add(newspaper.trim());
             }
         });
+        
+        // Debug: Check what fields exist in the data
+        if (articles.length > 0) {
+            const sampleArticle = articles[0];
+            console.log(`📰 All available fields in sample article:`, Object.keys(sampleArticle));
+            
+            // Check specific fields that might contain newspaper info
+            console.log(`📰 Sample article newspaper-related fields:`);
+            console.log(`  - newspaper:`, sampleArticle.newspaper);
+            console.log(`  - news_deserts_owner_name:`, sampleArticle.news_deserts_owner_name);
+            console.log(`  - article_id:`, sampleArticle.article_id);
+            console.log(`  - dataset_type:`, sampleArticle.dataset_type);
+        }
+        
+        console.log(`📰 Found ${newspaperSet.size} unique newspapers from ${articles.length} articles across datasets:`, datasets);
         
         // Convert to array and sort
         const newspapers = Array.from(newspaperSet).sort();
@@ -1638,7 +1660,7 @@ class StaticDataLoader {
 window.dataLoader = new StaticDataLoader();
 
 // Log version for debugging
-console.log('🔄 Data loader version 2025-10-20-v7 - Text truncated, cache busted');
+        console.log('🔄 Data loader version 2025-10-20-v9 - Correct newspaper names restored, cache busted');
 
 // Auto-preload basic stats for faster initial access (using metadata first)
 // Add a small delay to ensure event listeners are set up
