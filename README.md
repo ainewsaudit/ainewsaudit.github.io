@@ -1,6 +1,15 @@
 # AI News Audit
 
-A comprehensive analysis platform that examines **251,000+ news articles** to detect and track AI-generated content across different media sources.
+<!-- [![arxiv](https://img.shields.io/badge/arXiv-2406.17560-b31b1b.svg)](https://arxiv.org/abs/2406.17560) -->
+
+This repo hosts `AI News Audit` ([AI use in American newspapers is widespread, uneven, and rarely disclosed]()), a comprehensive analysis platform that examines **250,000+ news articles** to detect and track AI-generated content across different media sources.
+
+`Authors`: Jenna Russell, Marzena Karpinska, Destiny Akinode, Katherine Thai, Bradley Emi, Max Spero, and Mohit Iyyer
+
+## Introduction 
+
+AI is rapidly transforming journalism, but the extent of its use in published U.S. newspaper articles remains unclear. We address this gap by auditing a large-scale dataset of 186K articles from 1.5K American newspapers published in the summer of 2025. Using Pangram, a state-of-the-art AI detector, we discover that approximately 9\% of newly-published articles are either partially or fully AI-generated. This AI use is unevenly distributed, appearing more frequently in smaller, local outlets, in specific topics such as weather and technology, and within certain ownership groups. We also analyze 45K opinion pieces from **Washington Post**, **New York Times**, and  **Wall Street Journal**, finding that they are 6.4 times more likely to contain AI-generated content than news articles from the same publications, with many AI-flagged op-eds authored by prominent public figures. 
+Despite this prevalence, we find that AI use is rarely disclosed: a manual audit of 100 AI-flagged articles found only five disclosures of AI use. Overall, our audit highlights the immediate need for greater transparency and updated editorial standards regarding the use of AI in journalism to maintain public trust.
 
 ## 🔍 What This Site Does
 

@@ -125,7 +125,7 @@ class StaticDataLoader {
         if (this.DATA_VERSION) return this.DATA_VERSION;
         
         try {
-            const response = await fetch('/static_data/dataset_counts.json', {
+            const response = await fetch('/additional_data/dataset_counts.json', {
                 cache: 'force-cache'
             });
             
@@ -326,7 +326,7 @@ class StaticDataLoader {
 
         console.log(`🌊 Streaming ${datasetType} dataset from network...`);
 
-        const ndjsonUrl = `/static_data/${datasetType}_data.ndjson`;
+        const ndjsonUrl = `/data/${datasetType}_data.ndjson`;
         const startTime = performance.now();
         const articles = [];
         
@@ -423,7 +423,7 @@ class StaticDataLoader {
         console.log(`🔄 Loading ${datasetType} dataset from network...`);
 
         const filename = `${datasetType}_data.json.gz`;
-        const url = `/static_data/${filename}`;
+        const url = `/data/${filename}`;
         const startTime = performance.now();
 
         this.loadPromises[datasetType] = this.waitForPako().then(() => fetch(url, {
@@ -683,7 +683,7 @@ class StaticDataLoader {
         
         try {
             // Try to load from metadata file first (instant)
-            const response = await fetch('/static_data/dataset_counts.json', {
+            const response = await fetch('/additional_data/dataset_counts.json', {
                 cache: 'force-cache'
             });
             
@@ -750,7 +750,7 @@ class StaticDataLoader {
         }
 
         const filename = `${datasetType}_data.json.gz`;
-        const url = `/static_data/${filename}`;
+        const url = `/data/${filename}`;
         const startTime = performance.now();
 
         this.loadPromises[`${datasetType}_structure`] = this.waitForPako().then(() => fetch(url, {
@@ -1014,7 +1014,7 @@ class StaticDataLoader {
      */
     async loadCountsFromMetadata() {
         try {
-            const response = await fetch('/static_data/dataset_counts.json', {
+            const response = await fetch('/additional_data/dataset_counts.json', {
                 cache: 'force-cache'
             });
             
