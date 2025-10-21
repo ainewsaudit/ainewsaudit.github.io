@@ -30,7 +30,7 @@ Our data was collected from publicly accessible newspaper sites, either through 
 ## 📊 Understanding the Data
 
 ### AI Detection Categories
-We use [https://www.pangram.com/](Pangram) to detect AI use. 
+We use [Pangram](https://www.pangram.com/) to detect AI use. 
 
 - **Human**: Content written entirely by humans
 - **Mixed**: Content with some AI-generated elements
