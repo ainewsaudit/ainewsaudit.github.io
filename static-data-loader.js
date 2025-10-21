@@ -20,7 +20,7 @@ class StaticDataLoader {
         this.keepAllDatasets = false; // Flag to keep all datasets in memory
         
         // IndexedDB caching
-        this.DB_NAME = 'news-cache-v4'; // Bump version to bust cache after restoring correct newspaper names
+        this.DB_NAME = 'news-cache-v9'; // Bump version to bust cache after newspaper search fix
         this.STORE_NAME = 'datasets';
         this.DATA_VERSION = null; // Will be loaded from dataset_counts.json
         this.dbReady = this.initDB();
@@ -1660,7 +1660,7 @@ class StaticDataLoader {
 window.dataLoader = new StaticDataLoader();
 
 // Log version for debugging
-        console.log('🔄 Data loader version 2025-10-20-v9 - Correct newspaper names restored, cache busted');
+        console.log('🔄 Data loader version 2025-10-20-v14 - Newspaper search fix, cache busted');
 
 // Auto-preload basic stats for faster initial access (using metadata first)
 // Add a small delay to ensure event listeners are set up
