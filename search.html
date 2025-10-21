@@ -15,71 +15,73 @@
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold text-gray-900 mb-3">🔍 AI News Audit</h1>
-            <p class="text-xl text-gray-600">Search and analyze 251,000+ news articles for AI-generated content</p>
+        <div class="text-center mb-6 sm:mb-8">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">🔍 AI News Audit</h1>
+            <p class="text-base sm:text-lg lg:text-xl text-gray-600 px-4">Search and analyze 251,000+ news articles for AI-generated content</p>
         </div>
 
         <!-- Search Bar -->
         <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-2xl p-8">
-                <div class="flex items-center space-x-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                     <input type="text" id="search-input" 
                            placeholder="Search articles by title, content, or author..." 
-                           class="flex-1 p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <button id="search-button" 
-                            class="bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
-                        Search
-                    </button>
-                    <button id="main-reset-button" 
-                            class="bg-gray-500 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
-                        Reset
-                    </button>
+                           class="flex-1 p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button id="search-button" 
+                                class="bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
+                            Search
+                        </button>
+                        <button id="main-reset-button" 
+                                class="bg-gray-500 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
+                            Reset
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Quick Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6" id="quick-stats">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
-                        <div class="text-3xl font-bold text-blue-700" id="stat-total">-</div>
-                        <div class="text-sm text-blue-600">Total Articles</div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6" id="quick-stats">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700" id="stat-total">-</div>
+                        <div class="text-xs sm:text-sm text-blue-600">Total Articles</div>
                     </div>
-                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-green-700" id="stat-recent">-</div>
-                        <div class="text-sm text-green-600">Recent News →</div>
+                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700" id="stat-recent">-</div>
+                        <div class="text-xs sm:text-sm text-green-600">Recent News →</div>
                     </a>
-                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-purple-700" id="stat-opinions">-</div>
-                        <div class="text-sm text-purple-600">Opinions →</div>
+                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700" id="stat-opinions">-</div>
+                        <div class="text-xs sm:text-sm text-purple-600">Opinions →</div>
                     </a>
-                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-orange-700" id="stat-reporters">-</div>
-                        <div class="text-sm text-orange-600">Reporters →</div>
+                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700" id="stat-reporters">-</div>
+                        <div class="text-xs sm:text-sm text-orange-600">Reporters →</div>
                     </a>
                 </div>
             </div>
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-6" id="filters-section">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">🎯 Advanced Filters</h2>
-                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6" id="filters-section">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800">🎯 Advanced Filters</h2>
+                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium text-sm sm:text-base">
                     Show Filters
                 </button>
             </div>
             
             <div id="filters-content" class="hidden space-y-4">
                 <!-- Row 1: Basic Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
-                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">All Topics</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Dataset</label>
-                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">All Datasets</option>
                             <option value="recent_news">Recent News</option>
                             <option value="opinions">Opinions</option>
@@ -88,13 +90,13 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">AI Prediction</label>
-                        <select id="prediction-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="prediction-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">All Predictions</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="date">Date (Newest)</option>
                             <option value="ai_likelihood">AI Likelihood</option>
                             <option value="title">Title (A-Z)</option>
@@ -102,24 +104,36 @@
                     </div>
                 </div>
 
-                <!-- Row 2: Date Range -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <!-- Row 2: Date Range and Author -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                            <span class="text-gray-400">to</span>
-                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
+                            <span class="text-gray-400 text-sm">to</span>
+                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Author</label>
                         <input type="text" id="author-filter" placeholder="Filter by author..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                     </div>
                 </div>
 
-                <!-- Row 3: AI Likelihood Sliders -->
+                <!-- Row 3: Newspaper -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Newspaper</label>
+                        <input type="text" id="newspaper-filter" placeholder="Filter by newspaper..." 
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
+                    </div>
+                    <div>
+                        <!-- Empty div for layout balance -->
+                    </div>
+                </div>
+
+                <!-- Row 4: AI Likelihood Sliders -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">AI Likelihood Range</label>
@@ -265,6 +279,7 @@
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
             const author = document.getElementById('author-filter').value;
+            const newspaper = document.getElementById('newspaper-filter').value;
             const aiMin = document.getElementById('ai-min').value;
             const aiMax = document.getElementById('ai-max').value;
             const maxAiMin = document.getElementById('max-ai-min').value;
@@ -281,10 +296,11 @@
             if (search) options.search = search;
             if (topic) options.topic = topic;
             if (dataset) options.dataset_type = dataset;
-            if (prediction) options.prediction = prediction;
+            if (prediction) options.prediction = [prediction];
             if (startDate) options.start_date = startDate;
             if (endDate) options.end_date = endDate;
             if (author) options.author = author;
+            if (newspaper) options.newspaper = newspaper;
             if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
             if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
             if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
@@ -342,6 +358,7 @@
                             <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
                                 <span>📅 ${date}</span>
                                 ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
+                                ${article.newspaper || article.newspaper_name ? `<span>📰 ${article.newspaper || article.newspaper_name}</span>` : ''}
                                 <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
                                     ${getPredictionLabel(article.prediction)}
                                 </span>
@@ -446,6 +463,7 @@
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
             document.getElementById('author-filter').value = '';
+            document.getElementById('newspaper-filter').value = '';
             document.getElementById('ai-min').value = 0;
             document.getElementById('ai-max').value = 1;
             document.getElementById('max-ai-min').value = 0;
@@ -505,7 +523,10 @@
                 document.getElementById('topic-filter').value = topic;
             }
             if (prediction) {
-                document.getElementById('prediction-filter').value = prediction;
+                // Handle both string and array formats for backward compatibility
+                const predArray = Array.isArray(prediction) ? prediction : [prediction];
+                // For search.html, we'll use the first prediction value in the dropdown
+                document.getElementById('prediction-filter').value = predArray[0];
             }
             
             searchArticles();

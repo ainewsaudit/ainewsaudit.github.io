@@ -1491,13 +1491,32 @@ class StaticDataLoader {
      * Get filter options (lightweight version that doesn't load all datasets)
      */
     async getFilterOptions() {
-        // Return basic filter options without loading all datasets
-        return {
-            topics: [], // Will be populated when datasets load
-            authors: [], // Will be populated when datasets load
-            predictions: ['Human', 'Mixed', 'AI'], // Standard predictions
-            datasets: ['recent_news', 'opinions', 'reporters'] // Standard datasets
-        };
+        // Load topics from the currently loaded dataset or load a default dataset
+        try {
+            // If no dataset is loaded, load the opinions dataset as default
+            if (!this.currentDataset) {
+                await this.loadDataset('opinions');
+            }
+            
+            // Get topics from the loaded data
+            const topics = await this.getTopics();
+            
+            return {
+                topics: topics.map(t => t.primary_topic), // Extract just the topic names
+                authors: [], // Will be populated when datasets load
+                predictions: ['Human', 'Mixed', 'AI'], // Standard predictions
+                datasets: ['recent_news', 'opinions', 'reporters'] // Standard datasets
+            };
+        } catch (error) {
+            console.error('Error loading filter options:', error);
+            // Return empty topics on error
+            return {
+                topics: [],
+                authors: [],
+                predictions: ['Human', 'Mixed', 'AI'],
+                datasets: ['recent_news', 'opinions', 'reporters']
+            };
+        }
     }
 
     /**
@@ -1587,6 +1606,15 @@ class StaticDataLoader {
             }
         });
 
+        // Newspaper distribution
+        const newspaperDist = {};
+        validArticles.forEach(a => {
+            const newspaper = a.newspaper || a.newspaper_name || 'Unknown';
+            if (newspaper && newspaper.trim() !== '') {
+                newspaperDist[newspaper] = (newspaperDist[newspaper] || 0) + 1;
+            }
+        });
+
         return {
             dataset_type: datasetType,
             prediction_distribution: Object.entries(predictionDist)
@@ -1597,7 +1625,11 @@ class StaticDataLoader {
             topic_distribution: Object.entries(topicDist)
                 .map(([primary_topic, count]) => ({ primary_topic, count }))
                 .sort((a, b) => b.count - a.count)
-                .slice(0, 15)
+                .slice(0, 15),
+            newspaper_distribution: Object.entries(newspaperDist)
+                .map(([newspaper, count]) => ({ newspaper, count }))
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 20)
         };
     }
 }

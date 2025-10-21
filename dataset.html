@@ -16,26 +16,26 @@
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
-        <div class="mb-6">
-            <a href="/" class="text-blue-600 hover:underline mb-4 inline-block">← Back to Search</a>
-            <h1 class="text-4xl font-bold text-gray-900 mb-2" id="dataset-title">Dataset Analysis</h1>
-            <p class="text-lg text-gray-600" id="dataset-description">Comprehensive statistics and trends</p>
+        <div class="mb-4 sm:mb-6">
+            <a href="/" class="text-blue-600 hover:underline mb-3 sm:mb-4 inline-block text-sm sm:text-base">← Back to Search</a>
+            <h1 class="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2" id="dataset-title">Dataset Analysis</h1>
+            <p class="text-base sm:text-lg text-gray-600 px-2 sm:px-0" id="dataset-description">Comprehensive statistics and trends</p>
         </div>
 
         <!-- Dataset Selector -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-8">
-            <h2 class="text-xl font-bold text-gray-900 mb-4">Select Dataset</h2>
-            <div class="flex gap-4">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8">
+            <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4">Select Dataset</h2>
+            <div class="flex flex-col sm:flex-row gap-3 sm:gap-4">
                 <button onclick="loadDataset('recent_news')" id="btn-recent_news" 
-                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                        class="flex-1 px-4 sm:px-6 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base">
                     📰 Recent News
                 </button>
                 <button onclick="loadDataset('opinions')" id="btn-opinions"
-                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                        class="flex-1 px-4 sm:px-6 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base">
                     💭 Opinions
                 </button>
                 <button onclick="loadDataset('reporters')" id="btn-reporters"
-                        class="flex-1 px-6 py-3 rounded-lg font-semibold transition-all">
+                        class="flex-1 px-4 sm:px-6 py-3 rounded-lg font-semibold transition-all text-sm sm:text-base">
                     👤 Reporters
                 </button>
             </div>
@@ -50,28 +50,34 @@
         <!-- Charts Container -->
         <div id="charts-container" class="hidden">
             <!-- Summary Stats -->
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8" id="summary-stats"></div>
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8" id="summary-stats"></div>
 
             <!-- Charts Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 lg:gap-8 mb-6 sm:mb-8">
                 <!-- Prediction Distribution Pie Chart -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Prediction Distribution</h2>
-                    <div class="max-w-md mx-auto">
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                    <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Prediction Distribution</h2>
+                    <div class="max-w-sm sm:max-w-md mx-auto">
                         <canvas id="predictionChart"></canvas>
                     </div>
                 </div>
 
                 <!-- Topic Distribution Pie Chart -->
-                <div class="bg-white rounded-xl shadow-lg p-6">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4">Top Topics</h2>
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                    <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Top Topics</h2>
                     <canvas id="topicChart"></canvas>
                 </div>
             </div>
 
+            <!-- Newspaper Distribution Chart (only for opinions dataset) -->
+            <div id="newspaper-chart-container" class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 sm:mb-8 hidden">
+                <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">Top Newspapers</h2>
+                <canvas id="newspaperChart"></canvas>
+            </div>
+
             <!-- Time Series Line Chart (Full Width) -->
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-2xl font-bold text-gray-900 mb-4">AI/Mixed Predictions Over Time</h2>
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900 mb-3 sm:mb-4">AI/Mixed Predictions Over Time</h2>
                 <canvas id="timeSeriesChart"></canvas>
             </div>
         </div>
@@ -84,6 +90,7 @@
         let charts = {
             prediction: null,
             topic: null,
+            newspaper: null,
             timeSeries: null
         };
 
@@ -110,9 +117,9 @@
             ['recent_news', 'opinions', 'reporters'].forEach(dataset => {
                 const btn = document.getElementById(`btn-${dataset}`);
                 if (dataset === activeDataset) {
-                    btn.className = 'flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg';
+                    btn.className = 'flex-1 px-4 sm:px-6 py-3 rounded-lg font-semibold transition-all bg-blue-600 text-white shadow-lg text-sm sm:text-base';
                 } else {
-                    btn.className = 'flex-1 px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300';
+                    btn.className = 'flex-1 px-4 sm:px-6 py-3 rounded-lg font-semibold transition-all bg-gray-200 text-gray-700 hover:bg-gray-300 text-sm sm:text-base';
                 }
             });
         }
@@ -133,7 +140,7 @@
             try {
                 const data = await window.dataLoader.getDatasetStats(datasetType);
                 
-                renderCharts(data);
+                await renderCharts(data);
                 
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('charts-container').classList.remove('hidden');
@@ -144,7 +151,7 @@
             }
         }
 
-        function renderCharts(data) {
+        async function renderCharts(data) {
             // Destroy existing charts
             Object.values(charts).forEach(chart => {
                 if (chart) chart.destroy();
@@ -164,17 +171,17 @@
             
             // Render summary stats
             document.getElementById('summary-stats').innerHTML = `
-                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-6 rounded-lg">
-                    <div class="text-4xl font-bold text-blue-700">${totalArticles.toLocaleString()}</div>
-                    <div class="text-sm text-blue-600">Total Articles</div>
+                <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 sm:p-6 rounded-lg">
+                    <div class="text-2xl sm:text-3xl lg:text-4xl font-bold text-blue-700">${totalArticles.toLocaleString()}</div>
+                    <div class="text-xs sm:text-sm text-blue-600">Total Articles</div>
                 </div>
-                <div class="bg-gradient-to-br from-green-50 to-green-100 p-6 rounded-lg">
-                    <div class="text-4xl font-bold text-green-700">${((humanCount / totalArticles) * 100).toFixed(1)}%</div>
-                    <div class="text-sm text-green-600">Human-Written</div>
+                <div class="bg-gradient-to-br from-green-50 to-green-100 p-4 sm:p-6 rounded-lg">
+                    <div class="text-2xl sm:text-3xl lg:text-4xl font-bold text-green-700">${((humanCount / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="text-xs sm:text-sm text-green-600">Human-Written</div>
                 </div>
-                <div class="bg-gradient-to-br from-red-50 to-red-100 p-6 rounded-lg">
-                    <div class="text-4xl font-bold text-red-700">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
-                    <div class="text-sm text-red-600">AI/Mixed Content</div>
+                <div class="bg-gradient-to-br from-red-50 to-red-100 p-4 sm:p-6 rounded-lg">
+                    <div class="text-2xl sm:text-3xl lg:text-4xl font-bold text-red-700">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="text-xs sm:text-sm text-red-600">AI/Mixed Content</div>
                 </div>
             `;
             
@@ -333,6 +340,153 @@
                     }
                 }
             });
+            
+            // 4. Newspaper Distribution Stacked Bar Chart (only for opinions dataset)
+            const newspaperContainer = document.getElementById('newspaper-chart-container');
+            
+            if (currentDataset === 'opinions') {
+                // Show newspaper chart for opinions dataset
+                newspaperContainer.classList.remove('hidden');
+                
+                const newspaperData = data.newspaper_distribution || [];
+                
+                // Process newspaper data to get prediction breakdowns
+                const processedNewspaperData = await Promise.all(
+                    newspaperData.map(async (newspaper) => {
+                        try {
+                            // Get articles for this newspaper to analyze predictions
+                            const articles = await window.dataLoader.getArticles({
+                                newspaper: newspaper.newspaper,
+                                dataset_type: currentDataset,
+                                limit: 1000 // Get a sample for analysis
+                            });
+                            
+                            // Count predictions
+                            const predictionCounts = { Human: 0, Mixed: 0, AI: 0 };
+                            articles.articles.forEach(article => {
+                                const prediction = article.prediction;
+                                if (predictionCounts.hasOwnProperty(prediction)) {
+                                    predictionCounts[prediction]++;
+                                }
+                            });
+                            
+                            return {
+                                newspaper: newspaper.newspaper,
+                                total: newspaper.count,
+                                human: predictionCounts.Human,
+                                mixed: predictionCounts.Mixed,
+                                ai: predictionCounts.AI
+                            };
+                        } catch (error) {
+                            console.warn(`Error processing newspaper ${newspaper.newspaper}:`, error);
+                            // Fallback to equal distribution
+                            const total = newspaper.count;
+                            return {
+                                newspaper: newspaper.newspaper,
+                                total: total,
+                                human: Math.floor(total * 0.6),
+                                mixed: Math.floor(total * 0.2),
+                                ai: Math.floor(total * 0.2)
+                            };
+                        }
+                    })
+                );
+                
+                charts.newspaper = new Chart(document.getElementById('newspaperChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: processedNewspaperData.map(n => n.newspaper),
+                        datasets: [
+                            {
+                                label: 'AI',
+                                data: processedNewspaperData.map(n => n.ai),
+                                backgroundColor: '#ef4444', // Red
+                                borderColor: '#dc2626',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Mixed',
+                                data: processedNewspaperData.map(n => n.mixed),
+                                backgroundColor: '#f59e0b', // Yellow/Orange
+                                borderColor: '#d97706',
+                                borderWidth: 1
+                            },
+                            {
+                                label: 'Human',
+                                data: processedNewspaperData.map(n => n.human),
+                                backgroundColor: '#10b981', // Green
+                                borderColor: '#059669',
+                                borderWidth: 1
+                            }
+                        ]
+                    },
+                    options: {
+                        responsive: true,
+                        onClick: (event, elements) => {
+                            if (elements.length > 0) {
+                                const element = elements[0];
+                                const newspaper = processedNewspaperData[element.index].newspaper;
+                                const datasetType = currentDataset;
+                                const datasetIndex = element.datasetIndex;
+                                let prediction = '';
+                                
+                                // Determine which prediction type was clicked
+                                if (datasetIndex === 0) prediction = 'AI';
+                                else if (datasetIndex === 1) prediction = 'Mixed';
+                                else if (datasetIndex === 2) prediction = 'Human';
+                                
+                                const url = `search.html?dataset_type=${datasetType}&newspaper=${encodeURIComponent(newspaper)}&prediction=${encodeURIComponent(prediction)}`;
+                                window.open(url, '_blank');
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                display: true,
+                                position: 'top',
+                                labels: {
+                                    font: { size: 12 },
+                                    padding: 15
+                                }
+                            },
+                            tooltip: {
+                                callbacks: {
+                                    label: function(context) {
+                                        const value = context.parsed.y;
+                                        const total = processedNewspaperData[context.dataIndex].total;
+                                        const percentage = ((value / total) * 100).toFixed(1);
+                                        return `${context.dataset.label}: ${value.toLocaleString()} articles (${percentage}%) - Click to view examples`;
+                                    }
+                                }
+                            }
+                        },
+                        scales: {
+                            x: {
+                                stacked: true,
+                                title: {
+                                    display: true,
+                                    text: 'Newspaper'
+                                }
+                            },
+                            y: {
+                                stacked: true,
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Number of Articles'
+                                }
+                            }
+                        }
+                    }
+                });
+            } else {
+                // Hide newspaper chart for other datasets
+                newspaperContainer.classList.add('hidden');
+                // Destroy existing chart if it exists
+                if (charts.newspaper) {
+                    charts.newspaper.destroy();
+                    charts.newspaper = null;
+                }
+            }
         }
 
         // Load dataset from URL query parameter

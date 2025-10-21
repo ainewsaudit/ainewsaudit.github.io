@@ -610,45 +610,47 @@
 <body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
-        <div class="text-center mb-8">
-            <h1 class="text-5xl font-bold text-gray-900 mb-3">🔍 AI News Audit</h1>
-            <p class="text-xl text-gray-600">Search and analyze 251,446 news articles for AI-generated content</p>
+        <div class="text-center mb-6 sm:mb-8">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">🔍 AI News Audit</h1>
+            <p class="text-base sm:text-lg lg:text-xl text-gray-600 px-4">Search and analyze 251,446 news articles for AI-generated content</p>
         </div>
 
         <!-- Search Bar -->
         <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-2xl p-8">
-                <div class="flex items-center space-x-4">
+            <div class="bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
                     <input type="text" id="search-input" 
                            placeholder="Search articles by title, content, author, or newspaper..." 
-                           class="flex-1 p-4 text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <button id="search-button" 
-                            class="bg-blue-600 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
-                        Search
-                    </button>
-                    <button id="main-reset-button" 
-                            class="bg-gray-500 text-white px-8 py-4 text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
-                        Reset
-                    </button>
+                           class="flex-1 p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
+                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
+                        <button id="search-button" 
+                                class="bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
+                            Search
+                        </button>
+                        <button id="main-reset-button" 
+                                class="bg-gray-500 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
+                            Reset
+                        </button>
+                    </div>
                 </div>
                 
                 <!-- Quick Stats -->
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mt-6" id="quick-stats">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-4 rounded-lg">
-                        <div class="text-3xl font-bold text-blue-700" id="stat-total">251,446</div>
-                        <div class="text-sm text-blue-600">Total Articles</div>
+                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6" id="quick-stats">
+                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700" id="stat-total">251,446</div>
+                        <div class="text-xs sm:text-sm text-blue-600">Total Articles</div>
                     </div>
-                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-green-700" id="stat-recent">186,512</div>
-                        <div class="text-sm text-green-600">Recent News →</div>
+                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700" id="stat-recent">186,512</div>
+                        <div class="text-xs sm:text-sm text-green-600">Recent News →</div>
                     </a>
-                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-purple-700" id="stat-opinions">44,803</div>
-                        <div class="text-sm text-purple-600">Opinions →</div>
+                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700" id="stat-opinions">44,803</div>
+                        <div class="text-xs sm:text-sm text-purple-600">Opinions →</div>
                     </a>
-                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-3xl font-bold text-orange-700" id="stat-reporters">20,131</div>
-                        <div class="text-sm text-orange-600">Reporters →</div>
+                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
+                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700" id="stat-reporters">20,131</div>
+                        <div class="text-xs sm:text-sm text-orange-600">Reporters →</div>
                     </a>
                 </div>
             </div>
@@ -656,25 +658,25 @@
 
         <!-- Quick Filter Buttons -->
         <div class="mb-6">
-            <div class="bg-white rounded-xl shadow-lg p-6">
-                <h2 class="text-xl font-bold text-gray-800 mb-4">Quick Filters</h2>
-                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-                    <button id="filter-ai" class="bg-red-100 hover:bg-red-200 text-red-800 px-4 py-2 rounded-lg font-medium transition-colors">
+            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Quick Filters</h2>
+                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
+                    <button id="filter-ai" class="bg-red-100 hover:bg-red-200 text-red-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         🤖 AI
                     </button>
-                    <button id="filter-ai-mixed" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="filter-ai-mixed" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         ⚡ AI + Mixed
                     </button>
-                    <button id="filter-human" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="filter-human" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         👤 Human
                     </button>
-                    <button id="filter-recent-news" class="bg-green-100 hover:bg-green-200 text-green-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="filter-recent-news" class="bg-green-100 hover:bg-green-200 text-green-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         📰 Recent News
                     </button>
-                    <button id="filter-opinions" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="filter-opinions" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         💭 Opinions
                     </button>
-                    <button id="filter-reporters" class="bg-orange-100 hover:bg-orange-200 text-orange-800 px-4 py-2 rounded-lg font-medium transition-colors">
+                    <button id="filter-reporters" class="bg-orange-100 hover:bg-orange-200 text-orange-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
                         📝 Reporters
                     </button>
                 </div>
@@ -682,26 +684,26 @@
         </div>
 
         <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-6 mb-6" id="filters-section">
-            <div class="flex items-center justify-between mb-4">
-                <h2 class="text-xl font-bold text-gray-800">Advanced Filters</h2>
-                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6" id="filters-section">
+            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-800">Advanced Filters</h2>
+                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium text-sm sm:text-base">
                     Show Filters
                 </button>
             </div>
             
             <div id="filters-content" class="hidden space-y-4">
                 <!-- Row 1: Basic Filters -->
-                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
-                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">All Topics</option>
                         </select>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Dataset</label>
-                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="">All Datasets</option>
                             <option value="recent_news">Recent News</option>
                             <option value="opinions">Opinions</option>
@@ -727,7 +729,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                             <option value="date">Date (Newest)</option>
                             <option value="ai_likelihood">AI Likelihood</option>
                             <option value="title">Title (A-Z)</option>
@@ -736,19 +738,19 @@
                 </div>
 
                 <!-- Row 2: Date Range and Author -->
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
-                            <span class="text-gray-400">to</span>
-                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
+                            <span class="text-gray-400 text-sm">to</span>
+                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Author</label>
                         <input type="text" id="author-filter" list="author-list" placeholder="Search for author..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                         <datalist id="author-list">
                             <!-- Will be populated dynamically -->
                         </datalist>
@@ -756,7 +758,7 @@
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Newspaper</label>
                         <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search for newspaper..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500">
+                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
                         <datalist id="newspaper-list">
                             <!-- Will be populated dynamically -->
                         </datalist>
@@ -764,34 +766,34 @@
                 </div>
 
                 <!-- Row 3: AI Likelihood Sliders -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">AI Likelihood Range</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
-                            <span id="ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
-                            <span class="text-gray-400">to</span>
-                            <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
-                            <span id="ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1 w-full sm:w-auto">
+                            <span id="ai-min-value" class="text-sm text-gray-600 min-w-[3rem] text-center">0.00</span>
+                            <span class="text-gray-400 text-sm">to</span>
+                            <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1 w-full sm:w-auto">
+                            <span id="ai-max-value" class="text-sm text-gray-600 min-w-[3rem] text-center">1.00</span>
                         </div>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Max AI Likelihood (Chunks)</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
-                            <span id="max-ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
-                            <span class="text-gray-400">to</span>
-                            <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
-                            <span id="max-ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
+                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
+                            <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1 w-full sm:w-auto">
+                            <span id="max-ai-min-value" class="text-sm text-gray-600 min-w-[3rem] text-center">0.00</span>
+                            <span class="text-gray-400 text-sm">to</span>
+                            <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1 w-full sm:w-auto">
+                            <span id="max-ai-max-value" class="text-sm text-gray-600 min-w-[3rem] text-center">1.00</span>
                         </div>
                     </div>
                 </div>
 
-                <div class="flex items-center space-x-2 pt-4">
-                    <button id="apply-filters" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-medium">
+                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
+                    <button id="apply-filters" class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2 rounded-md hover:bg-blue-700 font-medium text-sm sm:text-base">
                         Apply Filters
                     </button>
-                    <button id="reset-filters" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-medium">
+                    <button id="reset-filters" class="bg-gray-500 text-white px-4 sm:px-6 py-2 sm:py-2 rounded-md hover:bg-gray-600 font-medium text-sm sm:text-base">
                         Reset
                     </button>
                 </div>
