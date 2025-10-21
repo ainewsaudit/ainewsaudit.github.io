@@ -4,9 +4,10 @@
 
 This repo hosts `AI News Audit` ([AI use in American newspapers is widespread, uneven, and rarely disclosed]()), analyzing  **250,000+ news articles** to detect and track AI-generated content across different media sources.
 
+🌐 **Website**: [https://ainewsaudit.github.io/](https://ainewsaudit.github.io/)
+
 `Authors`: [Jenna Russell](https://jenna-russell.github.io/), [Marzena Karpinska](https://marzenakrp.github.io/), [Destiny Akinode](https://www.linkedin.com/in/destiny-akinode/), [Katherine Thai](https://katherinethai.github.io/), [Bradley Emi](https://www.bradleyemi.com/), [Max Spero](https://www.pangram.com/about-us), and [Mohit Iyyer](https://www.cs.umd.edu/~miyyer/)
 
-🌐 **Website**: [https://ainewsaudit.github.io/](https://ainewsaudit.github.io/)
 
 ## Introduction 
 

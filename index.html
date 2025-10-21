@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>AI News Audit - Search Articles</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js?v=1760922767"></script>
@@ -90,10 +90,10 @@
             document.getElementById('max-ai-max').value = state.maxAiMax || 1;
             
             // Update slider displays
-            document.getElementById('ai-min-value').textContent = parseFloat(state.aiMin || 0).toFixed(2);
-            document.getElementById('ai-max-value').textContent = parseFloat(state.aiMax || 1).toFixed(2);
-            document.getElementById('max-ai-min-value').textContent = parseFloat(state.maxAiMin || 0).toFixed(2);
-            document.getElementById('max-ai-max-value').textContent = parseFloat(state.maxAiMax || 1).toFixed(2);
+            document.getElementById('ai-min-value').textContent = (parseFloat(state.aiMin || 0) * 100).toFixed(0) + '%';
+            document.getElementById('ai-max-value').textContent = (parseFloat(state.aiMax || 1) * 100).toFixed(0) + '%';
+            document.getElementById('max-ai-min-value').textContent = (parseFloat(state.maxAiMin || 0) * 100).toFixed(0) + '%';
+            document.getElementById('max-ai-max-value').textContent = (parseFloat(state.maxAiMax || 1) * 100).toFixed(0) + '%';
             
             currentPage = state.currentPage || 1;
             totalArticles = state.totalArticles || 0;
@@ -259,8 +259,8 @@
                             <p class="text-gray-700 mb-3 leading-relaxed">${article.text_preview}</p>
                             <div class="flex items-center gap-4 text-sm">
                                 ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">📂 ${article.primary_topic}</span>` : ''}
-                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? article.ai_likelihood.toFixed(3) : 'N/A'}</span></span>
-                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${article.max_ai_likelihood.toFixed(3)}</span></span>` : ''}
+                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) + '%' : 'N/A'}</span></span>
+                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${(article.max_ai_likelihood * 100).toFixed(0)}%</span></span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -376,9 +376,7 @@
                 
                 const options = {
                     datasets: ['recent_news', 'opinions', 'reporters'],
-                    limit: 1000,
-                    startDate: '2025-08-01',
-                    endDate: '2025-09-30'
+                    limit: 1000
                 };
                 
                 // Load authors
@@ -508,8 +506,8 @@
                 if (datasetType) {
                     document.getElementById('dataset-filter').value = datasetType;
                 } else {
-                    // Default to opinions dataset
-                    document.getElementById('dataset-filter').value = 'opinions';
+                    // Default to all datasets (no filter)
+                    document.getElementById('dataset-filter').value = '';
                 }
                 
                 if (topic) {
@@ -521,13 +519,7 @@
                     setSelectedPredictions(predArray);
                 }
                 
-                // Set default date range to August-September 2025
-                if (!urlParams.has('start_date')) {
-                    document.getElementById('start-date').value = '2025-08-01';
-                }
-                if (!urlParams.has('end_date')) {
-                    document.getElementById('end-date').value = '2025-09-30';
-                }
+                // No default date range - show all articles
             }
             
             // Set up event listeners for UI elements
@@ -574,16 +566,16 @@
 
         // Range slider updates
         document.getElementById('ai-min').addEventListener('input', function() {
-            document.getElementById('ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('ai-max').addEventListener('input', function() {
-            document.getElementById('ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('max-ai-min').addEventListener('input', function() {
-            document.getElementById('max-ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('max-ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('max-ai-max').addEventListener('input', function() {
-            document.getElementById('max-ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
 
             console.log('✅ All event listeners set up successfully');
@@ -612,33 +604,39 @@
     <div class="container mx-auto px-4 py-8 max-w-7xl">
         <!-- Header -->
         <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">🔍 AI News Audit</h1>
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">AI Use in American Newspapers</h1>
             <p class="text-base sm:text-lg lg:text-xl text-gray-600 px-4 mb-4">Search and analyze 251,446 news articles for AI-generated content</p>
             <div class="bg-blue-50 p-4 mx-4 sm:mx-8 rounded-lg">
-                <p class="text-sm sm:text-base text-blue-900">
+                <p class="text-lg sm:text-xl text-blue-900">
                     <strong>📄 Paper:</strong> 
                     <a href="" target="_blank" class="text-blue-800 hover:text-blue-900 underline">
                         "AI use in American newspapers is widespread, uneven, and rarely disclosed"
                     </a>
-                    <br>
-                    <span class="text-blue-900">by 
-                        <a href="https://jenna-russell.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Jenna Russell</a>, 
-                        <a href="https://marzenakrp.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Marzena Karpinska</a>, 
-                        <a href="https://www.linkedin.com/in/destiny-akinode/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Destiny Akinode</a>, 
-                        <a href="https://katherinethai.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Katherine Thai</a>, 
-                        <a href="https://www.bradleyemi.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Bradley Emi</a>, 
-                        <a href="https://www.pangram.com/about-us" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Max Spero</a>, and 
-                        <a href="https://www.cs.umd.edu/~miyyer/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Mohit Iyyer</a>
-                    </span>
                 </p>
-                <p class="text-sm sm:text-base text-blue-900 mt-2 inline-flex items-center">
-                    <svg class="w-4 h-4 mr-2" fill="currentColor" viewBox="0 0 20 20">
+                <p class="text-lg sm:text-xl text-blue-900 mt-2 inline-flex items-center">
+                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
                         <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"></path>
                     </svg>
-                    <a href="https://github.com/ainewsaudit/ainewsaudit.github.io" target="_blank" class="text-blue-800 hover:text-blue-900 underline">
+                    <a href="https://github.com/jenna-russell/ai_news" target="_blank" class="text-blue-800 hover:text-blue-900 underline">
                         Data & Code
                     </a>
                 </p>
+                <div class="text-lg sm:text-xl text-blue-900 mt-2 flex items-center justify-center">
+                    <img src="/additional_data/pangram.png" alt="Pangram" class="h-6 w-6 mr-2">
+                    <a href="metrics.html" class="text-blue-800 hover:text-blue-900 underline">
+                        Learn about Pangram's AI detection metrics
+                    </a>
+                </div>
+                <!-- <p class="text-xs sm:text-sm text-blue-900 mt-2">
+                    by 
+                    <a href="https://jenna-russell.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Jenna Russell</a>, 
+                    <a href="https://marzenakrp.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Marzena Karpinska</a>, 
+                    <a href="https://www.linkedin.com/in/destiny-akinode/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Destiny Akinode</a>, 
+                    <a href="https://katherinethai.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Katherine Thai</a>, 
+                    <a href="https://www.bradleyemi.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Bradley Emi</a>, 
+                    <a href="https://www.pangram.com/about-us" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Max Spero</a>, and 
+                    <a href="https://www.cs.umd.edu/~miyyer/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Mohit Iyyer</a>
+                </p> -->
                 <div class="mt-4 flex flex-wrap justify-center items-center gap-4 sm:gap-6">
                     <img src="/additional_data/umd.png" alt="University of Maryland" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">
                     <img src="/additional_data/umass.png" alt="University of Massachusetts" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">

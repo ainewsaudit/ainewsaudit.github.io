@@ -7,7 +7,7 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>AI News Audit - Search Articles</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js"></script>
@@ -368,8 +368,8 @@
                             <p class="text-gray-700 mb-3 leading-relaxed">${article.text_preview}</p>
                             <div class="flex items-center gap-4 text-sm">
                                 ${article.primary_topic ? `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">📂 ${article.primary_topic}</span>` : ''}
-                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? article.ai_likelihood.toFixed(3) : 'N/A'}</span></span>
-                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${article.max_ai_likelihood.toFixed(3)}</span></span>` : ''}
+                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) + '%' : 'N/A'}</span></span>
+                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${(article.max_ai_likelihood * 100).toFixed(0)}%</span></span>` : ''}
                             </div>
                         </div>
                     </div>
@@ -495,16 +495,16 @@
 
         // Range slider updates
         document.getElementById('ai-min').addEventListener('input', function() {
-            document.getElementById('ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('ai-max').addEventListener('input', function() {
-            document.getElementById('ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('max-ai-min').addEventListener('input', function() {
-            document.getElementById('max-ai-min-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('max-ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
         document.getElementById('max-ai-max').addEventListener('input', function() {
-            document.getElementById('max-ai-max-value').textContent = parseFloat(this.value).toFixed(2);
+            document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
 
         // Initialize on page load

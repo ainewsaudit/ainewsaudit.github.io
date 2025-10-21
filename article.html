@@ -7,13 +7,29 @@
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
     <title>Article - AI News Audit</title>
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js"></script>
 </head>
 <!-- Version: 2025-10-19-v5 -->
 <body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 max-w-7xl">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center space-x-3">
+                    <span class="text-2xl font-bold text-gray-900">🔍 AI News Audit</span>
+                </a>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">Search</a>
+                    <a href="dataset.html" class="text-gray-600 hover:text-blue-600 transition-colors">Datasets</a>
+                    <a href="metrics.html" class="text-blue-600 font-medium">Metrics</a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
     <div class="container mx-auto px-4 py-8 max-w-5xl">
         <a href="/" class="text-blue-600 hover:underline mb-6 inline-block text-lg">← Back to Search</a>
         
@@ -57,10 +73,20 @@
 
                 <!-- AI Analysis Dashboard -->
                 <div class="mb-8 bg-gradient-to-br from-blue-50 to-purple-50 rounded-xl p-6 border border-blue-100">
-                    <h2 class="text-2xl font-bold text-gray-900 mb-4 flex items-center">
-                        🤖 AI Analysis
-                        <span id="prediction-badge" class="ml-4 px-4 py-1 rounded-full text-white text-sm font-semibold"></span>
-                    </h2>
+                    <div class="mb-4">
+                        <div class="flex items-center">
+                            <img src="/additional_data/pangram.png" alt="Pangram" class="h-6 w-6 mr-2">
+                            <h2 class="text-2xl font-bold text-gray-900 flex items-center">
+                                AI Analysis
+                                <span id="prediction-badge" class="ml-4 px-4 py-1 rounded-full text-white text-sm font-semibold"></span>
+                            </h2>
+                        </div>
+                        <div class="mt-2">
+                            <a href="metrics.html" class="text-sm text-blue-600 hover:text-blue-800 underline">
+                                Learn about these metrics →
+                            </a>
+                        </div>
+                    </div>
                     
                     <!-- Main Metrics -->
                     <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
@@ -346,16 +372,16 @@
                 
                 // Update AI analysis
                 document.getElementById('ai-likelihood').textContent = 
-                    article.ai_likelihood !== null ? article.ai_likelihood.toFixed(4) : 'N/A';
+                    article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) + '%' : 'N/A';
                 document.getElementById('max-ai-likelihood').textContent = 
-                    article.max_ai_likelihood !== null ? article.max_ai_likelihood.toFixed(4) : 'N/A';
+                    article.max_ai_likelihood !== null ? (article.max_ai_likelihood * 100).toFixed(0) + '%' : 'N/A';
                 document.getElementById('avg-ai-likelihood').textContent = 
-                    article.avg_ai_likelihood !== null ? article.avg_ai_likelihood.toFixed(4) : 'N/A';
+                    article.avg_ai_likelihood !== null ? (article.avg_ai_likelihood * 100).toFixed(0) + '%' : 'N/A';
                 
                 // Calculate delta
                 if (article.max_ai_likelihood !== null && article.avg_ai_likelihood !== null) {
                     const delta = article.max_ai_likelihood - article.avg_ai_likelihood;
-                    document.getElementById('ai-delta').textContent = delta.toFixed(4);
+                    document.getElementById('ai-delta').textContent = (delta * 100).toFixed(0) + '%';
                 }
 
                 // Fraction AI content

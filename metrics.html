@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+    <title>AI Metrics Explained</title>
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
+    <script src="https://cdn.tailwindcss.com"></script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- Header -->
+    <div class="bg-white shadow-sm">
+        <div class="container mx-auto px-4 py-4 max-w-7xl">
+            <div class="flex items-center justify-between">
+                <a href="index.html" class="flex items-center space-x-3">
+                    <span class="text-2xl font-bold text-gray-900">🔍 AI News in American Newspapers</span>
+                </a>
+                <nav class="hidden md:flex space-x-6">
+                    <a href="index.html" class="text-gray-600 hover:text-blue-600 transition-colors">Search</a>
+                    <a href="dataset.html" class="text-gray-600 hover:text-blue-600 transition-colors">Datasets</a>
+                    <a href="metrics.html" class="text-blue-600 font-medium">Metrics</a>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="container mx-auto px-4 py-8 max-w-4xl">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl sm:text-4xl font-bold text-gray-900 mb-4">AI Detection Metrics Explained</h1>
+            <p class="text-lg text-gray-600">Understanding how we measure AI-generated content in news articles</p>
+        </div>
+
+        <!-- How It Works -->
+        <div class="bg-blue-50 p-6 rounded-lg mb-8">
+            <h2 class="text-2xl font-bold text-blue-900 mb-4">How AI Detection Works</h2>
+            <div class="space-y-4 text-blue-800">
+                <div class="flex items-center justify-center mb-4">
+                    <a href="https://www.pangram.com/" target="_blank" class="hover:opacity-80 transition-opacity">
+                        <img src="/additional_data/pangram.png" alt="Pangram" class="h-12 sm:h-16">
+                    </a>
+                </div>
+                <p>
+                    Our AI detection system uses <strong><a href="https://www.pangram.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Pangram</a></strong>, a state-of-the-art AI detector that analyzes text at multiple levels:
+                </p>
+                <ul class="list-disc list-inside space-y-2 ml-4">
+                    <li><strong>Article-level analysis:</strong> Evaluates the entire article for AI characteristics</li>
+                    <li><strong>Chunk-level analysis:</strong> Breaks the article into segments and analyzes each one</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Categories -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <h2 class="text-2xl font-bold text-gray-900 mb-4">Content Categories</h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="text-center p-4 bg-green-50 rounded-lg">
+                    <div class="text-3xl mb-2">👤</div>
+                    <h3 class="font-semibold text-green-800 mb-2">Human</h3>
+                    <p class="text-xs text-green-600 mt-1">Written entirely by humans</p>
+                </div>
+                <div class="text-center p-4 bg-yellow-50 rounded-lg">
+                    <div class="text-3xl mb-2">⚡</div>
+                    <h3 class="font-semibold text-yellow-800 mb-2">Mixed</h3>
+                    <p class="text-xs text-yellow-600 mt-1">Combination of human and AI content</p>
+                </div>
+                <div class="text-center p-4 bg-red-50 rounded-lg">
+                    <div class="text-3xl mb-2">🤖</div>
+                    <h3 class="font-semibold text-red-800 mb-2">AI</h3>
+                    <p class="text-xs text-red-600 mt-1">Generated primarily by AI</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- Metrics Grid -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+            <!-- AI Likelihood -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mr-4">
+                        <span class="text-2xl">🤖</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">AI Likelihood</h3>
+                        <p class="text-sm text-gray-500">Overall article score</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    The overall probability that the entire article contains AI-generated content.
+                </p>
+                <div class="bg-blue-50 p-3 rounded-lg">
+                    <div class="text-sm text-blue-800">
+                        <strong>Range:</strong> 0% - 100%<br>
+                        <strong>Interpretation:</strong> Higher percentages indicate greater likelihood of AI generation
+                    </div>
+                </div>
+            </div>
+
+            <!-- Max AI Likelihood -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center mr-4">
+                        <span class="text-2xl">📊</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Max AI Likelihood</h3>
+                        <p class="text-sm text-gray-500">Highest chunk score</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    The highest AI likelihood score from any individual segment (chunk) of the article. This identifies the most AI-like portion of the text, even if the overall article score is lower.
+                </p>
+                <div class="bg-purple-50 p-3 rounded-lg">
+                    <div class="text-sm text-purple-800">
+                        <strong>Range:</strong> 0% - 100%<br>
+                        <strong>Use:</strong> Identifies specific AI-generated sections within articles
+                    </div>
+                </div>
+            </div>
+
+            <!-- Average AI Likelihood -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center mr-4">
+                        <span class="text-2xl">📈</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">Average AI Likelihood</h3>
+                        <p class="text-sm text-gray-500">Average chunk score</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    The average AI likelihood score across all segments of the article. 
+                </p>
+                <div class="bg-green-50 p-3 rounded-lg">
+                    <div class="text-sm text-green-800">
+                        <strong>Range:</strong> 0% - 100%<br>
+                        <strong>Use:</strong> Shows overall AI content consistency across the article
+                    </div>
+                </div>
+            </div>
+
+            <!-- AI Delta -->
+            <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+                <div class="flex items-center mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center mr-4">
+                        <span class="text-2xl">⚡</span>
+                    </div>
+                    <div>
+                        <h3 class="text-xl font-semibold text-gray-900">AI Delta</h3>
+                        <p class="text-sm text-gray-500">Variation in chunk scores</p>
+                    </div>
+                </div>
+                <p class="text-gray-700 mb-4">
+                    The difference between the maximum and average AI likelihood scores. A high delta indicates that some parts of the article are much more AI-generated than others.
+                </p>
+                <div class="bg-orange-50 p-3 rounded-lg">
+                    <div class="text-sm text-orange-800">
+                        <strong>Range:</strong> 0% - 100%<br>
+                        <strong>High Delta:</strong> Mixed human/AI content<br>
+                        <strong>Low Delta:</strong> Consistent content throughout
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- AI Content Fraction -->
+        <div class="bg-white p-6 rounded-lg shadow-sm border border-gray-200 mb-8">
+            <div class="flex items-center mb-4">
+                <div class="w-12 h-12 bg-red-100 rounded-lg flex items-center justify-center mr-4">
+                    <span class="text-2xl">📊</span>
+                </div>
+                <div>
+                    <h3 class="text-xl font-semibold text-gray-900">AI Content Fraction</h3>
+                    <p class="text-sm text-gray-500">Percentage of AI-generated content</p>
+                </div>
+            </div>
+            <p class="text-gray-700 mb-4">
+                The estimated percentage of the article that was generated by AI. This metric provides a more granular view of AI content distribution, showing exactly how much of the article is AI-generated.
+            </p>
+            <div class="bg-red-50 p-3 rounded-lg">
+                <div class="text-sm text-red-800">
+                    <strong>Range:</strong> 0.0% - 100.0%<br>
+                    <strong>Examples:</strong><br>
+                    • 0% = Fully human-written<br>
+                    • 50% = Half AI, half human<br>
+                    • 100% = Fully AI-generated
+                </div>
+            </div>
+        </div>
+
+
+        <!-- Back to Search -->
+        <div class="text-center mt-8">
+            <a href="index.html" class="inline-flex items-center px-6 py-3 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors">
+                <span class="mr-2">🔍</span>
+                Back to Search
+            </a>
+        </div>
+    </div>
+</body>
+</html>
