@@ -1321,6 +1321,14 @@ class StaticDataLoader {
                 return false;
             }
             
+            // Filter out articles published after current date
+            if (a.publish_date) {
+                const articleDate = new Date(a.publish_date);
+                const currentDate = new Date();
+                currentDate.setHours(23, 59, 59, 999); // End of current day
+                if (articleDate > currentDate) return false;
+            }
+            
             // Apply search filter
             if (search) {
                 const searchLower = search.toLowerCase();
@@ -1736,5 +1744,40 @@ window.testAIMixedFilter = async () => {
     console.log(`Filtered ${filtered.length} out of ${sample.length} articles`);
     
     return filtered;
+};
+
+// Test the current date filter
+window.testCurrentDateFilter = async () => {
+    console.log('🧪 Testing current date filter...');
+    
+    // Load a small sample
+    const articles = await window.dataLoader.loadSpecificDatasets(['opinions']);
+    const sample = articles.slice(0, 100);
+    
+    console.log('Sample articles with dates:', sample.map(a => ({ 
+        title: a.title?.substring(0, 50) + '...', 
+        publish_date: a.publish_date 
+    })));
+    
+    // Test the date filter by calling getArticles
+    const result = await window.dataLoader.getArticles({ limit: 10 });
+    
+    console.log('Filtered articles with dates:', result.articles.map(a => ({ 
+        title: a.title?.substring(0, 50) + '...', 
+        publish_date: a.publish_date 
+    })));
+    
+    // Check if any articles have future dates
+    const futureArticles = result.articles.filter(a => {
+        if (!a.publish_date) return false;
+        const articleDate = new Date(a.publish_date);
+        const currentDate = new Date();
+        return articleDate > currentDate;
+    });
+    
+    console.log(`Found ${futureArticles.length} articles with future dates (should be 0)`);
+    console.log(`Total articles returned: ${result.articles.length}`);
+    
+    return result;
 };
 
