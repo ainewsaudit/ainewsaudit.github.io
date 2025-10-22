@@ -36,7 +36,7 @@
 
         <!-- How It Works -->
         <div class="bg-blue-50 p-6 rounded-lg mb-8">
-            <h2 class="text-2xl font-bold text-blue-900 mb-4">How AI Detection Works</h2>
+            <h2 class="text-2xl font-bold text-blue-900 mb-4">How does AI detection work?</h2>
             <div class="space-y-4 text-blue-800">
                 <div class="flex items-center justify-center mb-4">
                     <a href="https://www.pangram.com/" target="_blank" class="hover:opacity-80 transition-opacity">
@@ -44,11 +44,11 @@
                     </a>
                 </div>
                 <p>
-                    Our AI detection system uses <strong><a href="https://www.pangram.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Pangram</a></strong>, a state-of-the-art AI detector that analyzes text at multiple levels:
+                    We use <strong><a href="https://www.pangram.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Pangram</a></strong>, a state-of-the-art AI detector, which analyzes text on two levels:
                 </p>
                 <ul class="list-disc list-inside space-y-2 ml-4">
-                    <li><strong>Article-level analysis:</strong> Evaluates the entire article for AI characteristics</li>
-                    <li><strong>Chunk-level analysis:</strong> Breaks the article into segments and analyzes each one</li>
+                    <li><strong>Chunk-level:</strong> Breaks the article into chunks and analyzes each one for AI use.</li>
+                    <li><strong>Article-level:</strong> Uses those chunk-level results to give an overall judgment for the entire article.</li>
                 </ul>
             </div>
         </div>
@@ -111,7 +111,7 @@
                     </div>
                 </div>
                 <p class="text-gray-700 mb-4">
-                    The highest AI likelihood score from any individual segment (chunk) of the article. This identifies the most AI-like portion of the text, even if the overall article score is lower.
+                    This is the highest AI likelihood score found in any single <i>chunk</i> of the article. It's useful for spotting a "hidden" AI paragraph, even if the rest of the article looks human.
                 </p>
                 <div class="bg-purple-50 p-3 rounded-lg">
                     <div class="text-sm text-purple-800">
