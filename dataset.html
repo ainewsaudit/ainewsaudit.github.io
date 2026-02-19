@@ -44,7 +44,7 @@
                 <a href="/" class="text-white font-semibold text-sm">AI News Audit</a>
                 <nav class="flex items-center gap-6">
                     <a href="/" class="text-slate-400 hover:text-white text-sm transition-colors">Search</a>
-                    <a href="dataset.html" class="text-white text-sm font-medium">Datasets</a>
+                    <a href="dataset.html" class="text-white text-sm font-medium">Statistics</a>
                     <a href="metrics.html" class="text-slate-400 hover:text-white text-sm transition-colors">Metrics</a>
                 </nav>
             </div>
@@ -79,26 +79,26 @@
             <!-- Charts Grid -->
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 class="text-sm font-semibold text-gray-900 mb-4">Prediction Distribution</h2>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Prediction Distribution</h2>
                     <div class="max-w-xs mx-auto">
                         <canvas id="predictionChart"></canvas>
                     </div>
                 </div>
                 <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 class="text-sm font-semibold text-gray-900 mb-4">Top Topics</h2>
+                    <h2 class="text-lg font-bold text-gray-900 mb-4">Top Topics</h2>
                     <canvas id="topicChart"></canvas>
                 </div>
             </div>
 
             <!-- Newspaper Chart (opinions only) -->
             <div id="newspaper-chart-container" class="bg-white rounded-xl border border-gray-200 p-5 mb-6 hidden">
-                <h2 class="text-sm font-semibold text-gray-900 mb-4">Top Newspapers</h2>
+                <h2 class="text-lg font-bold text-gray-900 mb-4">Top Newspapers</h2>
                 <canvas id="newspaperChart"></canvas>
             </div>
 
             <!-- Time Series -->
             <div class="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 class="text-sm font-semibold text-gray-900 mb-4">AI/Mixed Predictions Over Time</h2>
+                <h2 class="text-lg font-bold text-gray-900 mb-4">AI/Mixed Predictions Over Time</h2>
                 <canvas id="timeSeriesChart"></canvas>
             </div>
         </div>
@@ -240,7 +240,7 @@
                     plugins: {
                         legend: {
                             position: 'bottom',
-                            labels: { font: { size: 12 }, padding: 16 }
+                            labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' }
                         },
                         tooltip: {
                             callbacks: {
@@ -285,15 +285,15 @@
                 },
                 options: {
                     responsive: true,
-                    plugins: { legend: { position: 'top', labels: { font: { size: 12 } } } },
+                    plugins: { legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } } },
                     scales: {
                         y: {
                             beginAtZero: true,
-                            title: { display: true, text: 'Percentage (%)', font: { size: 12 } },
+                            title: { display: true, text: 'Percentage (%)', font: { size: 13, weight: '600' } },
                             grid: { color: 'rgba(0,0,0,0.04)' }
                         },
                         x: {
-                            title: { display: true, text: 'Month', font: { size: 12 } },
+                            title: { display: true, text: 'Month', font: { size: 13, weight: '600' } },
                             grid: { display: false }
                         }
                     }
@@ -329,7 +329,7 @@
                     plugins: {
                         legend: {
                             position: 'right',
-                            labels: { font: { size: 11 }, padding: 8, boxWidth: 12 }
+                            labels: { font: { size: 13, weight: '600' }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
                         },
                         tooltip: {
                             callbacks: {
@@ -411,7 +411,7 @@
                             }
                         },
                         plugins: {
-                            legend: { display: true, position: 'top', labels: { font: { size: 12 }, padding: 12 } },
+                            legend: { display: true, position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } },
                             tooltip: {
                                 callbacks: {
                                     label: function(context) {
@@ -424,8 +424,8 @@
                             }
                         },
                         scales: {
-                            x: { stacked: true, title: { display: true, text: 'Newspaper', font: { size: 12 } }, grid: { display: false } },
-                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Articles', font: { size: 12 } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                            x: { stacked: true, title: { display: true, text: 'Newspaper', font: { size: 13, weight: '600' } }, grid: { display: false } },
+                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Articles', font: { size: 13, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
                         }
                     }
                 });

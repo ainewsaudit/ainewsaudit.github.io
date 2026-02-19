@@ -526,11 +526,6 @@
                 }
             });
 
-            document.getElementById('apply-filters').addEventListener('click', () => {
-                currentPage = 1;
-                searchArticles();
-            });
-
             document.getElementById('reset-filters').addEventListener('click', resetFilters);
             document.getElementById('main-reset-button').addEventListener('click', resetFilters);
 
@@ -553,17 +548,44 @@
                 }
             });
 
+            // Live filtering: auto-search on any filter change
+            const liveSearch = () => { currentPage = 1; searchArticles(); };
+
+            ['topic-filter', 'dataset-filter', 'sort-filter'].forEach(id => {
+                document.getElementById(id).addEventListener('change', liveSearch);
+            });
+            document.querySelectorAll('.prediction-checkbox').forEach(cb => {
+                cb.addEventListener('change', liveSearch);
+            });
+            ['start-date', 'end-date'].forEach(id => {
+                document.getElementById(id).addEventListener('change', liveSearch);
+            });
+
+            let debounceTimer = null;
+            const debouncedSearch = () => {
+                clearTimeout(debounceTimer);
+                debounceTimer = setTimeout(liveSearch, 400);
+            };
+
+            ['author-filter', 'newspaper-filter'].forEach(id => {
+                document.getElementById(id).addEventListener('input', debouncedSearch);
+            });
+
             document.getElementById('ai-min').addEventListener('input', function() {
                 document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+                debouncedSearch();
             });
             document.getElementById('ai-max').addEventListener('input', function() {
                 document.getElementById('ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+                debouncedSearch();
             });
             document.getElementById('max-ai-min').addEventListener('input', function() {
                 document.getElementById('max-ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+                debouncedSearch();
             });
             document.getElementById('max-ai-max').addEventListener('input', function() {
                 document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+                debouncedSearch();
             });
 
             console.log('✅ All event listeners set up successfully');
@@ -799,34 +821,17 @@
                                 </select>
                             </div>
 
-                            <!-- Dataset Type -->
-                            <div>
-                                <label class="filter-label">Dataset Type</label>
-                                <select id="dataset-filter" class="filter-input">
-                                    <option value="">All Datasets</option>
-                                    <option value="recent_news">Recent News</option>
-                                    <option value="opinions">Opinions</option>
-                                    <option value="reporters">Reporters</option>
-                                </select>
-                            </div>
-
-                            <!-- AI Prediction -->
-                            <div>
-                                <label class="filter-label">AI Prediction</label>
-                                <div id="prediction-filters" class="space-y-1.5 p-2.5 bg-gray-50 rounded-lg">
-                                    <label class="flex items-center cursor-pointer py-0.5">
-                                        <input type="checkbox" value="Human" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
-                                        <span class="text-xs text-gray-600">Human</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer py-0.5">
-                                        <input type="checkbox" value="Mixed" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
-                                        <span class="text-xs text-gray-600">Mixed</span>
-                                    </label>
-                                    <label class="flex items-center cursor-pointer py-0.5">
-                                        <input type="checkbox" value="AI" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
-                                        <span class="text-xs text-gray-600">AI</span>
-                                    </label>
-                                </div>
+                            <!-- Hidden: dataset-filter and prediction checkboxes (driven by segmented controls above) -->
+                            <select id="dataset-filter" class="hidden">
+                                <option value="">All Datasets</option>
+                                <option value="recent_news">Recent News</option>
+                                <option value="opinions">Opinions</option>
+                                <option value="reporters">Reporters</option>
+                            </select>
+                            <div id="prediction-filters" class="hidden">
+                                <input type="checkbox" value="Human" class="prediction-checkbox">
+                                <input type="checkbox" value="Mixed" class="prediction-checkbox">
+                                <input type="checkbox" value="AI" class="prediction-checkbox">
                             </div>
 
                             <!-- Sort By -->
@@ -896,13 +901,10 @@
                                 </div>
                             </div>
 
-                            <!-- Action Buttons -->
-                            <div class="flex gap-2 pt-1">
-                                <button id="apply-filters" class="flex-1 bg-slate-900 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">
-                                    Apply
-                                </button>
-                                <button id="reset-filters" class="flex-1 bg-gray-100 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">
-                                    Reset
+                            <!-- Reset Button -->
+                            <div class="pt-1">
+                                <button id="reset-filters" class="w-full bg-gray-100 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                    Reset All Filters
                                 </button>
                             </div>
                         </div>
