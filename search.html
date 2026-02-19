@@ -8,225 +8,237 @@
     <meta http-equiv="Expires" content="0">
     <title>AI News Audit - Search Articles</title>
     <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js"></script>
+<style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .filter-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+    .filter-input {
+        width: 100%;
+        padding: 7px 10px;
+        font-size: 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 150ms, box-shadow 150ms;
+        background: white;
+    }
+    .filter-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    input[type="range"] {
+        -webkit-appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: #e5e7eb;
+        outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+</style>
 </head>
-<!-- Version: 2025-10-19-v5 -->
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- Header -->
-        <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">🔍 AI News Audit</h1>
-            <p class="text-base sm:text-lg lg:text-xl text-gray-600 px-4">Search and analyze 251,000+ news articles for AI-generated content</p>
-        </div>
-
-        <!-- Search Bar -->
-        <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                    <input type="text" id="search-input" 
-                           placeholder="Search articles by title, content, or author..." 
-                           class="flex-1 p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <button id="search-button" 
-                                class="bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
-                            Search
-                        </button>
-                        <button id="main-reset-button" 
-                                class="bg-gray-500 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
-                            Reset
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Quick Stats -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6" id="quick-stats">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700" id="stat-total">-</div>
-                        <div class="text-xs sm:text-sm text-blue-600">Total Articles</div>
-                    </div>
-                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700" id="stat-recent">-</div>
-                        <div class="text-xs sm:text-sm text-green-600">Recent News →</div>
-                    </a>
-                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700" id="stat-opinions">-</div>
-                        <div class="text-xs sm:text-sm text-purple-600">Opinions →</div>
-                    </a>
-                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700" id="stat-reporters">-</div>
-                        <div class="text-xs sm:text-sm text-orange-600">Reporters →</div>
-                    </a>
-                </div>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Navigation -->
+    <header class="bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <a href="/" class="text-white font-semibold text-sm">AI News Audit</a>
+                <nav class="flex items-center gap-6">
+                    <a href="/" class="text-white text-sm font-medium">Search</a>
+                    <a href="dataset.html" class="text-slate-400 hover:text-white text-sm transition-colors">Datasets</a>
+                    <a href="metrics.html" class="text-slate-400 hover:text-white text-sm transition-colors">Metrics</a>
+                </nav>
             </div>
         </div>
+    </header>
 
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6" id="filters-section">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800">🎯 Advanced Filters</h2>
-                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium text-sm sm:text-base">
-                    Show Filters
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- Search Bar -->
+        <div class="max-w-3xl mx-auto mb-8">
+            <div class="bg-white rounded-2xl shadow-lg shadow-slate-900/[0.05] px-4 sm:px-5 py-3 flex items-center gap-3">
+                <button id="search-button" class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0" aria-label="Search">
+                    <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                    </svg>
+                </button>
+                <input type="text" id="search-input"
+                       placeholder="Search articles by title, content, or author..."
+                       class="flex-1 py-2 text-sm sm:text-base text-gray-900 placeholder-gray-400 outline-none bg-transparent min-w-0">
+                <button id="main-reset-button"
+                        class="text-xs text-gray-400 hover:text-gray-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+                    Reset
                 </button>
             </div>
-            
-            <div id="filters-content" class="hidden space-y-4">
-                <!-- Row 1: Basic Filters -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
-                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">All Topics</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Dataset</label>
-                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">All Datasets</option>
-                            <option value="recent_news">Recent News</option>
-                            <option value="opinions">Opinions</option>
-                            <option value="reporters">Reporters</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Prediction</label>
-                        <select id="prediction-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">All Predictions</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="date">Date (Newest)</option>
-                            <option value="ai_likelihood">AI Likelihood</option>
-                            <option value="title">Title (A-Z)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 2: Date Range and Author -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <span class="text-gray-400 text-sm">to</span>
-                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Author</label>
-                        <input type="text" id="author-filter" list="author-list" placeholder="Search for author..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        <datalist id="author-list">
-                            <!-- Will be populated dynamically -->
-                        </datalist>
-                    </div>
-                </div>
-
-                <!-- Row 3: Newspaper -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Newspaper</label>
-                        <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search for newspaper..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        <datalist id="newspaper-list">
-                            <!-- Will be populated dynamically -->
-                        </datalist>
-                    </div>
-                    <div>
-                        <!-- Empty div for layout balance -->
-                    </div>
-                </div>
-
-                <!-- Row 4: AI Likelihood Sliders -->
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Likelihood Range</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
-                            <span id="ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
-                            <span class="text-gray-400">to</span>
-                            <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
-                            <span id="ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Max AI Likelihood (Chunks)</label>
-                        <div class="flex items-center space-x-2">
-                            <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
-                            <span id="max-ai-min-value" class="text-sm text-gray-600 min-w-[3rem]">0.00</span>
-                            <span class="text-gray-400">to</span>
-                            <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
-                            <span id="max-ai-max-value" class="text-sm text-gray-600 min-w-[3rem]">1.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex items-center space-x-2 pt-4">
-                    <button id="apply-filters" class="bg-blue-600 text-white px-6 py-2 rounded-md hover:bg-blue-700 font-medium">
-                        Apply Filters
-                    </button>
-                    <button id="reset-filters" class="bg-gray-500 text-white px-6 py-2 rounded-md hover:bg-gray-600 font-medium">
-                        Reset
-                    </button>
-                </div>
-            </div>
         </div>
 
-        <!-- Results Count -->
-        <div class="mb-4">
-            <p class="text-gray-700 font-medium" id="results-count">Loading articles...</p>
-        </div>
+        <!-- Two Column Layout -->
+        <div class="lg:flex lg:gap-8">
+            <!-- Sidebar -->
+            <aside class="lg:w-64 flex-shrink-0 mb-6 lg:mb-0">
+                <div class="bg-white rounded-xl border border-gray-200 lg:sticky lg:top-4">
+                    <div class="p-4 sm:p-5">
+                        <div class="flex items-center justify-between lg:hidden mb-3">
+                            <h2 class="text-sm font-semibold text-gray-900">Filters</h2>
+                            <button id="toggle-filters" class="text-xs text-blue-600 hover:text-blue-800 font-medium">Show Filters</button>
+                        </div>
+                        <h2 class="hidden lg:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Filters</h2>
 
-        <!-- Loading Indicator -->
-        <div id="loading-indicator" class="hidden bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
-            <div class="flex items-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
-                <div>
-                    <p class="text-blue-900 font-semibold text-lg">🔍 Searching...</p>
-                    <p class="text-blue-700 text-sm">Finding articles that match your criteria</p>
+                        <div id="filters-content" class="hidden lg:block space-y-5">
+                            <div>
+                                <label class="filter-label">Topic</label>
+                                <select id="topic-filter" class="filter-input">
+                                    <option value="">All Topics</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label">Dataset</label>
+                                <select id="dataset-filter" class="filter-input">
+                                    <option value="">All Datasets</option>
+                                    <option value="recent_news">Recent News</option>
+                                    <option value="opinions">Opinions</option>
+                                    <option value="reporters">Reporters</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label">Prediction</label>
+                                <select id="prediction-filter" class="filter-input">
+                                    <option value="">All Predictions</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label">Sort By</label>
+                                <select id="sort-filter" class="filter-input">
+                                    <option value="date">Date (Newest)</option>
+                                    <option value="ai_likelihood">AI Likelihood</option>
+                                    <option value="title">Title (A-Z)</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="filter-label">Date Range</label>
+                                <div class="space-y-1.5">
+                                    <input type="date" id="start-date" class="filter-input">
+                                    <input type="date" id="end-date" class="filter-input">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="filter-label">Author</label>
+                                <input type="text" id="author-filter" list="author-list" placeholder="Search author..." class="filter-input">
+                                <datalist id="author-list"></datalist>
+                            </div>
+                            <div>
+                                <label class="filter-label">Newspaper</label>
+                                <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search newspaper..." class="filter-input">
+                                <datalist id="newspaper-list"></datalist>
+                            </div>
+                            <div>
+                                <label class="filter-label">AI Likelihood</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Min</span>
+                                        <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                                        <span id="ai-min-value" class="text-xs text-gray-500 w-8 text-right">0%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Max</span>
+                                        <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                                        <span id="ai-max-value" class="text-xs text-gray-500 w-8 text-right">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="filter-label">Max AI (Chunks)</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Min</span>
+                                        <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                                        <span id="max-ai-min-value" class="text-xs text-gray-500 w-8 text-right">0%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Max</span>
+                                        <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                                        <span id="max-ai-max-value" class="text-xs text-gray-500 w-8 text-right">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="flex gap-2 pt-1">
+                                <button id="apply-filters" class="flex-1 bg-slate-900 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">Apply</button>
+                                <button id="reset-filters" class="flex-1 bg-gray-100 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">Reset</button>
+                            </div>
+                        </div>
+                    </div>
                 </div>
-            </div>
+            </aside>
+
+            <!-- Results -->
+            <main class="flex-1 min-w-0">
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-500" id="results-count">Loading articles...</p>
+                </div>
+
+                <div id="loading-indicator" class="hidden bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-slate-900 border-t-transparent"></div>
+                        <p class="text-sm text-gray-600">Searching articles...</p>
+                    </div>
+                </div>
+
+                <div id="article-list" class="space-y-3"></div>
+                <div class="flex justify-center mt-8" id="pagination"></div>
+            </main>
         </div>
-
-        <!-- Article List -->
-        <div id="article-list" class="space-y-4"></div>
-
-        <!-- Pagination -->
-        <div class="flex justify-center mt-8" id="pagination"></div>
     </div>
 
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 mt-12 py-6">
+        <p class="text-center text-xs text-gray-400">Website made with the help of Claude Opus via Cursor</p>
+    </footer>
+
     <script>
-        // Static data loader
         console.log('Using static data loader');
         let currentPage = 1;
         const pageSize = 20;
         let totalArticles = 0;
         let filterOptions = {};
 
-        // Load stats on page load
         async function loadStats() {
             try {
                 const stats = await window.dataLoader.getStats();
-                
                 const total = Object.values(stats.datasets).reduce((sum, count) => sum + count, 0);
-                document.getElementById('stat-total').textContent = total.toLocaleString();
-                document.getElementById('stat-recent').textContent = (stats.datasets.recent_news || 0).toLocaleString();
-                document.getElementById('stat-opinions').textContent = (stats.datasets.opinions || 0).toLocaleString();
-                document.getElementById('stat-reporters').textContent = (stats.datasets.reporters || 0).toLocaleString();
             } catch (error) {
                 console.error('Error loading stats:', error);
             }
         }
 
-        // Load filter options
         async function loadFilterOptions() {
             try {
                 filterOptions = await window.dataLoader.getFilterOptions();
-                
-                // Populate topics
                 const topicSelect = document.getElementById('topic-filter');
                 filterOptions.topics.forEach(topic => {
                     const option = document.createElement('option');
@@ -234,12 +246,8 @@
                     option.textContent = topic;
                     topicSelect.appendChild(option);
                 });
-                
-                // Populate predictions (normalized)
                 const predictionSelect = document.getElementById('prediction-filter');
-                // Force fixed order and labels
-                const finalPreds = ['Human', 'Mixed', 'AI'];
-                finalPreds.forEach(pred => {
+                ['Human', 'Mixed', 'AI'].forEach(pred => {
                     const option = document.createElement('option');
                     option.value = pred;
                     option.textContent = pred;
@@ -250,29 +258,21 @@
             }
         }
 
-        // Get prediction color
-        function getPredictionColor(prediction) {
-            if (!prediction) return 'bg-gray-600';
+        function getPredictionBadge(prediction) {
+            if (!prediction) return 'bg-gray-100 text-gray-600';
             const pred = prediction.toLowerCase();
-            if (pred === 'human') {
-                return 'bg-green-600';
-            } else if (pred === 'mixed') {
-                return 'bg-yellow-500';
-            } else if (pred === 'ai') {
-                return 'bg-red-600';
-            }
-            return 'bg-gray-600';
+            if (pred === 'human') return 'bg-emerald-50 text-emerald-700';
+            if (pred === 'mixed') return 'bg-amber-50 text-amber-700';
+            if (pred === 'ai') return 'bg-red-50 text-red-700';
+            return 'bg-gray-100 text-gray-600';
         }
 
-        // Get readable prediction label
         function getPredictionLabel(prediction) {
             if (!prediction) return 'Unknown';
-            return prediction;  // Now using full names directly
+            return prediction;
         }
 
-        // Search articles
         async function searchArticles() {
-            // Show loading indicator
             document.getElementById('loading-indicator').classList.remove('hidden');
             document.getElementById('article-list').innerHTML = '';
             document.getElementById('pagination').innerHTML = '';
@@ -294,12 +294,7 @@
 
             const offset = (currentPage - 1) * pageSize;
             
-            // Build query options
-            const options = {
-                limit: pageSize,
-                offset: offset,
-                sort: sort
-            };
+            const options = { limit: pageSize, offset: offset, sort: sort };
             if (search) options.search = search;
             if (topic) options.topic = topic;
             if (dataset) options.dataset_type = dataset;
@@ -315,68 +310,76 @@
 
             try {
                 const data = await window.dataLoader.getArticles(options);
-                
                 totalArticles = data.total;
-                // Ensure we use normalized final_prediction when rendering
                 renderArticles(data.articles);
                 renderPagination();
-                
                 document.getElementById('results-count').textContent = 
                     `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
             } catch (error) {
                 console.error('Error searching articles:', error);
                 document.getElementById('article-list').innerHTML = 
-                    '<div class="bg-red-50 text-red-700 p-4 rounded-lg">Error loading articles. Please try again.</div>';
+                    '<div class="bg-red-50 text-red-700 p-4 rounded-lg text-sm">Error loading articles. Please try again.</div>';
             } finally {
-                // Hide loading indicator when done
                 document.getElementById('loading-indicator').classList.add('hidden');
             }
         }
 
-        // Render articles
         function renderArticles(articles) {
-            console.log('Rendering articles. First article:', articles[0]);
-            console.log('First article has id?', articles[0] && 'id' in articles[0]);
             const container = document.getElementById('article-list');
             container.innerHTML = '';
 
             if (articles.length === 0) {
-                container.innerHTML = '<div class="bg-yellow-50 text-yellow-700 p-8 rounded-lg text-center text-lg">No articles found matching your criteria.</div>';
+                container.innerHTML = '<div class="bg-white border border-gray-200 text-gray-500 p-8 rounded-xl text-center text-sm">No articles found matching your criteria.</div>';
                 return;
             }
 
             articles.forEach(article => {
                 const div = document.createElement('div');
-                div.className = "bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-6";
+                div.className = "bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors cursor-pointer";
+                div.onclick = function() { window.location.href = `article.html?id=${article.id}&dataset=${article.dataset_type}`; };
                 
                 const date = new Date(article.publish_date).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric'
+                    year: 'numeric', month: 'short', day: 'numeric'
                 });
 
+                const aiPct = article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) : null;
+                const maxPct = article.max_ai_likelihood !== null ? (article.max_ai_likelihood * 100).toFixed(0) : null;
+                const aiBarColor = aiPct !== null ? (aiPct >= 70 ? 'bg-red-400' : aiPct >= 30 ? 'bg-amber-400' : 'bg-emerald-400') : '';
+                const maxBarColor = maxPct !== null ? (maxPct >= 70 ? 'bg-red-400' : maxPct >= 30 ? 'bg-amber-400' : 'bg-emerald-400') : '';
+
                 div.innerHTML = `
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
-                                onclick="window.location.href='article.html?id=${article.id}'">
-                                ${article.title}
-                            </h3>
-                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-                                <span>📅 ${date}</span>
-                                ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
-                                ${article.newspaper ? `<span>📰 ${article.newspaper}</span>` : ''}
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
-                                    ${getPredictionLabel(article.prediction)}
-                                </span>
-                                <span class="text-blue-600 font-medium">${article.dataset_type}</span>
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-semibold text-gray-900 mb-1.5 leading-snug">${article.title}</h3>
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
+                                <span>${date}</span>
+                                ${article.authors ? `<span class="text-gray-300">&middot;</span><span>${article.authors}</span>` : ''}
+                                ${article.newspaper ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
                             </div>
-                            <p class="text-gray-700 mb-3 leading-relaxed">${article.text_preview}</p>
-                            <div class="flex items-center gap-4 text-sm">
-                                ${article.primary_topic ? `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">📂 ${article.primary_topic}</span>` : ''}
-                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) + '%' : 'N/A'}</span></span>
-                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${(article.max_ai_likelihood * 100).toFixed(0)}%</span></span>` : ''}
+                            <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${article.primary_topic}</span>` : ''}
+                                <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${getPredictionBadge(article.prediction)}">${getPredictionLabel(article.prediction)}</span>
+                                <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">${article.dataset_type}</span>
                             </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
+                            ${aiPct !== null ? `
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400 w-6 text-right">AI</span>
+                                <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${aiBarColor} rounded-full" style="width: ${aiPct}%"></div>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-600 w-8 text-right">${aiPct}%</span>
+                            </div>` : ''}
+                            ${maxPct !== null ? `
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400 w-6 text-right">Max</span>
+                                <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${maxBarColor} rounded-full" style="width: ${maxPct}%"></div>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-600 w-8 text-right">${maxPct}%</span>
+                            </div>` : ''}
                         </div>
                     </div>
                 `;
@@ -384,83 +387,48 @@
             });
         }
 
-        // Render pagination
         function renderPagination() {
             const container = document.getElementById('pagination');
             container.innerHTML = '';
-            
             const totalPages = Math.ceil(totalArticles / pageSize);
             if (totalPages <= 1) return;
 
-            // Previous button
             if (currentPage > 1) {
                 const prevBtn = document.createElement('button');
                 prevBtn.textContent = '← Previous';
-                prevBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
-                prevBtn.onclick = () => {
-                    currentPage--;
-                    searchArticles();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
+                prevBtn.className = 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
+                prevBtn.onclick = () => { currentPage--; searchArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
                 container.appendChild(prevBtn);
             }
 
-            // Page numbers
             const maxPages = 5;
             let startPage = Math.max(1, currentPage - 2);
             let endPage = Math.min(totalPages, startPage + maxPages - 1);
-            
-            if (endPage - startPage < maxPages - 1) {
-                startPage = Math.max(1, endPage - maxPages + 1);
-            }
+            if (endPage - startPage < maxPages - 1) startPage = Math.max(1, endPage - maxPages + 1);
 
             for (let i = startPage; i <= endPage; i++) {
                 const pageBtn = document.createElement('button');
                 pageBtn.textContent = i;
                 pageBtn.className = i === currentPage
-                    ? 'mx-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold'
-                    : 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
-                pageBtn.onclick = () => {
-                    currentPage = i;
-                    searchArticles();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
+                    ? 'mx-1 px-3 py-1.5 text-sm bg-slate-900 text-white rounded-lg font-medium'
+                    : 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
+                pageBtn.onclick = () => { currentPage = i; searchArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
                 container.appendChild(pageBtn);
             }
 
-            // Next button
             if (currentPage < totalPages) {
                 const nextBtn = document.createElement('button');
                 nextBtn.textContent = 'Next →';
-                nextBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
-                nextBtn.onclick = () => {
-                    currentPage++;
-                    searchArticles();
-                    window.scrollTo({ top: 0, behavior: 'smooth' });
-                };
+                nextBtn.className = 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
+                nextBtn.onclick = () => { currentPage++; searchArticles(); window.scrollTo({ top: 0, behavior: 'smooth' }); };
                 container.appendChild(nextBtn);
             }
         }
 
-        // Event listeners
-        document.getElementById('search-button').addEventListener('click', () => {
-            currentPage = 1;
-            searchArticles();
-        });
+        document.getElementById('search-button').addEventListener('click', () => { currentPage = 1; searchArticles(); });
+        document.getElementById('search-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { currentPage = 1; searchArticles(); } });
+        document.getElementById('apply-filters').addEventListener('click', () => { currentPage = 1; searchArticles(); });
 
-        document.getElementById('search-input').addEventListener('keypress', (e) => {
-            if (e.key === 'Enter') {
-                currentPage = 1;
-                searchArticles();
-            }
-        });
-
-        document.getElementById('apply-filters').addEventListener('click', () => {
-            currentPage = 1;
-            searchArticles();
-        });
-
-        // Reset function shared by both reset buttons
         function resetFilters() {
             document.getElementById('search-input').value = '';
             document.getElementById('topic-filter').value = '';
@@ -475,10 +443,10 @@
             document.getElementById('ai-max').value = 1;
             document.getElementById('max-ai-min').value = 0;
             document.getElementById('max-ai-max').value = 1;
-            document.getElementById('ai-min-value').textContent = '0.00';
-            document.getElementById('ai-max-value').textContent = '1.00';
-            document.getElementById('max-ai-min-value').textContent = '0.00';
-            document.getElementById('max-ai-max-value').textContent = '1.00';
+            document.getElementById('ai-min-value').textContent = '0%';
+            document.getElementById('ai-max-value').textContent = '100%';
+            document.getElementById('max-ai-min-value').textContent = '0%';
+            document.getElementById('max-ai-max-value').textContent = '100%';
             currentPage = 1;
             searchArticles();
         }
@@ -486,7 +454,6 @@
         document.getElementById('reset-filters').addEventListener('click', resetFilters);
         document.getElementById('main-reset-button').addEventListener('click', resetFilters);
 
-        // Toggle filters
         document.getElementById('toggle-filters').addEventListener('click', () => {
             const content = document.getElementById('filters-content');
             const button = document.getElementById('toggle-filters');
@@ -499,7 +466,6 @@
             }
         });
 
-        // Range slider updates
         document.getElementById('ai-min').addEventListener('input', function() {
             document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
@@ -513,28 +479,17 @@
             document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
         });
 
-        // Initialize on page load
         document.addEventListener('DOMContentLoaded', async () => {
             await Promise.all([loadStats(), loadFilterOptions()]);
             
-            // Check for URL parameters and set filters
             const urlParams = new URLSearchParams(window.location.search);
             const datasetType = urlParams.get('dataset_type');
             const topic = urlParams.get('topic');
             const prediction = urlParams.get('prediction');
             
-            if (datasetType) {
-                document.getElementById('dataset-filter').value = datasetType;
-            }
-            if (topic) {
-                document.getElementById('topic-filter').value = topic;
-            }
-            if (prediction) {
-                // Handle both string and array formats for backward compatibility
-                const predArray = Array.isArray(prediction) ? prediction : [prediction];
-                // For search.html, we'll use the first prediction value in the dropdown
-                document.getElementById('prediction-filter').value = predArray[0];
-            }
+            if (datasetType) document.getElementById('dataset-filter').value = datasetType;
+            if (topic) document.getElementById('topic-filter').value = topic;
+            if (prediction) document.getElementById('prediction-filter').value = prediction;
             
             searchArticles();
         });

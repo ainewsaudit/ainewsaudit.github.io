@@ -8,6 +8,9 @@
     <meta http-equiv="Expires" content="0">
     <title>AI News Audit - Search Articles</title>
     <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
     <script src="/static-data-loader.js?v=1760922767"></script>
@@ -15,7 +18,6 @@
     <script>
         console.log('🚀 INDEX.HTML SCRIPT STARTING... - Version 2025-10-20-v7 - Background loading enabled');
         
-        // Test basic functionality
         try {
             console.log('Script is running!');
             console.log('dataLoader available?', typeof window.dataLoader);
@@ -23,22 +25,18 @@
             console.error('Error in script:', error);
         }
         
-        // Global variables
         let currentPage = 1;
         const pageSize = 20;
         let totalArticles = 0;
         let filterOptions = {};
 
-        // Helper functions for prediction checkboxes
         function getSelectedPredictions() {
             const checkboxes = document.querySelectorAll('.prediction-checkbox:checked');
             return Array.from(checkboxes).map(cb => cb.value);
         }
         
         function setSelectedPredictions(predictions) {
-            // Clear all first
             document.querySelectorAll('.prediction-checkbox').forEach(cb => cb.checked = false);
-            // Check the specified ones
             if (predictions && predictions.length > 0) {
                 predictions.forEach(pred => {
                     const checkbox = document.querySelector(`.prediction-checkbox[value="${pred}"]`);
@@ -47,7 +45,6 @@
             }
         }
 
-        // Save current state to history
         function saveState() {
             const state = {
                 search: document.getElementById('search-input').value,
@@ -70,7 +67,6 @@
             console.log('💾 Saved state:', state);
         }
 
-        // Restore state from history
         function restoreState(state) {
             if (!state) return false;
             
@@ -89,7 +85,6 @@
             document.getElementById('max-ai-min').value = state.maxAiMin || 0;
             document.getElementById('max-ai-max').value = state.maxAiMax || 1;
             
-            // Update slider displays
             document.getElementById('ai-min-value').textContent = (parseFloat(state.aiMin || 0) * 100).toFixed(0) + '%';
             document.getElementById('ai-max-value').textContent = (parseFloat(state.aiMax || 1) * 100).toFixed(0) + '%';
             document.getElementById('max-ai-min-value').textContent = (parseFloat(state.maxAiMin || 0) * 100).toFixed(0) + '%';
@@ -101,9 +96,7 @@
             return true;
         }
 
-        // Search articles
         async function searchArticles() {
-            // Show loading indicator
             document.getElementById('loading-indicator').classList.remove('hidden');
             document.getElementById('article-list').innerHTML = '';
             document.getElementById('pagination').innerHTML = '';
@@ -125,7 +118,6 @@
 
             const offset = (currentPage - 1) * pageSize;
             
-            // Build query options
             const options = {
                 limit: pageSize,
                 offset: offset,
@@ -148,33 +140,26 @@
                 const data = await window.dataLoader.getArticles(options);
                 
                 totalArticles = data.total;
-                // Ensure we use normalized final_prediction when rendering
                 renderArticles(data.articles);
                 renderPagination();
                 
                 document.getElementById('results-count').textContent = 
                     `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
                 
-                // Save state for browser back button
                 saveState();
-                
-                // Start background loading of other datasets after first successful search
                 startBackgroundLoading();
             } catch (error) {
                 console.error('Error searching articles:', error);
                 document.getElementById('article-list').innerHTML = 
                     '<div class="bg-red-50 text-red-700 p-4 rounded-lg">Error loading articles. Please try again.</div>';
             } finally {
-                // Hide loading indicator when done
                 document.getElementById('loading-indicator').classList.add('hidden');
             }
         }
 
-        // Store articles for quick access
         let currentArticles = [];
         let backgroundLoadingStarted = false;
 
-        // Start background loading of other datasets
         function startBackgroundLoading() {
             if (backgroundLoadingStarted) {
                 console.log('📊 Background loading already started, skipping');
@@ -184,14 +169,11 @@
             
             console.log('🔄 Starting background loading of remaining datasets...');
             
-            // Enable multi-dataset mode so we don't clear datasets
             window.dataLoader.enableMultiDatasetMode();
             
-            // Get the currently loaded dataset
             const currentDataset = document.getElementById('dataset-filter').value;
             const datasetsToLoad = ['recent_news', 'opinions', 'reporters'].filter(ds => ds !== currentDataset);
             
-            // Load them one at a time in the background
             setTimeout(async () => {
                 for (const dataset of datasetsToLoad) {
                     try {
@@ -203,66 +185,83 @@
                     }
                 }
                 console.log('🎉 All datasets loaded in background and cached!');
-            }, 2000); // Wait 2 seconds before starting background load
+            }, 2000);
         }
 
-        // Open article with cached data
         function openArticle(articleId, datasetType) {
-            // Find the article in our current results
             const article = currentArticles.find(a => a.id === articleId);
             if (article) {
-                // Store the full article data
                 sessionStorage.setItem('cachedArticle', JSON.stringify(article));
                 console.log('💾 Cached article data for instant loading');
             }
             window.location.href = `article.html?id=${articleId}&dataset=${datasetType}`;
         }
 
-        // Render articles
         function renderArticles(articles) {
             console.log('Rendering articles. First article:', articles[0]);
             console.log('First article has id?', articles[0] && 'id' in articles[0]);
-            currentArticles = articles; // Store for quick access
+            currentArticles = articles;
             const container = document.getElementById('article-list');
             container.innerHTML = '';
 
             if (articles.length === 0) {
-                container.innerHTML = '<div class="bg-yellow-50 text-yellow-700 p-8 rounded-lg text-center text-lg">No articles found matching your criteria.</div>';
+                container.innerHTML = '<div class="bg-white border border-gray-200 text-gray-500 p-8 rounded-xl text-center">No articles found matching your criteria.</div>';
                 return;
             }
 
             articles.forEach(article => {
                 const div = document.createElement('div');
-                div.className = "bg-white rounded-xl shadow-md hover:shadow-xl transition-shadow p-6";
+                div.className = "bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors cursor-pointer";
+                div.onclick = function() { openArticle(article.id, article.dataset_type); };
                 
                 const date = new Date(article.publish_date).toLocaleDateString('en-US', {
                     year: 'numeric',
-                    month: 'long',
+                    month: 'short',
                     day: 'numeric'
                 });
 
+                const aiPct = article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) : null;
+                const maxPct = article.max_ai_likelihood !== null ? (article.max_ai_likelihood * 100).toFixed(0) : null;
+                const aiBarColor = aiPct !== null ? (aiPct >= 70 ? 'bg-red-400' : aiPct >= 30 ? 'bg-amber-400' : 'bg-emerald-400') : '';
+                const maxBarColor = maxPct !== null ? (maxPct >= 70 ? 'bg-red-400' : maxPct >= 30 ? 'bg-amber-400' : 'bg-emerald-400') : '';
+
                 div.innerHTML = `
-                    <div class="flex items-start justify-between">
-                        <div class="flex-1">
-                            <h3 class="text-xl font-bold text-gray-900 mb-2 hover:text-blue-600 cursor-pointer"
-                                onclick="openArticle(${article.id}, '${article.dataset_type}')">
+                    <div class="flex items-start justify-between gap-4">
+                        <div class="flex-1 min-w-0">
+                            <h3 class="text-base font-semibold text-gray-900 mb-1.5 leading-snug">
                                 ${article.title}
                             </h3>
-                            <div class="flex flex-wrap items-center gap-3 text-sm text-gray-600 mb-3">
-                                <span>📅 ${date}</span>
-                                ${article.authors ? `<span>✍️ ${article.authors}</span>` : ''}
-                                ${article.newspaper ? `<span>📰 ${article.newspaper}</span>` : ''}
-                                <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold text-white ${getPredictionColor(article.prediction)}">
+                            <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
+                                <span>${date}</span>
+                                ${article.authors ? `<span class="text-gray-300">&middot;</span><span>${article.authors}</span>` : ''}
+                                ${article.newspaper ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
+                            <div class="flex flex-wrap items-center gap-2">
+                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${article.primary_topic}</span>` : ''}
+                                <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${getPredictionBadge(article.prediction)}">
                                     ${getPredictionLabel(article.prediction)}
                                 </span>
-                                <span class="text-blue-600 font-medium">${article.dataset_type}</span>
+                                <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">${article.dataset_type}</span>
                             </div>
-                            <p class="text-gray-700 mb-3 leading-relaxed">${article.text_preview}</p>
-                            <div class="flex items-center gap-4 text-sm">
-                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="bg-purple-100 text-purple-700 px-3 py-1 rounded-full">📂 ${article.primary_topic}</span>` : ''}
-                                <span class="text-gray-600">AI: <span class="font-bold">${article.ai_likelihood !== null ? (article.ai_likelihood * 100).toFixed(0) + '%' : 'N/A'}</span></span>
-                                ${article.max_ai_likelihood !== null ? `<span class="text-purple-600">Max: <span class="font-bold">${(article.max_ai_likelihood * 100).toFixed(0)}%</span></span>` : ''}
-                            </div>
+                        </div>
+                        <div class="flex flex-col items-end gap-2 flex-shrink-0 pt-1">
+                            ${aiPct !== null ? `
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400 w-6 text-right">AI</span>
+                                <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${aiBarColor} rounded-full" style="width: ${aiPct}%"></div>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-600 w-8 text-right">${aiPct}%</span>
+                            </div>` : ''}
+                            ${maxPct !== null ? `
+                            <div class="flex items-center gap-2">
+                                <span class="text-xs text-gray-400 w-6 text-right">Max</span>
+                                <div class="w-16 h-1.5 bg-gray-100 rounded-full overflow-hidden">
+                                    <div class="h-full ${maxBarColor} rounded-full" style="width: ${maxPct}%"></div>
+                                </div>
+                                <span class="text-xs font-semibold text-gray-600 w-8 text-right">${maxPct}%</span>
+                            </div>` : ''}
                         </div>
                     </div>
                 `;
@@ -270,27 +269,29 @@
             });
         }
 
-        // Get prediction color
         function getPredictionColor(prediction) {
             if (!prediction) return 'bg-gray-600';
             const pred = prediction.toLowerCase();
-            if (pred === 'human') {
-                return 'bg-green-600';
-            } else if (pred === 'mixed') {
-                return 'bg-yellow-500';
-            } else if (pred === 'ai') {
-                return 'bg-red-600';
-            }
+            if (pred === 'human') return 'bg-green-600';
+            if (pred === 'mixed') return 'bg-yellow-500';
+            if (pred === 'ai') return 'bg-red-600';
             return 'bg-gray-600';
         }
 
-        // Get readable prediction label
         function getPredictionLabel(prediction) {
             if (!prediction) return 'Unknown';
-            return prediction;  // Now using full names directly
+            return prediction;
         }
 
-        // Render pagination
+        function getPredictionBadge(prediction) {
+            if (!prediction) return 'bg-gray-100 text-gray-600';
+            const pred = prediction.toLowerCase();
+            if (pred === 'human') return 'bg-emerald-50 text-emerald-700';
+            if (pred === 'mixed') return 'bg-amber-50 text-amber-700';
+            if (pred === 'ai') return 'bg-red-50 text-red-700';
+            return 'bg-gray-100 text-gray-600';
+        }
+
         function renderPagination() {
             const container = document.getElementById('pagination');
             container.innerHTML = '';
@@ -298,11 +299,10 @@
             const totalPages = Math.ceil(totalArticles / pageSize);
             if (totalPages <= 1) return;
 
-            // Previous button
             if (currentPage > 1) {
                 const prevBtn = document.createElement('button');
                 prevBtn.textContent = '← Previous';
-                prevBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                prevBtn.className = 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
                 prevBtn.onclick = () => {
                     currentPage--;
                     searchArticles();
@@ -311,7 +311,6 @@
                 container.appendChild(prevBtn);
             }
 
-            // Page numbers
             const maxPages = 5;
             let startPage = Math.max(1, currentPage - 2);
             let endPage = Math.min(totalPages, startPage + maxPages - 1);
@@ -324,8 +323,8 @@
                 const pageBtn = document.createElement('button');
                 pageBtn.textContent = i;
                 pageBtn.className = i === currentPage
-                    ? 'mx-1 px-4 py-2 bg-blue-600 text-white rounded-lg font-bold'
-                    : 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                    ? 'mx-1 px-3 py-1.5 text-sm bg-slate-900 text-white rounded-lg font-medium'
+                    : 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
                 pageBtn.onclick = () => {
                     currentPage = i;
                     searchArticles();
@@ -334,11 +333,10 @@
                 container.appendChild(pageBtn);
             }
 
-            // Next button
             if (currentPage < totalPages) {
                 const nextBtn = document.createElement('button');
                 nextBtn.textContent = 'Next →';
-                nextBtn.className = 'mx-1 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-blue-50 border border-gray-300';
+                nextBtn.className = 'mx-1 px-3 py-1.5 text-sm bg-white text-gray-600 rounded-lg hover:bg-gray-50 border border-gray-200 transition-colors';
                 nextBtn.onclick = () => {
                     currentPage++;
                     searchArticles();
@@ -348,12 +346,10 @@
             }
         }
 
-        // Load filter options
         async function loadFilterOptions() {
             try {
                 filterOptions = await window.dataLoader.getFilterOptions();
                 
-                // Populate topics
                 const topicSelect = document.getElementById('topic-filter');
                 filterOptions.topics.forEach(topic => {
                     const option = document.createElement('option');
@@ -361,10 +357,7 @@
                     option.textContent = topic;
                     topicSelect.appendChild(option);
                 });
-                
-                // Prediction checkboxes are already in HTML, no need to populate
 
-                // Load authors and newspapers for datalists (in background)
                 loadAuthorsAndNewspapers();
             } catch (error) {
                 console.error('Error loading filter options:', error);
@@ -380,36 +373,33 @@
                     limit: 10000
                 };
                 
-                // Load authors
                 const authors = await window.dataLoader.getUniqueAuthors(options);
                 const authorList = document.getElementById('author-list');
-                console.log('👤 Authors loaded:', authors.slice(0, 5)); // Debug: show first 5 authors
+                console.log('👤 Authors loaded:', authors.slice(0, 5));
                 authors.forEach(author => {
                     const option = document.createElement('option');
                     option.value = author;
                     authorList.appendChild(option);
                 });
                 console.log(`✅ Loaded ${authors.length} unique authors from all datasets (Aug-Sep 2025)`);
-                console.log('👤 Author datalist options count:', authorList.children.length); // Debug: verify options were added
+                console.log('👤 Author datalist options count:', authorList.children.length);
                 
-                // Load newspapers
                 const newspapers = await window.dataLoader.getUniqueNewspapers(options);
                 const newspaperList = document.getElementById('newspaper-list');
-                console.log('📰 Newspapers loaded:', newspapers.slice(0, 10)); // Debug: show first 10 newspapers
-                console.log('📰 Total newspapers found:', newspapers.length); // Debug: show total count
+                console.log('📰 Newspapers loaded:', newspapers.slice(0, 10));
+                console.log('📰 Total newspapers found:', newspapers.length);
                 newspapers.forEach(newspaper => {
                     const option = document.createElement('option');
                     option.value = newspaper;
                     newspaperList.appendChild(option);
                 });
                 console.log(`✅ Loaded ${newspapers.length} unique newspapers from all datasets (Aug-Sep 2025)`);
-                console.log('📰 Newspaper datalist options count:', newspaperList.children.length); // Debug: verify options were added
+                console.log('📰 Newspaper datalist options count:', newspaperList.children.length);
             } catch (error) {
                 console.error('Error loading authors/newspapers:', error);
             }
         }
 
-        // Reset function shared by both reset buttons
         function resetFilters() {
             document.getElementById('search-input').value = '';
             document.getElementById('topic-filter').value = '';
@@ -424,62 +414,69 @@
             document.getElementById('ai-max').value = 1;
             document.getElementById('max-ai-min').value = 0;
             document.getElementById('max-ai-max').value = 1;
-            document.getElementById('ai-min-value').textContent = '0.00';
-            document.getElementById('ai-max-value').textContent = '1.00';
-            document.getElementById('max-ai-min-value').textContent = '0.00';
-            document.getElementById('max-ai-max-value').textContent = '1.00';
+            document.getElementById('ai-min-value').textContent = '0%';
+            document.getElementById('ai-max-value').textContent = '100%';
+            document.getElementById('max-ai-min-value').textContent = '0%';
+            document.getElementById('max-ai-max-value').textContent = '100%';
+            currentPage = 1;
+            clearSegments();
+            searchArticles();
+        }
+
+        function applyClassificationFilter(value) {
+            const btn = document.querySelector(`.seg-classification[data-value="${value}"]`);
+            if (!btn) return;
+
+            btn.classList.toggle('active');
+
+            const active = Array.from(document.querySelectorAll('.seg-classification.active')).map(b => b.dataset.value);
+            setSelectedPredictions(active);
+
             currentPage = 1;
             searchArticles();
         }
 
-        // Quick filter functions
-        function applyQuickFilter(filterType) {
-            // Reset all filters first
-            resetFilters();
-            
-            switch(filterType) {
-                case 'ai':
-                    setSelectedPredictions(['AI']);
-                    break;
-                case 'ai-mixed':
-                    // Select both AI and Mixed
-                    setSelectedPredictions(['AI', 'Mixed']);
-                    break;
-                case 'human':
-                    setSelectedPredictions(['Human']);
-                    break;
-                case 'recent-news':
-                    document.getElementById('dataset-filter').value = 'recent_news';
-                    break;
-                case 'opinions':
-                    document.getElementById('dataset-filter').value = 'opinions';
-                    break;
-                case 'reporters':
-                    document.getElementById('dataset-filter').value = 'reporters';
-                    break;
+        function applyDatasetFilter(filterType) {
+            const btn = document.getElementById('filter-' + filterType);
+            const isActive = btn && btn.classList.contains('active');
+
+            document.querySelectorAll('.seg-dataset').forEach(b => b.classList.remove('active'));
+
+            if (isActive) {
+                document.getElementById('dataset-filter').value = '';
+            } else {
+                switch(filterType) {
+                    case 'recent-news': document.getElementById('dataset-filter').value = 'recent_news'; break;
+                    case 'opinions': document.getElementById('dataset-filter').value = 'opinions'; break;
+                    case 'reporters': document.getElementById('dataset-filter').value = 'reporters'; break;
+                }
+                if (btn) btn.classList.add('active');
             }
-            
             currentPage = 1;
             searchArticles();
         }
 
-        // Newspaper search function
-        // Initialize when DOM is ready
+        function clearSegments() {
+            document.querySelectorAll('.seg-btn').forEach(btn => btn.classList.remove('active'));
+        }
+
+        function activateSegment(button, groupClass) {
+            document.querySelectorAll('.' + groupClass).forEach(btn => btn.classList.remove('active'));
+            button.classList.add('active');
+        }
+
         document.addEventListener('DOMContentLoaded', async () => {
             console.log('🚀 Page loaded, initializing...');
             console.log('📋 Using hardcoded article counts for instant display');
             
-            // Test basic page elements
             console.log('Testing page elements:');
             console.log('Search button:', document.getElementById('search-button'));
             console.log('Search input:', document.getElementById('search-input'));
             console.log('Stat total:', document.getElementById('stat-total'));
             console.log('Stat recent:', document.getElementById('stat-recent'));
             
-            // Test dataLoader availability again
             console.log('dataLoader available in DOMContentLoaded?', typeof window.dataLoader);
             
-            // Load filter options
             try {
                 await loadFilterOptions();
                 console.log('✅ Filter options loaded successfully');
@@ -487,19 +484,16 @@
                 console.error('❌ Error loading filter options:', error);
             }
             
-            // Check if we're restoring state from history (back button)
             const historyState = history.state;
             let shouldSearch = true;
             
             if (historyState) {
-                // Restore state from history
                 console.log('🔙 Back button detected, restoring previous state');
                 const restored = restoreState(historyState);
                 if (restored) {
-                    shouldSearch = true; // Trigger search with restored state
+                    shouldSearch = true;
                 }
             } else {
-                // Check for URL parameters and set filters
                 const urlParams = new URLSearchParams(window.location.search);
                 const datasetType = urlParams.get('dataset_type');
                 const topic = urlParams.get('topic');
@@ -508,7 +502,6 @@
                 if (datasetType) {
                     document.getElementById('dataset-filter').value = datasetType;
                 } else {
-                    // Default to all datasets (no filter)
                     document.getElementById('dataset-filter').value = '';
                 }
                 
@@ -516,15 +509,11 @@
                     document.getElementById('topic-filter').value = topic;
                 }
                 if (prediction) {
-                    // Handle both string and array formats for backward compatibility
                     const predArray = Array.isArray(prediction) ? prediction : [prediction];
                     setSelectedPredictions(predArray);
                 }
-                
-                // No default date range - show all articles
             }
             
-            // Set up event listeners for UI elements
             document.getElementById('search-button').addEventListener('click', () => {
                 currentPage = 1;
                 searchArticles();
@@ -545,53 +534,48 @@
             document.getElementById('reset-filters').addEventListener('click', resetFilters);
             document.getElementById('main-reset-button').addEventListener('click', resetFilters);
 
-            // Quick filter button event listeners
-            document.getElementById('filter-ai').addEventListener('click', () => applyQuickFilter('ai'));
-            document.getElementById('filter-ai-mixed').addEventListener('click', () => applyQuickFilter('ai-mixed'));
-            document.getElementById('filter-human').addEventListener('click', () => applyQuickFilter('human'));
-            document.getElementById('filter-recent-news').addEventListener('click', () => applyQuickFilter('recent-news'));
-            document.getElementById('filter-opinions').addEventListener('click', () => applyQuickFilter('opinions'));
-            document.getElementById('filter-reporters').addEventListener('click', () => applyQuickFilter('reporters'));
+            document.getElementById('filter-ai').addEventListener('click', () => applyClassificationFilter('AI'));
+            document.getElementById('filter-mixed').addEventListener('click', () => applyClassificationFilter('Mixed'));
+            document.getElementById('filter-human').addEventListener('click', () => applyClassificationFilter('Human'));
+            document.getElementById('filter-recent-news').addEventListener('click', () => applyDatasetFilter('recent-news'));
+            document.getElementById('filter-opinions').addEventListener('click', () => applyDatasetFilter('opinions'));
+            document.getElementById('filter-reporters').addEventListener('click', () => applyDatasetFilter('reporters'));
 
-        // Toggle filters
-        document.getElementById('toggle-filters').addEventListener('click', () => {
-            const content = document.getElementById('filters-content');
-            const button = document.getElementById('toggle-filters');
-            if (content.classList.contains('hidden')) {
-                content.classList.remove('hidden');
-                button.textContent = 'Hide Filters';
-            } else {
-                content.classList.add('hidden');
-                button.textContent = 'Show Filters';
-            }
-        });
+            document.getElementById('toggle-filters').addEventListener('click', () => {
+                const content = document.getElementById('filters-content');
+                const button = document.getElementById('toggle-filters');
+                if (content.classList.contains('hidden')) {
+                    content.classList.remove('hidden');
+                    button.textContent = 'Hide Filters';
+                } else {
+                    content.classList.add('hidden');
+                    button.textContent = 'Show Filters';
+                }
+            });
 
-        // Range slider updates
-        document.getElementById('ai-min').addEventListener('input', function() {
-            document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
-        });
-        document.getElementById('ai-max').addEventListener('input', function() {
-            document.getElementById('ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
-        });
-        document.getElementById('max-ai-min').addEventListener('input', function() {
-            document.getElementById('max-ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
-        });
-        document.getElementById('max-ai-max').addEventListener('input', function() {
-            document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
-        });
+            document.getElementById('ai-min').addEventListener('input', function() {
+                document.getElementById('ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+            });
+            document.getElementById('ai-max').addEventListener('input', function() {
+                document.getElementById('ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+            });
+            document.getElementById('max-ai-min').addEventListener('input', function() {
+                document.getElementById('max-ai-min-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+            });
+            document.getElementById('max-ai-max').addEventListener('input', function() {
+                document.getElementById('max-ai-max-value').textContent = (parseFloat(this.value) * 100).toFixed(0) + '%';
+            });
 
             console.log('✅ All event listeners set up successfully');
             
-            // Trigger initial search with default filters (or restored state)
             if (shouldSearch) {
                 if (!historyState) {
-                    currentPage = 1; // Only reset page if not restoring
+                    currentPage = 1;
                 }
                 searchArticles();
             }
         });
         
-        // Handle browser back/forward buttons
         window.addEventListener('popstate', (event) => {
             console.log('🔙 Popstate event:', event.state);
             if (event.state) {
@@ -609,261 +593,351 @@
 
   gtag('config', 'G-F3WPL16V2Z');
 </script>
+<style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    .seg-btn {
+        padding: 6px 8px;
+        font-size: 13px;
+        font-weight: 500;
+        border-radius: 6px;
+        transition: all 150ms ease;
+        color: #6b7280;
+        cursor: pointer;
+        text-align: center;
+        border: none;
+        background: transparent;
+    }
+    .seg-btn:hover { color: #374151; background: rgba(255,255,255,0.6); }
+    .seg-btn.active {
+        background: white;
+        color: #111827;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+    .line-clamp-2 {
+        display: -webkit-box;
+        -webkit-line-clamp: 2;
+        -webkit-box-orient: vertical;
+        overflow: hidden;
+    }
+    input[type="range"] {
+        -webkit-appearance: none;
+        height: 4px;
+        border-radius: 2px;
+        background: #e5e7eb;
+        outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        background: #3b82f6;
+        cursor: pointer;
+        border: 2px solid white;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+    }
+    .filter-label {
+        display: block;
+        font-size: 11px;
+        font-weight: 600;
+        color: #9ca3af;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        margin-bottom: 6px;
+    }
+    .filter-input {
+        width: 100%;
+        padding: 7px 10px;
+        font-size: 13px;
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        outline: none;
+        transition: border-color 150ms, box-shadow 150ms;
+        background: white;
+    }
+    .filter-input:focus {
+        border-color: #3b82f6;
+        box-shadow: 0 0 0 3px rgba(59,130,246,0.1);
+    }
+    .sidebar-scroll {
+        max-height: calc(100vh - 2rem);
+        overflow-y: auto;
+        scrollbar-width: thin;
+        scrollbar-color: #e5e7eb transparent;
+    }
+    .sidebar-scroll::-webkit-scrollbar { width: 4px; }
+    .sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
+    .sidebar-scroll::-webkit-scrollbar-thumb { background: #e5e7eb; border-radius: 2px; }
+</style>
 </head>
-<!-- Version: 2025-10-20-v7 - Background loading -->
-<body class="bg-gradient-to-br from-blue-50 to-indigo-100 min-h-screen font-sans">
-    <div class="container mx-auto px-4 py-8 max-w-7xl">
-        <!-- Header -->
-        <div class="text-center mb-6 sm:mb-8">
-            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-bold text-gray-900 mb-2 sm:mb-3">AI Use in American Newspapers</h1>
-            <p class="text-base sm:text-lg lg:text-xl text-gray-600 px-4 mb-4">Search and analyze 251,446 news articles for AI-generated content</p>
-            <div class="bg-blue-50 p-4 mx-4 sm:mx-8 rounded-lg">
-                <p class="text-lg sm:text-xl text-blue-900">
-                    <strong>📄 Paper:</strong> 
-                    <a href="https://arxiv.org/abs/2510.18774" target="_blank" class="text-blue-800 hover:text-blue-900 underline">
-                        "AI use in American newspapers is widespread, uneven, and rarely disclosed"
-                    </a>
-                </p>
-                <p class="text-lg sm:text-xl text-blue-900 mt-2 inline-flex items-center">
-                    <svg class="w-5 h-5 mr-2" fill="currentColor" viewBox="0 0 20 20">
-                        <path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"></path>
-                    </svg>
-                    <a href="https://github.com/jenna-russell/ai_news" target="_blank" class="text-blue-800 hover:text-blue-900 underline">
-                        Data & Code
-                    </a>
-                </p>
-                <div class="text-lg sm:text-xl text-blue-900 mt-2 flex items-center justify-center">
-                    <img src="/additional_data/pangram.png" alt="Pangram" class="h-6 w-6 mr-2">
-                    <a href="metrics.html" class="text-blue-800 hover:text-blue-900 underline">
-                        Learn about Pangram's AI detection metrics
-                    </a>
-                </div>
-                <!-- <p class="text-xs sm:text-sm text-blue-900 mt-2">
-                    by 
-                    <a href="https://jenna-russell.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Jenna Russell</a>, 
-                    <a href="https://marzenakrp.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Marzena Karpinska</a>, 
-                    <a href="https://www.linkedin.com/in/destiny-akinode/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Destiny Akinode</a>, 
-                    <a href="https://katherinethai.github.io/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Katherine Thai</a>, 
-                    <a href="https://www.bradleyemi.com/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Bradley Emi</a>, 
-                    <a href="https://www.pangram.com/about-us" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Max Spero</a>, and 
-                    <a href="https://www.cs.umd.edu/~miyyer/" target="_blank" class="text-blue-800 hover:text-blue-900 underline">Mohit Iyyer</a>
-                </p> -->
-                <div class="mt-4 flex flex-wrap justify-center items-center gap-4 sm:gap-6">
-                    <img src="/additional_data/umd.png" alt="University of Maryland" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">
-                    <img src="/additional_data/umass.png" alt="University of Massachusetts" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">
-                    <img src="/additional_data/msft.png" alt="Microsoft" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">
-                    <img src="/additional_data/pangram.png" alt="Pangram" class="h-8 sm:h-10 opacity-80 hover:opacity-100 transition-opacity">
-                </div>
+<body class="bg-gray-50 min-h-screen">
+    <!-- Hero Header -->
+    <header class="bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-10 pb-16 text-center">
+            <h1 class="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-white tracking-tight mb-3">
+                AI Use in American Newspapers
+            </h1>
+            <p class="text-base sm:text-lg text-slate-400 mb-6 max-w-2xl mx-auto">
+                Search and analyze 251,446 news articles for AI-generated content
+            </p>
+            <div class="flex flex-wrap justify-center gap-3 mb-8">
+                <a href="https://arxiv.org/abs/2510.18774" target="_blank"
+                   class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/[0.15] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Read the Paper
+                </a>
+                <a href="https://github.com/jenna-russell/ai_news" target="_blank"
+                   class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/[0.15] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+                    <svg class="w-4 h-4" fill="currentColor" viewBox="0 0 20 20"><path fill-rule="evenodd" d="M10 0C4.477 0 0 4.484 0 10.017c0 4.425 2.865 8.18 6.839 9.504.5.092.682-.217.682-.483 0-.237-.008-.868-.013-1.703-2.782.605-3.369-1.343-3.369-1.343-.454-1.158-1.11-1.466-1.11-1.466-.908-.62.069-.608.069-.608 1.003.07 1.531 1.032 1.531 1.032.892 1.53 2.341 1.088 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.113-4.555-4.951 0-1.093.39-1.988 1.029-2.688-.103-.253-.446-1.272.098-2.65 0 0 .84-.27 2.75 1.026A9.564 9.564 0 0110 4.844c.85.004 1.705.115 2.504.337 1.909-1.296 2.747-1.027 2.747-1.027.546 1.379.203 2.398.1 2.651.64.7 1.028 1.595 1.028 2.688 0 3.848-2.339 4.695-4.566 4.942.359.31.678.921.678 1.856 0 1.338-.012 2.419-.012 2.747 0 .268.18.58.688.482A10.019 10.019 0 0020 10.017C20 4.484 15.522 0 10 0z" clip-rule="evenodd"></path></svg>
+                    Data &amp; Code
+                </a>
+                <a href="metrics.html"
+                   class="inline-flex items-center gap-2 bg-white/10 hover:bg-white/[0.15] text-white text-sm font-medium px-4 py-2.5 rounded-lg transition-colors">
+                    <img src="/additional_data/pangram.png" alt="Pangram" class="h-4 w-4">
+                    AI Detection Metrics
+                </a>
+            </div>
+            <div class="flex flex-wrap items-center justify-center gap-5 sm:gap-8 pt-6 border-t border-slate-700/50">
+                <a href="https://www.cs.umd.edu/researcharea/natural-language-processing" target="_blank"><img src="/additional_data/umd.png" alt="University of Maryland" class="h-5 sm:h-6 opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer"></a>
+                <a href="https://nlp.cs.umass.edu/" target="_blank"><img src="/additional_data/umass.png" alt="University of Massachusetts" class="h-5 sm:h-6 opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer"></a>
+                <a href="https://www.microsoft.com/en-us/research/group/machine-translation-group/" target="_blank"><img src="/additional_data/msft.png" alt="Microsoft" class="h-5 sm:h-6 opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer"></a>
+                <a href="https://www.pangram.com/" target="_blank"><img src="/additional_data/pangram.png" alt="Pangram" class="h-5 sm:h-6 opacity-40 hover:opacity-100 transition-all duration-300 grayscale hover:grayscale-0 cursor-pointer"></a>
             </div>
         </div>
+    </header>
 
-        <!-- Search Bar -->
-        <div class="mb-8">
-            <div class="bg-white rounded-2xl shadow-2xl p-4 sm:p-8">
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-4">
-                    <input type="text" id="search-input" 
-                           placeholder="Search articles by title, content, author, or newspaper..." 
-                           class="flex-1 p-3 sm:p-4 text-base sm:text-lg border-2 border-gray-300 rounded-lg focus:ring-4 focus:ring-blue-500 focus:border-blue-500 outline-none transition-all">
-                    <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-3">
-                        <button id="search-button" 
-                                class="bg-blue-600 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-blue-700 focus:ring-4 focus:ring-blue-500 transition-all shadow-lg">
-                            Search
-                        </button>
-                        <button id="main-reset-button" 
-                                class="bg-gray-500 text-white px-6 sm:px-8 py-3 sm:py-4 text-base sm:text-lg font-semibold rounded-lg hover:bg-gray-600 focus:ring-4 focus:ring-gray-400 transition-all shadow-lg">
-                            Reset
-                        </button>
-                    </div>
-                </div>
-                
-                <!-- Quick Stats -->
-                <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mt-4 sm:mt-6" id="quick-stats">
-                    <div class="bg-gradient-to-br from-blue-50 to-blue-100 p-3 sm:p-4 rounded-lg">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-blue-700" id="stat-total">251,446</div>
-                        <div class="text-xs sm:text-sm text-blue-600">Total Articles</div>
-                    </div>
-                    <a href="dataset.html?type=recent_news" class="bg-gradient-to-br from-green-50 to-green-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-green-700" id="stat-recent">186,512</div>
-                        <div class="text-xs sm:text-sm text-green-600">Recent News →</div>
-                    </a>
-                    <a href="dataset.html?type=opinions" class="bg-gradient-to-br from-purple-50 to-purple-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-purple-700" id="stat-opinions">44,803</div>
-                        <div class="text-xs sm:text-sm text-purple-600">Opinions →</div>
-                    </a>
-                    <a href="dataset.html?type=reporters" class="bg-gradient-to-br from-orange-50 to-orange-100 p-3 sm:p-4 rounded-lg hover:shadow-lg transition-shadow cursor-pointer">
-                        <div class="text-xl sm:text-2xl lg:text-3xl font-bold text-orange-700" id="stat-reporters">20,131</div>
-                        <div class="text-xs sm:text-sm text-orange-600">Reporters →</div>
-                    </a>
-                </div>
-            </div>
+    <!-- Floating Search Bar -->
+    <div class="max-w-3xl mx-auto px-4 -mt-7 relative z-10 mb-8">
+        <div class="bg-white rounded-2xl shadow-xl shadow-slate-900/[0.08] px-4 sm:px-5 py-3 flex items-center gap-3">
+            <button id="search-button" class="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0" aria-label="Search">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"/>
+                </svg>
+            </button>
+            <input type="text" id="search-input"
+                   placeholder="Search articles by title, content, author, or newspaper..."
+                   class="flex-1 py-2 text-sm sm:text-base text-gray-900 placeholder-gray-400 outline-none bg-transparent min-w-0">
+            <button id="main-reset-button"
+                    class="text-xs text-gray-400 hover:text-gray-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
+                Reset
+            </button>
         </div>
-
-        <!-- Quick Filter Buttons -->
-        <div class="mb-6">
-            <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800 mb-4">Quick Filters</h2>
-                <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2 sm:gap-3">
-                    <button id="filter-ai" class="bg-red-100 hover:bg-red-200 text-red-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        🤖 AI
-                    </button>
-                    <button id="filter-ai-mixed" class="bg-yellow-100 hover:bg-yellow-200 text-yellow-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        ⚡ AI + Mixed
-                    </button>
-                    <button id="filter-human" class="bg-blue-100 hover:bg-blue-200 text-blue-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        👤 Human
-                    </button>
-                    <button id="filter-recent-news" class="bg-green-100 hover:bg-green-200 text-green-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        📰 Recent News
-                    </button>
-                    <button id="filter-opinions" class="bg-purple-100 hover:bg-purple-200 text-purple-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        💭 Opinions
-                    </button>
-                    <button id="filter-reporters" class="bg-orange-100 hover:bg-orange-200 text-orange-800 px-3 sm:px-4 py-2 sm:py-2 rounded-lg font-medium transition-colors text-sm sm:text-base">
-                        📝 Reporters
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Filters -->
-        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6" id="filters-section">
-            <div class="flex flex-col sm:flex-row sm:items-center justify-between mb-4 space-y-2 sm:space-y-0">
-                <h2 class="text-lg sm:text-xl font-bold text-gray-800">Advanced Filters</h2>
-                <button id="toggle-filters" class="text-blue-600 hover:text-blue-800 font-medium text-sm sm:text-base">
-                    Show Filters
-                </button>
-            </div>
-            
-            <div id="filters-content" class="hidden space-y-4">
-                <!-- Row 1: Basic Filters -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Topic</label>
-                        <select id="topic-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">All Topics</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Dataset</label>
-                        <select id="dataset-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="">All Datasets</option>
-                            <option value="recent_news">Recent News</option>
-                            <option value="opinions">Opinions</option>
-                            <option value="reporters">Reporters</option>
-                        </select>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Prediction</label>
-                        <div id="prediction-filters" class="space-y-2 p-3 border border-gray-300 rounded-md bg-gray-50">
-                            <label class="flex items-center">
-                                <input type="checkbox" value="Human" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">Human</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="Mixed" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">Mixed</span>
-                            </label>
-                            <label class="flex items-center">
-                                <input type="checkbox" value="AI" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500">
-                                <span class="text-sm text-gray-700">AI</span>
-                            </label>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Sort By</label>
-                        <select id="sort-filter" class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <option value="date">Date (Newest)</option>
-                            <option value="ai_likelihood">AI Likelihood</option>
-                            <option value="title">Title (A-Z)</option>
-                        </select>
-                    </div>
-                </div>
-
-                <!-- Row 2: Date Range and Author -->
-                <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Date Range</label>
-                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="date" id="start-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                            <span class="text-gray-400 text-sm">to</span>
-                            <input type="date" id="end-date" class="flex-1 p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Author</label>
-                        <input type="text" id="author-filter" list="author-list" placeholder="Search for author..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        <datalist id="author-list">
-                            <!-- Will be populated dynamically -->
-                        </datalist>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Newspaper</label>
-                        <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search for newspaper..." 
-                               class="w-full p-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-blue-500 text-sm">
-                        <datalist id="newspaper-list">
-                            <!-- Will be populated dynamically -->
-                        </datalist>
-                    </div>
-                </div>
-
-                <!-- Row 3: AI Likelihood Sliders -->
-                <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">AI Likelihood Range</label>
-                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1 w-full sm:w-auto">
-                            <span id="ai-min-value" class="text-sm text-gray-600 min-w-[3rem] text-center">0.00</span>
-                            <span class="text-gray-400 text-sm">to</span>
-                            <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1 w-full sm:w-auto">
-                            <span id="ai-max-value" class="text-sm text-gray-600 min-w-[3rem] text-center">1.00</span>
-                        </div>
-                    </div>
-                    <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Max AI Likelihood (Chunks)</label>
-                        <div class="flex flex-col sm:flex-row items-center space-y-2 sm:space-y-0 sm:space-x-2">
-                            <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1 w-full sm:w-auto">
-                            <span id="max-ai-min-value" class="text-sm text-gray-600 min-w-[3rem] text-center">0.00</span>
-                            <span class="text-gray-400 text-sm">to</span>
-                            <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1 w-full sm:w-auto">
-                            <span id="max-ai-max-value" class="text-sm text-gray-600 min-w-[3rem] text-center">1.00</span>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-2 sm:space-y-0 sm:space-x-2 pt-4">
-                    <button id="apply-filters" class="bg-blue-600 text-white px-4 sm:px-6 py-2 sm:py-2 rounded-md hover:bg-blue-700 font-medium text-sm sm:text-base">
-                        Apply Filters
-                    </button>
-                    <button id="reset-filters" class="bg-gray-500 text-white px-4 sm:px-6 py-2 sm:py-2 rounded-md hover:bg-gray-600 font-medium text-sm sm:text-base">
-                        Reset
-                    </button>
-                </div>
-            </div>
-        </div>
-
-        <!-- Results Count -->
-        <div class="mb-4">
-            <p class="text-gray-700 font-medium" id="results-count">Loading articles...</p>
-        </div>
-
-        <!-- Loading Indicator -->
-        <div id="loading-indicator" class="hidden bg-blue-50 border-l-4 border-blue-500 p-6 rounded-lg mb-6">
-            <div class="flex items-center">
-                <div class="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mr-4"></div>
-                <div>
-                    <p class="text-blue-900 font-semibold text-lg">🔍 Searching...</p>
-                    <p class="text-blue-700 text-sm">Finding articles that match your criteria</p>
-                </div>
-            </div>
-        </div>
-
-        <!-- Article List -->
-        <div id="article-list" class="space-y-4"></div>
-
-        <!-- Pagination -->
-        <div class="flex justify-center mt-8" id="pagination"></div>
     </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pb-12">
+        <!-- Stats Cards -->
+        <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8" id="quick-stats">
+            <div class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden">
+                <div class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"></div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-total">251,446</div>
+                <div class="text-xs text-gray-500 mt-1">Total Articles</div>
+            </div>
+            <a href="dataset.html?type=recent_news" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-emerald-300 transition-colors group">
+                <div class="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500"></div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-recent">186,512</div>
+                <div class="text-xs text-gray-500 mt-1 group-hover:text-emerald-600 transition-colors">Recent News</div>
+            </a>
+            <a href="dataset.html?type=opinions" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-violet-300 transition-colors group">
+                <div class="absolute top-0 left-0 right-0 h-0.5 bg-violet-500"></div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-opinions">44,803</div>
+                <div class="text-xs text-gray-500 mt-1 group-hover:text-violet-600 transition-colors">Opinions</div>
+            </a>
+            <a href="dataset.html?type=reporters" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-amber-300 transition-colors group">
+                <div class="absolute top-0 left-0 right-0 h-0.5 bg-amber-500"></div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-reporters">20,131</div>
+                <div class="text-xs text-gray-500 mt-1 group-hover:text-amber-600 transition-colors">Reporters</div>
+            </a>
+        </div>
+
+        <!-- Two Column Layout: Sidebar + Results -->
+        <div class="lg:flex lg:gap-8">
+            <!-- Left Sidebar -->
+            <aside class="lg:w-72 flex-shrink-0 mb-6 lg:mb-0">
+                <div class="bg-white rounded-xl border border-gray-200 lg:sticky lg:top-4 sidebar-scroll">
+                    <div class="p-4 sm:p-5">
+                        <!-- Mobile toggle -->
+                        <div class="flex items-center justify-between lg:hidden mb-3">
+                            <h2 class="text-sm font-semibold text-gray-900">Filters</h2>
+                            <button id="toggle-filters" class="text-xs text-blue-600 hover:text-blue-800 font-medium">
+                                Show Filters
+                            </button>
+                        </div>
+
+                        <!-- Desktop heading -->
+                        <h2 class="hidden lg:block text-xs font-semibold text-gray-400 uppercase tracking-wider mb-5">Filters</h2>
+
+                        <!-- Filter Content -->
+                        <div id="filters-content" class="hidden lg:block space-y-5">
+                            <!-- Classification Segmented Control -->
+                            <div>
+                                <label class="filter-label">Classification</label>
+                                <div class="bg-gray-100 rounded-lg p-1 grid grid-cols-3 gap-1">
+                                    <button id="filter-ai" class="seg-btn seg-classification" data-value="AI">AI</button>
+                                    <button id="filter-mixed" class="seg-btn seg-classification" data-value="Mixed">Mixed</button>
+                                    <button id="filter-human" class="seg-btn seg-classification" data-value="Human">Human</button>
+                                </div>
+                            </div>
+
+                            <!-- Dataset Segmented Control -->
+                            <div>
+                                <label class="filter-label">Dataset</label>
+                                <div class="bg-gray-100 rounded-lg p-1 grid grid-cols-3 gap-1">
+                                    <button id="filter-recent-news" class="seg-btn seg-dataset">News</button>
+                                    <button id="filter-opinions" class="seg-btn seg-dataset">Opinions</button>
+                                    <button id="filter-reporters" class="seg-btn seg-dataset">Reporters</button>
+                                </div>
+                            </div>
+
+                            <hr class="border-gray-100">
+
+                            <!-- Topic -->
+                            <div>
+                                <label class="filter-label">Topic</label>
+                                <select id="topic-filter" class="filter-input">
+                                    <option value="">All Topics</option>
+                                </select>
+                            </div>
+
+                            <!-- Dataset Type -->
+                            <div>
+                                <label class="filter-label">Dataset Type</label>
+                                <select id="dataset-filter" class="filter-input">
+                                    <option value="">All Datasets</option>
+                                    <option value="recent_news">Recent News</option>
+                                    <option value="opinions">Opinions</option>
+                                    <option value="reporters">Reporters</option>
+                                </select>
+                            </div>
+
+                            <!-- AI Prediction -->
+                            <div>
+                                <label class="filter-label">AI Prediction</label>
+                                <div id="prediction-filters" class="space-y-1.5 p-2.5 bg-gray-50 rounded-lg">
+                                    <label class="flex items-center cursor-pointer py-0.5">
+                                        <input type="checkbox" value="Human" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
+                                        <span class="text-xs text-gray-600">Human</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer py-0.5">
+                                        <input type="checkbox" value="Mixed" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
+                                        <span class="text-xs text-gray-600">Mixed</span>
+                                    </label>
+                                    <label class="flex items-center cursor-pointer py-0.5">
+                                        <input type="checkbox" value="AI" class="prediction-checkbox mr-2 rounded border-gray-300 text-blue-600 focus:ring-blue-500 focus:ring-offset-0 h-3.5 w-3.5">
+                                        <span class="text-xs text-gray-600">AI</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- Sort By -->
+                            <div>
+                                <label class="filter-label">Sort By</label>
+                                <select id="sort-filter" class="filter-input">
+                                    <option value="date">Date (Newest)</option>
+                                    <option value="ai_likelihood">AI Likelihood</option>
+                                    <option value="title">Title (A-Z)</option>
+                                </select>
+                            </div>
+
+                            <!-- Date Range -->
+                            <div>
+                                <label class="filter-label">Date Range</label>
+                                <div class="space-y-1.5">
+                                    <input type="date" id="start-date" class="filter-input">
+                                    <input type="date" id="end-date" class="filter-input">
+                                </div>
+                            </div>
+
+                            <!-- Author -->
+                            <div>
+                                <label class="filter-label">Author</label>
+                                <input type="text" id="author-filter" list="author-list" placeholder="Search author..." class="filter-input">
+                                <datalist id="author-list"></datalist>
+                            </div>
+
+                            <!-- Newspaper -->
+                            <div>
+                                <label class="filter-label">Newspaper</label>
+                                <input type="text" id="newspaper-filter" list="newspaper-list" placeholder="Search newspaper..." class="filter-input">
+                                <datalist id="newspaper-list"></datalist>
+                            </div>
+
+                            <!-- AI Likelihood Range -->
+                            <div>
+                                <label class="filter-label">AI Likelihood</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Min</span>
+                                        <input type="range" id="ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                                        <span id="ai-min-value" class="text-xs text-gray-500 w-8 text-right">0%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Max</span>
+                                        <input type="range" id="ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                                        <span id="ai-max-value" class="text-xs text-gray-500 w-8 text-right">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Max AI Likelihood -->
+                            <div>
+                                <label class="filter-label">Max AI (Chunks)</label>
+                                <div class="space-y-2">
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Min</span>
+                                        <input type="range" id="max-ai-min" min="0" max="1" step="0.01" value="0" class="flex-1">
+                                        <span id="max-ai-min-value" class="text-xs text-gray-500 w-8 text-right">0%</span>
+                                    </div>
+                                    <div class="flex items-center gap-2">
+                                        <span class="text-xs text-gray-400 w-6">Max</span>
+                                        <input type="range" id="max-ai-max" min="0" max="1" step="0.01" value="1" class="flex-1">
+                                        <span id="max-ai-max-value" class="text-xs text-gray-500 w-8 text-right">100%</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Action Buttons -->
+                            <div class="flex gap-2 pt-1">
+                                <button id="apply-filters" class="flex-1 bg-slate-900 text-white text-xs font-medium px-3 py-2 rounded-lg hover:bg-slate-800 transition-colors">
+                                    Apply
+                                </button>
+                                <button id="reset-filters" class="flex-1 bg-gray-100 text-gray-600 text-xs font-medium px-3 py-2 rounded-lg hover:bg-gray-200 transition-colors">
+                                    Reset
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </aside>
+
+            <!-- Main Results Area -->
+            <main class="flex-1 min-w-0">
+                <!-- Results Count -->
+                <div class="mb-4">
+                    <p class="text-sm font-medium text-gray-500" id="results-count">Loading articles...</p>
+                </div>
+
+                <!-- Loading Indicator -->
+                <div id="loading-indicator" class="hidden bg-white border border-gray-200 rounded-xl p-5 mb-4">
+                    <div class="flex items-center gap-3">
+                        <div class="animate-spin rounded-full h-4 w-4 border-2 border-slate-900 border-t-transparent"></div>
+                        <p class="text-sm text-gray-600">Searching articles...</p>
+                    </div>
+                </div>
+
+                <!-- Article List -->
+                <div id="article-list" class="space-y-3"></div>
+
+                <!-- Pagination -->
+                <div class="flex justify-center mt-8" id="pagination"></div>
+            </main>
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="border-t border-gray-200 mt-12 py-6">
+        <p class="text-center text-xs text-gray-400">Website made with the help of Claude Opus via Cursor</p>
+    </footer>
 
 </body>
 </html>
