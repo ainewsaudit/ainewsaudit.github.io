@@ -1,0 +1,75 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: AI News Audit - DynamoDB-backed API
+
+Parameters:
+  TableName:
+    Type: String
+    Default: ai-news-articles
+
+Globals:
+  Function:
+    Timeout: 29
+    MemorySize: 512
+    Runtime: python3.12
+    Environment:
+      Variables:
+        TABLE_NAME: !Ref TableName
+
+Resources:
+  Api:
+    Type: AWS::Serverless::HttpApi
+    Properties:
+      CorsConfiguration:
+        AllowOrigins:
+          - "*"
+        AllowMethods:
+          - GET
+          - OPTIONS
+        AllowHeaders:
+          - Content-Type
+
+  ArticlesFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.handler
+      Policies:
+        - DynamoDBReadPolicy:
+            TableName: !Ref TableName
+      Events:
+        Articles:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /articles
+            Method: GET
+        Article:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /article
+            Method: GET
+        Counts:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /counts
+            Method: GET
+        FilterOptions:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /filter-options
+            Method: GET
+        Stats:
+          Type: HttpApi
+          Properties:
+            ApiId: !Ref Api
+            Path: /stats
+            Method: GET
+
+Outputs:
+  ApiUrl:
+    Description: API Gateway endpoint — paste this into api-data-loader.js as API_URL
+    Value: !Sub "https://${Api}.execute-api.${AWS::Region}.amazonaws.com"

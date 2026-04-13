@@ -12,8 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js"></script>
+    <script src="/api-data-loader.js"></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
     .filter-label {
@@ -310,11 +309,28 @@
 
             try {
                 const data = await window.dataLoader.getArticles(options);
-                totalArticles = data.total;
+
+                const hasFilters = !!(search || newspaper || topic || prediction ||
+                    startDate || endDate || author ||
+                    (aiMin !== '0') || (aiMax !== '1') ||
+                    (maxAiMin !== '0') || (maxAiMax !== '1'));
+
+                if (hasFilters) {
+                    const n = data.total_found ?? (offset + (data.articles?.length || 0));
+                    const exact = data.count_exact ?? !data.hasMore;
+                    document.getElementById('results-count').textContent =
+                        exact
+                            ? `Found ${n.toLocaleString()} article${n !== 1 ? 's' : ''}`
+                            : `Found ${n.toLocaleString()}+ articles`;
+                    totalArticles = exact ? n : n + 1;
+                } else {
+                    totalArticles = data.total;
+                    document.getElementById('results-count').textContent =
+                        `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
+                }
+
                 renderArticles(data.articles);
                 renderPagination();
-                document.getElementById('results-count').textContent = 
-                    `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
             } catch (error) {
                 console.error('Error searching articles:', error);
                 document.getElementById('article-list').innerHTML = 
@@ -336,7 +352,7 @@
             articles.forEach(article => {
                 const div = document.createElement('div');
                 div.className = "bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors cursor-pointer";
-                div.onclick = function() { window.location.href = `article.html?id=${article.id}&dataset=${article.dataset_type}`; };
+                div.onclick = function() { window.location.href = `article.html?dataset_type=${article.dataset_type}&date_id=${encodeURIComponent(article.date_id)}`; };
                 
                 const date = new Date(article.publish_date).toLocaleDateString('en-US', {
                     year: 'numeric', month: 'short', day: 'numeric'
@@ -480,7 +496,9 @@
         });
 
         document.addEventListener('DOMContentLoaded', async () => {
-            await Promise.all([loadStats(), loadFilterOptions()]);
+            await loadStats();
+            // Load filter options in the background — don't block article rendering
+            loadFilterOptions().catch(err => console.warn('Filter options unavailable:', err));
             
             const urlParams = new URLSearchParams(window.location.search);
             const datasetType = urlParams.get('dataset_type');

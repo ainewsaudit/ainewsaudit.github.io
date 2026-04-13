@@ -12,8 +12,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=1760922767"></script>
+    <script src="/api-data-loader.js"></script>
 
     <script>
         console.log('🚀 INDEX.HTML SCRIPT STARTING... - Version 2025-10-20-v7 - Background loading enabled');
@@ -138,14 +137,28 @@
 
             try {
                 const data = await window.dataLoader.getArticles(options);
-                
-                totalArticles = data.total;
+
+                const hasFilters = !!(search || newspaper || topic || prediction?.length ||
+                    startDate || endDate || author ||
+                    (aiMin !== '0') || (aiMax !== '1') ||
+                    (maxAiMin !== '0') || (maxAiMax !== '1'));
+
+                if (hasFilters) {
+                    const n = data.total_found ?? (offset + (data.articles?.length || 0));
+                    const exact = data.count_exact ?? !data.hasMore;
+                    document.getElementById('results-count').textContent =
+                        exact
+                            ? `Found ${n.toLocaleString()} article${n !== 1 ? 's' : ''}`
+                            : `Found ${n.toLocaleString()}+ articles`;
+                    totalArticles = exact ? n : n + 1; // drives pagination
+                } else {
+                    totalArticles = data.total;
+                    document.getElementById('results-count').textContent =
+                        `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
+                }
+
                 renderArticles(data.articles);
                 renderPagination();
-                
-                document.getElementById('results-count').textContent = 
-                    `Found ${totalArticles.toLocaleString()} article${totalArticles !== 1 ? 's' : ''}`;
-                
                 saveState();
                 startBackgroundLoading();
             } catch (error) {
@@ -188,13 +201,13 @@
             }, 2000);
         }
 
-        function openArticle(articleId, datasetType) {
-            const article = currentArticles.find(a => a.id === articleId);
+        function openArticle(dateId, datasetType) {
+            const article = currentArticles.find(a => a.date_id === dateId);
             if (article) {
                 sessionStorage.setItem('cachedArticle', JSON.stringify(article));
                 console.log('💾 Cached article data for instant loading');
             }
-            window.location.href = `article.html?id=${articleId}&dataset=${datasetType}`;
+            window.location.href = `article.html?dataset_type=${datasetType}&date_id=${encodeURIComponent(dateId)}`;
         }
 
         function renderArticles(articles) {
@@ -212,7 +225,7 @@
             articles.forEach(article => {
                 const div = document.createElement('div');
                 div.className = "bg-white rounded-xl border border-gray-200 p-5 hover:border-gray-300 transition-colors cursor-pointer";
-                div.onclick = function() { openArticle(article.id, article.dataset_type); };
+                div.onclick = function() { openArticle(article.date_id, article.dataset_type); };
                 
                 const date = new Date(article.publish_date).toLocaleDateString('en-US', {
                     year: 'numeric',
@@ -427,7 +440,10 @@
             const btn = document.querySelector(`.seg-classification[data-value="${value}"]`);
             if (!btn) return;
 
-            btn.classList.toggle('active');
+            const isActive = btn.classList.contains('active');
+            // Deselect all buttons first, then toggle the clicked one
+            document.querySelectorAll('.seg-classification').forEach(b => b.classList.remove('active'));
+            if (!isActive) btn.classList.add('active');
 
             const active = Array.from(document.querySelectorAll('.seg-classification.active')).map(b => b.dataset.value);
             setSelectedPredictions(active);
@@ -477,13 +493,9 @@
             
             console.log('dataLoader available in DOMContentLoaded?', typeof window.dataLoader);
             
-            try {
-                await loadFilterOptions();
-                console.log('✅ Filter options loaded successfully');
-            } catch (error) {
-                console.error('❌ Error loading filter options:', error);
-            }
-            
+            // Load filter options in the background — don't block article rendering
+            loadFilterOptions().catch(err => console.warn('Filter options unavailable:', err));
+
             const historyState = history.state;
             let shouldSearch = true;
             
