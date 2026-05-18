@@ -10,83 +10,353 @@
     <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
     html { scroll-behavior: smooth; }
+    .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; font-optical-sizing: auto; }
 
-    /* Timeline rail (left of each update card) */
+    /* === Palette ===
+       slate-900 #0f172a  : primary text / headings
+       slate-600 #475569  : body
+       slate-400 #94a3b8  : tertiary
+       slate-100 #f1f5f9  : dividers
+       amber-700 #b45309  : editorial accent (date letters, rules, pulse)
+       amber-600 #d97706  : pulse fill
+       amber-50  #fffbeb  : soft amber tint
+       red-700   #b91c1c  : reserved for the critical 9% finding
+    */
+
+    /* ---------- Hero rule ---------- */
+    .gold-rule {
+        height: 3px; width: 56px;
+        background: linear-gradient(to right, #b45309 0%, #d97706 100%);
+        border-radius: 2px;
+    }
+
+    /* ---------- Timeline ---------- */
     .timeline-rail {
         position: absolute;
-        left: 11px;
-        top: 28px;
-        bottom: -24px;
-        width: 2px;
-        background: linear-gradient(to bottom, #e5e7eb 0%, #e5e7eb 100%);
+        left: 7px;
+        top: 36px;
+        bottom: -16px;
+        width: 1px;
+        background: linear-gradient(to bottom, #e2e8f0 0%, #e2e8f0 70%, transparent 100%);
     }
     .timeline-item:last-child .timeline-rail { display: none; }
+
     .timeline-dot {
         position: absolute;
-        left: 4px;
-        top: 8px;
-        width: 16px;
-        height: 16px;
+        left: 2px;
+        top: 22px;
+        width: 11px;
+        height: 11px;
         border-radius: 9999px;
         background: white;
-        border: 3px solid #3b82f6;
-        box-shadow: 0 0 0 4px #eff6ff;
+        border: 2px solid #94a3b8;
     }
-    .timeline-dot.launch { border-color: #22c55e; box-shadow: 0 0 0 4px #f0fdf4; }
+    .timeline-dot.launch { border-color: #b45309; background: #fffbeb; }
     .timeline-dot.upcoming {
-        border-color: #f59e0b;
-        box-shadow: 0 0 0 4px #fffbeb;
+        border-color: #d97706;
+        background: #fffbeb;
+        box-shadow: 0 0 0 0 rgba(217,119,6,0.5);
         animation: pulse-ring 2s ease-out infinite;
     }
     @keyframes pulse-ring {
-        0%   { box-shadow: 0 0 0 4px rgba(245,158,11,0.25); }
-        70%  { box-shadow: 0 0 0 12px rgba(245,158,11,0); }
-        100% { box-shadow: 0 0 0 4px rgba(245,158,11,0); }
+        0%   { box-shadow: 0 0 0 0 rgba(217,119,6,0.45); }
+        70%  { box-shadow: 0 0 0 12px rgba(217,119,6,0); }
+        100% { box-shadow: 0 0 0 0 rgba(217,119,6,0); }
     }
 
-    /* Sidebar TOC */
+    /* ---------- Sidebar TOC ---------- */
     .toc-link {
-        display: flex;
-        align-items: center;
-        gap: 8px;
-        padding: 6px 10px;
-        border-radius: 6px;
-        font-size: 13px;
-        color: #6b7280;
-        transition: all 150ms ease;
-        border-left: 2px solid transparent;
+        display: flex; align-items: center; gap: 10px;
+        padding: 6px 10px; border-radius: 6px;
+        font-size: 13px; color: #64748b;
+        transition: color 150ms ease, background 150ms ease;
         text-decoration: none;
     }
-    .toc-link:hover { color: #111827; background: #f9fafb; }
+    .toc-link:hover { color: #0f172a; background: #f8fafc; }
     .toc-link .toc-dot {
-        width: 8px; height: 8px; border-radius: 9999px;
-        background: #3b82f6; flex-shrink: 0;
+        width: 7px; height: 7px; border-radius: 9999px;
+        background: #cbd5e1; flex-shrink: 0;
     }
-    .toc-link.toc-launch .toc-dot { background: #22c55e; }
-    .toc-link.toc-upcoming .toc-dot { background: #f59e0b; }
+    .toc-link.toc-launch .toc-dot { background: #b45309; }
+    .toc-link.toc-upcoming .toc-dot {
+        background: #d97706;
+        box-shadow: 0 0 0 0 rgba(217,119,6,0.5);
+        animation: pulse-ring 2s ease-out infinite;
+    }
 
-    .tag {
-        display: inline-flex;
-        align-items: center;
-        gap: 4px;
+    /* ---------- Typography helpers ---------- */
+    .eyebrow {
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #b45309;
+    }
+    .eyebrow-muted {
         font-size: 11px;
         font-weight: 600;
-        padding: 3px 8px;
-        border-radius: 9999px;
+        letter-spacing: 0.12em;
         text-transform: uppercase;
+        color: #94a3b8;
+    }
+
+    /* ---------- Category chips ---------- */
+    .chip {
+        display: inline-flex; align-items: center;
+        font-size: 11px; font-weight: 600;
+        padding: 3px 9px;
+        border-radius: 9999px;
         letter-spacing: 0.04em;
     }
-    .tag-launch    { background: #dcfce7; color: #166534; }
-    .tag-data      { background: #dbeafe; color: #1e40af; }
-    .tag-upcoming  { background: #fef3c7; color: #92400e; }
+    .chip-launch  { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .chip-data    { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+    /* ---------- Date column ---------- */
+    .date-block {
+        display: flex; flex-direction: column; align-items: flex-start;
+        line-height: 1;
+    }
+    .date-month {
+        font-family: 'Fraunces', serif;
+        font-size: 34px;
+        font-weight: 700;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+        line-height: 0.95;
+    }
+    .date-year {
+        font-family: 'Fraunces', serif;
+        font-size: 26px;
+        font-weight: 500;
+        color: #475569;
+        letter-spacing: -0.01em;
+        line-height: 1;
+        margin-top: 4px;
+        font-variant-numeric: tabular-nums;
+    }
+    .date-day {
+        font-family: 'Fraunces', serif;
+        font-style: italic;
+        font-size: 13px;
+        font-weight: 400;
+        color: #94a3b8;
+        margin-top: 10px;
+        letter-spacing: 0.01em;
+        font-variant-numeric: tabular-nums;
+    }
+
+    /* ---------- Hero stat ribbon ---------- */
+    .ribbon {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0,1fr));
+        border-top: 1px solid #e2e8f0;
+        border-bottom: 1px solid #e2e8f0;
+        background: linear-gradient(to bottom, #fdfdfb 0%, #ffffff 100%);
+    }
+    @media (min-width: 640px) {
+        .ribbon { grid-template-columns: repeat(4, minmax(0,1fr)); }
+    }
+    .ribbon-cell {
+        padding: 18px 20px;
+        border-right: 1px solid #e2e8f0;
+        position: relative;
+    }
+    .ribbon-cell:last-child { border-right: none; }
+    .ribbon-cell:nth-child(2) { border-right: none; }
+    @media (min-width: 640px) {
+        .ribbon-cell:nth-child(2) { border-right: 1px solid #e2e8f0; }
+    }
+    .ribbon-label {
+        font-size: 10.5px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #b45309;
+        margin-bottom: 8px;
+    }
+    .ribbon-value {
+        font-family: 'Fraunces', serif;
+        font-size: 26px;
+        font-weight: 600;
+        color: #0f172a;
+        line-height: 1;
+        letter-spacing: -0.01em;
+        font-variant-numeric: tabular-nums;
+    }
+    .ribbon-sub {
+        font-size: 11px;
+        color: #94a3b8;
+        margin-top: 6px;
+        letter-spacing: 0.02em;
+    }
+
+    /* ---------- Pull-quote finding ---------- */
+    .finding {
+        position: relative;
+        padding: 18px 22px 18px 26px;
+        background:
+            linear-gradient(to right, #fff5f5 0%, transparent 80%);
+        border-left: 3px solid #b91c1c;
+        border-radius: 2px;
+        display: flex; align-items: center; gap: 22px;
+    }
+    .finding-num {
+        font-family: 'Fraunces', serif;
+        font-size: 48px;
+        font-weight: 700;
+        color: #b91c1c;
+        line-height: 0.9;
+        letter-spacing: -0.02em;
+        font-variant-numeric: tabular-nums;
+        flex-shrink: 0;
+    }
+    .finding-text {
+        font-size: 14.5px;
+        color: #7f1d1d;
+        line-height: 1.45;
+        font-weight: 500;
+    }
+    .finding-text em {
+        font-style: normal;
+        font-weight: 700;
+        color: #7f1d1d;
+    }
+
+    /* ---------- Entry headline ---------- */
+    .entry-title {
+        font-family: 'Fraunces', serif;
+        font-size: 30px;
+        font-weight: 700;
+        letter-spacing: -0.02em;
+        line-height: 1.1;
+        color: #0f172a;
+    }
+    @media (min-width: 640px) {
+        .entry-title { font-size: 34px; }
+    }
+
+    .lede {
+        font-family: 'Inter', sans-serif;
+        font-size: 16px;
+        line-height: 1.65;
+        color: #334155;
+    }
+    .lede strong { color: #0f172a; font-weight: 600; }
+    .lede a { color: #0f172a; text-decoration: underline; text-decoration-color: #d97706; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+    .lede a:hover { text-decoration-color: #b45309; }
+
+    /* ---------- Entry frame ---------- */
+    .entry-card {
+        background: white;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 28px 28px 28px 28px;
+        box-shadow:
+            0 1px 2px rgba(15, 23, 42, 0.04),
+            0 6px 18px rgba(15, 23, 42, 0.05);
+    }
+    @media (min-width: 640px) {
+        .entry-card { padding: 36px 40px; }
+    }
+    .entry-card-upcoming {
+        background: linear-gradient(180deg, #fffbeb 0%, #fffdf5 100%);
+        border: 1px solid #fde68a;
+        border-radius: 10px;
+        padding: 22px 24px;
+        box-shadow: 0 1px 2px rgba(180, 83, 9, 0.06);
+    }
+    @media (min-width: 640px) {
+        .entry-card-upcoming { padding: 24px 28px; }
+    }
+
+    /* ---------- Announcement framing inside the card ---------- */
+    .card-eyebrow {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding-bottom: 18px;
+        margin-bottom: 24px;
+        border-bottom: 1px solid #f1f5f9;
+        font-size: 11px;
+        font-weight: 700;
+        letter-spacing: 0.14em;
+        text-transform: uppercase;
+        color: #b45309;
+    }
+    .card-eyebrow .seal {
+        display: inline-flex; align-items: center; justify-content: center;
+        width: 18px; height: 18px; border-radius: 9999px;
+        background: #fef3c7; border: 1px solid #fde68a;
+    }
+    .card-eyebrow .seal::after {
+        content: "";
+        display: block; width: 6px; height: 6px; border-radius: 9999px;
+        background: #b45309;
+    }
+    .card-eyebrow .divider {
+        width: 1px; height: 12px; background: #fde68a;
+    }
+    .card-eyebrow .id {
+        color: #94a3b8; letter-spacing: 0.14em;
+    }
+
+    .card-signoff {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        margin-top: 32px;
+        padding-top: 18px;
+        border-top: 1px solid #f1f5f9;
+    }
+    .card-signoff .sig {
+        font-family: 'Fraunces', serif;
+        font-style: italic;
+        font-size: 14px;
+        color: #64748b;
+    }
+    .card-signoff .meta {
+        font-size: 11px;
+        font-weight: 600;
+        letter-spacing: 0.12em;
+        text-transform: uppercase;
+        color: #94a3b8;
+    }
+
+    /* ---------- Footer back link ---------- */
+    .back-link {
+        display: inline-flex; align-items: center; gap: 8px;
+        font-size: 13px; font-weight: 600;
+        letter-spacing: 0.06em; text-transform: uppercase;
+        color: #b45309;
+        text-decoration: none;
+        transition: color 150ms ease, gap 150ms ease;
+    }
+    .back-link:hover { color: #92400e; gap: 12px; }
+    .back-link .arrow {
+        width: 22px; height: 1.5px; background: currentColor;
+        position: relative; flex-shrink: 0;
+    }
+    .back-link .arrow::before {
+        content: "";
+        position: absolute; left: 0; top: 50%;
+        width: 8px; height: 1.5px; background: currentColor;
+        transform: translateY(-50%) rotate(-45deg); transform-origin: 0 50%;
+    }
+    .back-link .arrow::after {
+        content: "";
+        position: absolute; left: 0; top: 50%;
+        width: 8px; height: 1.5px; background: currentColor;
+        transform: translateY(-50%) rotate(45deg); transform-origin: 0 50%;
+    }
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-white min-h-screen">
     <!-- Navigation -->
     <header class="bg-slate-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -102,20 +372,22 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
-        <!-- Page header -->
-        <div class="mb-8">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">Updates</h1>
-            <p class="text-sm text-gray-500">Periodic updates to the AI News Audit</p>
-        </div>
+    <!-- Page header -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+        <p class="eyebrow mb-3">Changelog</p>
+        <h1 class="serif text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" style="letter-spacing:-0.025em;">Updates</h1>
+        <p class="serif text-lg sm:text-xl italic text-slate-500 max-w-2xl">Periodic updates to the AI News Audit.</p>
+        <div class="gold-rule mt-6"></div>
+    </div>
 
-        <div class="grid grid-cols-1 lg:grid-cols-[200px_minmax(0,1fr)] gap-10">
+    <!-- Main Content -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
+        <div class="grid grid-cols-1 lg:grid-cols-[180px_minmax(0,1fr)] gap-12">
             <!-- Sticky timeline TOC -->
             <aside class="hidden lg:block">
                 <div class="sticky top-6">
-                    <p class="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3 px-2">Timeline</p>
-                    <nav class="flex flex-col gap-1">
+                    <p class="eyebrow-muted mb-3 px-2">Timeline</p>
+                    <nav class="flex flex-col gap-0.5">
                         <a href="#upcoming" class="toc-link toc-upcoming">
                             <span class="toc-dot"></span>
                             <span>Coming soon</span>
@@ -131,94 +403,114 @@
             <!-- Updates feed -->
             <main class="relative">
                 <!-- Upcoming -->
-                <article id="upcoming" class="timeline-item relative pl-10 pb-10">
+                <article id="upcoming" class="timeline-item relative pl-8 pb-12">
                     <span class="timeline-rail"></span>
                     <span class="timeline-dot upcoming"></span>
 
-                    <div class="bg-white border border-amber-100 rounded-xl p-5 shadow-sm">
-                        <div class="flex flex-wrap items-center gap-2 mb-2">
-                            <span class="tag tag-upcoming">Coming soon</span>
-                            <span class="text-xs text-gray-400">Next update</span>
+                    <div class="entry-card-upcoming">
+                        <div class="flex items-baseline gap-3 mb-2">
+                            <p class="eyebrow">Coming soon</p>
+                            <span class="eyebrow-muted">Next update</span>
                         </div>
-                        <h2 class="text-base font-bold text-gray-900 mb-1">Next batch of articles &mdash; coming soon</h2>
-                        <p class="text-sm text-gray-600 leading-relaxed">
-                            We're preparing the next batch of data. Check here for updates!
+                        <h2 class="serif text-2xl font-semibold text-slate-900 tracking-tight mb-2">
+                            Next batch of articles
+                        </h2>
+                        <p class="text-[15px] text-slate-600 leading-relaxed max-w-prose">
+                            We're preparing the next batch of data. Check here for updates.
                         </p>
                     </div>
                 </article>
 
                 <!-- Launch update -->
-                <article id="launch-2025-10-18" class="timeline-item relative pl-10 pb-2">
+                <article id="launch-2025-10-18" class="timeline-item relative pl-8 pb-2">
                     <span class="timeline-rail"></span>
                     <span class="timeline-dot launch"></span>
 
-                    <div class="bg-white border border-gray-200 rounded-xl p-5 sm:p-6 shadow-sm">
-                        <div class="flex flex-wrap items-center gap-2 mb-3">
-                            <time datetime="2025-10-18" class="text-xs font-semibold text-gray-500">October 18, 2025</time>
-                            <span class="tag tag-launch">Launch</span>
-                            <span class="tag tag-data">Initial data</span>
-                        </div>
-                        <h2 class="text-lg font-bold text-gray-900 mb-2">AI News Audit goes live</h2>
-                        <p class="text-sm text-gray-700 leading-relaxed">
-                            We have launched <strong>AI News Audit</strong> to help track the use and disclosure of AI in
-                            American newspapers. The first batch of data was collected roughly twice a week between
-                            <strong>June&nbsp;15, 2025</strong> and <strong>September&nbsp;15, 2025</strong>. It includes
-                            <strong>186,507 articles</strong> from online editions of <strong>1,528 American newspapers</strong>
-                            published during that summer. The articles were tested with
-                            <a href="https://www.pangram.com/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium">Pangram 2.0</a>,
-                            which has a reported false positive rate of <strong>0.001</strong> for news articles.
-                            In this batch, about <strong>9%</strong> of newly published news articles were detected as either
-                            partially or fully AI-generated.
-                        </p>
+                    <div class="entry-card">
+                    <!-- Card eyebrow / announcement seal -->
+                    <div class="card-eyebrow">
+                        <span class="seal" aria-hidden="true"></span>
+                        <span>AI News Audit &middot; Update</span>
+                        <span class="divider" aria-hidden="true"></span>
+                        <span class="id">No. 01</span>
+                    </div>
 
-                        <!-- Headline finding -->
-                        <div class="mt-5 bg-red-50 border border-red-100 rounded-lg p-3.5 flex items-center gap-3">
-                            <div class="text-xl sm:text-2xl font-bold text-red-700 leading-none">~9%</div>
-                            <div class="flex-1 text-xs sm:text-sm text-red-900/80 leading-snug">
-                                of news articles in this batch was detected as either partially or fully AI-generated.
-                            </div>
+                    <!-- Date + chips row -->
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                        <div class="date-block">
+                            <span class="date-month">October</span>
+                            <span class="date-year">2025</span>
+                            <span class="date-day">the 18th</span>
                         </div>
+                        <div class="flex flex-wrap items-center gap-2 sm:pt-1">
+                            <span class="chip chip-launch">Launch</span>
+                            <span class="chip chip-data">Initial data</span>
+                        </div>
+                    </div>
 
-                        <!-- Quick stats -->
-                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mt-3">
-                            <div class="bg-emerald-50 border border-emerald-100 rounded-lg p-3 text-center">
-                                <div class="text-base font-bold text-emerald-800">186,507</div>
-                                <div class="text-[11px] text-emerald-700 uppercase tracking-wide">Articles</div>
-                            </div>
-                            <div class="bg-blue-50 border border-blue-100 rounded-lg p-3 text-center">
-                                <div class="text-base font-bold text-blue-800">1,528</div>
-                                <div class="text-[11px] text-blue-700 uppercase tracking-wide">Newspapers</div>
-                            </div>
-                            <div class="bg-violet-50 border border-violet-100 rounded-lg p-3 text-center">
-                                <div class="text-base font-bold text-violet-800">Jun&ndash;Sep&nbsp;2025</div>
-                                <div class="text-[11px] text-violet-700 uppercase tracking-wide">Period</div>
-                            </div>
-                            <div class="bg-amber-50 border border-amber-100 rounded-lg p-3 text-center">
-                                <div class="text-base font-bold text-amber-800">Pangram&nbsp;2.0</div>
-                                <div class="text-[11px] text-amber-700 uppercase tracking-wide">Detector</div>
-                            </div>
-                        </div>
+                    <!-- Headline -->
+                    <h2 class="entry-title mb-5">AI News Audit goes live</h2>
 
-                        <div class="mt-5 flex flex-wrap gap-2">
-                            <a href="/" class="inline-flex items-center gap-1.5 text-xs font-medium text-blue-600 hover:text-blue-800 transition-colors">
-                                Browse the dataset
-                                <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14 5l7 7m0 0l-7 7m7-7H3"/></svg>
-                            </a>
-                            <a href="metrics.html" class="inline-flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors">
-                                How AI detection works
-                            </a>
+                    <!-- Lede -->
+                    <p class="lede max-w-prose mb-8">
+                        We have launched <strong>AI News Audit</strong> to help track the use and disclosure of AI in
+                        American newspapers. The first batch of data was collected roughly twice a week between
+                        <strong>June&nbsp;15, 2025</strong> and <strong>September&nbsp;15, 2025</strong>. It includes
+                        <strong>186,507 articles</strong> from online editions of <strong>1,528 American newspapers</strong>
+                        published during that summer. The articles were tested with
+                        <a href="https://www.pangram.com/" target="_blank">Pangram&nbsp;2.0</a>,
+                        which has a reported false positive rate of <strong>0.001</strong> for news articles.
+                    </p>
+
+                    <!-- Hero stat ribbon -->
+                    <div class="ribbon mb-8">
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Period</div>
+                            <div class="ribbon-value">Jun&ndash;Sep</div>
+                            <div class="ribbon-sub">2025</div>
                         </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Articles</div>
+                            <div class="ribbon-value">186,507</div>
+                            <div class="ribbon-sub">scanned</div>
+                        </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Newspapers</div>
+                            <div class="ribbon-value">1,528</div>
+                            <div class="ribbon-sub">U.S. outlets</div>
+                        </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Detector</div>
+                            <div class="ribbon-value">Pangram</div>
+                            <div class="ribbon-sub">v&nbsp;2.0</div>
+                        </div>
+                    </div>
+
+                    <!-- Pull-quote finding -->
+                    <div class="finding">
+                        <div class="finding-num">~9%</div>
+                        <div class="finding-text">
+                            of news articles in this batch were detected as <em>either partially or fully AI&#8209;generated</em>.
+                        </div>
+                    </div>
+
+                    <!-- Card sign-off -->
+                    <div class="card-signoff">
+                        <span class="sig">&mdash; The AI News Audit team</span>
+                        <span class="meta">Filed under &middot; Launch</span>
+                    </div>
                     </div>
                 </article>
             </main>
         </div>
 
-        <!-- Back to Search -->
-        <div class="text-center mt-12">
-            <a href="/" class="inline-flex items-center gap-2 bg-slate-900 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                Back to Search
+        <!-- Back to home -->
+        <div class="mt-16 pt-8 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <a href="/" class="back-link">
+                <span class="arrow"></span>
+                Back to AI News Audit
             </a>
+            <p class="text-xs text-slate-400 italic serif">More updates to come.</p>
         </div>
     </div>
 
