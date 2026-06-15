@@ -1579,6 +1579,25 @@ class StaticDataLoader {
             }
         });
 
+        // Per-publisher monthly series (opinions has 3 publishers: NYT / WSJ / WaPo)
+        const tsByPublisher = {};
+        if (datasetType === 'opinions') {
+            articlesForTime.forEach(a => {
+                if (!a.publish_date) return;
+                const date = new Date(a.publish_date);
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const publisher = a.newspaper || a.newspaper_name || 'Unknown';
+                const key = `${publisher}||${month}`;
+                if (!tsByPublisher[key]) {
+                    tsByPublisher[key] = { month, publisher, total: 0, ai_count: 0, mixed_count: 0 };
+                }
+                tsByPublisher[key].total++;
+                const label = a.final_prediction || this.normalizePrediction(a.prediction);
+                if (label === 'AI') tsByPublisher[key].ai_count++;
+                if (label === 'Mixed') tsByPublisher[key].mixed_count++;
+            });
+        }
+
         // Topic distribution
         const topicDist = {};
         validArticles.forEach(a => {
@@ -1602,6 +1621,8 @@ class StaticDataLoader {
                 .map(([prediction, count]) => ({ prediction, count }))
                 .sort((a, b) => b.count - a.count),
             time_series: Object.values(timeSeries)
+                .sort((a, b) => a.month.localeCompare(b.month)),
+            time_series_by_publisher: Object.values(tsByPublisher)
                 .sort((a, b) => a.month.localeCompare(b.month)),
             topic_distribution: Object.entries(topicDist)
                 .map(([primary_topic, count]) => ({ primary_topic, count }))

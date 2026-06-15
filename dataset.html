@@ -6,37 +6,51 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>Dataset Analysis - AI News Audit</title>
+    <title>Statistics &mdash; AI News Audit</title>
     <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260615"></script>
+    <script src="/static-data-loader.js?v=20260616"></script>
 <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
+    .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; font-optical-sizing: auto; }
+    .gold-rule { height: 3px; width: 56px; background: linear-gradient(to right, #b45309 0%, #d97706 100%); border-radius: 2px; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; }
+    .eyebrow-muted { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #94a3b8; }
+    .card-title { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; color: #0f172a; }
+
+    /* Editorial card */
+    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05); }
+
+    /* Dataset selector */
     .ds-btn {
-        padding: 8px 16px;
-        font-size: 13px;
-        font-weight: 500;
-        border-radius: 8px;
-        transition: all 150ms ease;
-        border: 1px solid #e5e7eb;
-        background: white;
-        color: #6b7280;
-        cursor: pointer;
+        padding: 8px 16px; font-size: 13px; font-weight: 600;
+        border-radius: 9999px; transition: all 150ms ease;
+        border: 1px solid #e5e7eb; background: white; color: #64748b; cursor: pointer;
+        letter-spacing: 0.01em;
     }
-    .ds-btn:hover { border-color: #d1d5db; color: #374151; }
-    .ds-btn.active {
-        background: #0f172a;
-        color: white;
-        border-color: #0f172a;
-    }
+    .ds-btn:hover { border-color: #fde68a; color: #b45309; background: #fffbeb; }
+    .ds-btn.active { background: #0f172a; color: white; border-color: #0f172a; }
+
+    /* Summary stat ribbon */
+    .stat-cell { padding: 20px 22px; border-right: 1px solid #e2e8f0; }
+    .stat-cell:last-child { border-right: none; }
+    .stat-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; margin-bottom: 8px; }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: #0f172a; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+
+    /* Segmented toggle */
+    .seg-wrap { display: inline-flex; background: #f1f5f9; border-radius: 9999px; padding: 3px; gap: 2px; }
+    .seg-btn { font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 9999px; color: #64748b; border: none; background: transparent; cursor: pointer; transition: all 150ms ease; letter-spacing: 0.01em; }
+    .seg-btn:hover { color: #0f172a; }
+    .seg-btn.active { background: white; color: #0f172a; box-shadow: 0 1px 2px rgba(15,23,42,0.12); }
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-white min-h-screen">
     <!-- Navigation -->
     <header class="bg-slate-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -52,13 +66,15 @@
         </div>
     </header>
 
-    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <!-- Header -->
-        <div class="mb-6">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-1" id="dataset-title">Dataset Analysis</h1>
-            <p class="text-sm text-gray-500" id="dataset-description">Comprehensive statistics and trends</p>
-        </div>
+    <!-- Page header -->
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
+        <p class="eyebrow mb-3">Statistics</p>
+        <h1 class="serif text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" id="dataset-title" style="letter-spacing:-0.025em;">Dataset Analysis</h1>
+        <p class="serif text-lg sm:text-xl italic text-slate-500 max-w-2xl" id="dataset-description">Comprehensive statistics and trends</p>
+        <div class="gold-rule mt-6"></div>
+    </div>
 
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-20">
         <!-- Dataset Selector -->
         <div class="flex flex-wrap gap-2 mb-8">
             <button onclick="loadDataset('recent_news')" id="btn-recent_news" class="ds-btn">Recent News</button>
@@ -67,40 +83,57 @@
         </div>
 
         <!-- Loading -->
-        <div id="loading" class="hidden bg-white border border-gray-200 rounded-xl p-8 text-center">
+        <div id="loading" class="hidden panel p-8 text-center">
             <div class="inline-block animate-spin rounded-full h-6 w-6 border-2 border-slate-900 border-t-transparent mb-3"></div>
-            <p class="text-sm text-gray-500">Loading dataset statistics...</p>
+            <p class="text-sm text-gray-500">Loading dataset statistics&hellip;</p>
         </div>
 
         <!-- Charts Container -->
-        <div id="charts-container" class="hidden">
+        <div id="charts-container" class="hidden space-y-6">
             <!-- Summary Stats -->
-            <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-8" id="summary-stats"></div>
+            <div class="panel overflow-hidden">
+                <div class="grid grid-cols-1 sm:grid-cols-3" id="summary-stats"></div>
+            </div>
+
+            <!-- Time Series (featured) -->
+            <div class="panel p-5 sm:p-7">
+                <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-3 mb-5">
+                    <div>
+                        <p class="eyebrow mb-1.5">Trend over time</p>
+                        <h2 class="card-title" id="timeseries-title">AI &amp; Mixed content over time</h2>
+                        <p class="text-xs text-gray-400 mt-1" id="timeseries-sub">Share of articles flagged as AI or Mixed, by month</p>
+                    </div>
+                    <div id="timeseries-toggle" class="seg-wrap hidden flex-shrink-0">
+                        <button class="seg-btn active" data-mode="prediction">By prediction</button>
+                        <button class="seg-btn" data-mode="publisher">By publisher</button>
+                    </div>
+                </div>
+                <div style="position:relative; height: 340px;">
+                    <canvas id="timeSeriesChart"></canvas>
+                </div>
+            </div>
 
             <!-- Charts Grid -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-4 sm:gap-6 mb-6">
-                <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Prediction Distribution</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">Breakdown</p>
+                    <h2 class="card-title mb-4">Prediction distribution</h2>
                     <div class="max-w-xs mx-auto">
                         <canvas id="predictionChart"></canvas>
                     </div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5">
-                    <h2 class="text-lg font-bold text-gray-900 mb-4">Top Topics</h2>
+                <div class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">Coverage</p>
+                    <h2 class="card-title mb-4">Top topics</h2>
                     <canvas id="topicChart"></canvas>
                 </div>
             </div>
 
             <!-- Newspaper Chart (opinions only) -->
-            <div id="newspaper-chart-container" class="bg-white rounded-xl border border-gray-200 p-5 mb-6 hidden">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">Top Newspapers</h2>
+            <div id="newspaper-chart-container" class="panel p-5 sm:p-6 hidden">
+                <p class="eyebrow mb-1.5">By outlet</p>
+                <h2 class="card-title mb-4">Predictions by newspaper</h2>
                 <canvas id="newspaperChart"></canvas>
-            </div>
-
-            <!-- Time Series -->
-            <div class="bg-white rounded-xl border border-gray-200 p-5">
-                <h2 class="text-lg font-bold text-gray-900 mb-4">AI/Mixed Predictions Over Time</h2>
-                <canvas id="timeSeriesChart"></canvas>
             </div>
         </div>
     </div>
@@ -113,55 +146,51 @@
     <script>
         console.log('Using static data loader');
         let currentDataset = null;
-        let charts = {
-            prediction: null,
-            topic: null,
-            newspaper: null,
-            timeSeries: null
-        };
+        let currentStats = null;
+        let timeSeriesMode = 'prediction';
+        let charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
 
         const datasetInfo = {
-            'recent_news': {
-                title: 'Recent News Analysis',
-                description: 'Analysis of recent news articles',
-                color: '#3b82f6'
-            },
-            'opinions': {
-                title: 'Opinions Analysis',
-                description: 'Analysis of opinion pieces and editorials',
-                color: '#8b5cf6'
-            },
-            'reporters': {
-                title: 'Reporters Analysis',
-                description: 'Analysis of reporter-attributed articles',
-                color: '#f59e0b'
-            }
+            'recent_news': { title: 'Recent News Analysis', description: 'Analysis of recent news articles' },
+            'opinions':    { title: 'Opinions Analysis', description: 'Analysis of opinion pieces and editorials' },
+            'reporters':   { title: 'Reporters Analysis', description: 'Analysis of reporter-attributed articles' }
         };
+
+        // Publisher line colors (opinions)
+        const PUBLISHER_COLORS = {
+            'New York Times': '#0f172a',
+            'Wall Street Journal': '#b45309',
+            'Washington Post': '#2563eb'
+        };
+        const PUBLISHER_FALLBACK = ['#0f172a', '#b45309', '#2563eb', '#0ea5e9', '#a855f7'];
 
         function updateButtonStyles(activeDataset) {
             ['recent_news', 'opinions', 'reporters'].forEach(dataset => {
-                const btn = document.getElementById(`btn-${dataset}`);
-                if (dataset === activeDataset) {
-                    btn.className = 'ds-btn active';
-                } else {
-                    btn.className = 'ds-btn';
-                }
+                document.getElementById(`btn-${dataset}`).className =
+                    dataset === activeDataset ? 'ds-btn active' : 'ds-btn';
             });
+        }
+
+        function monthLabel(ym) {
+            const [y, m] = ym.split('-').map(Number);
+            return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         }
 
         async function loadDataset(datasetType) {
             currentDataset = datasetType;
+            timeSeriesMode = 'prediction';
             updateButtonStyles(datasetType);
-            
+
             const info = datasetInfo[datasetType];
             document.getElementById('dataset-title').textContent = info.title;
             document.getElementById('dataset-description').textContent = info.description;
-            
+
             document.getElementById('loading').classList.remove('hidden');
             document.getElementById('charts-container').classList.add('hidden');
-            
+
             try {
                 const data = await window.dataLoader.getDatasetStats(datasetType);
+                currentStats = data;
                 await renderCharts(data);
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('charts-container').classList.remove('hidden');
@@ -172,222 +201,159 @@
             }
         }
 
-        async function renderCharts(data) {
-            Object.values(charts).forEach(chart => {
-                if (chart) chart.destroy();
-            });
-            
-            const predictionData = ['Human', 'Mixed', 'AI']
-                .map(label => ({
-                    prediction: label,
-                    count: data.prediction_distribution.find(p => p.prediction === label)?.count || 0
-                }));
+        function renderTimeSeries(data) {
+            if (charts.timeSeries) { charts.timeSeries.destroy(); charts.timeSeries = null; }
+            Chart.defaults.font.family = 'Inter';
 
-            const totalArticles = predictionData.reduce((sum, item) => sum + item.count, 0);
+            const titleEl = document.getElementById('timeseries-title');
+            const subEl = document.getElementById('timeseries-sub');
+            let labels, datasets, yTitle;
+
+            if (timeSeriesMode === 'publisher') {
+                const rows = data.time_series_by_publisher || [];
+                const months = [...new Set(rows.map(r => r.month))].sort();
+                const publishers = [...new Set(rows.map(r => r.publisher))].sort();
+                const byKey = {};
+                rows.forEach(r => { byKey[`${r.publisher}||${r.month}`] = r; });
+
+                labels = months.map(monthLabel);
+                datasets = publishers.map((pub, i) => {
+                    const color = PUBLISHER_COLORS[pub] || PUBLISHER_FALLBACK[i % PUBLISHER_FALLBACK.length];
+                    return {
+                        label: pub,
+                        data: months.map(m => {
+                            const r = byKey[`${pub}||${m}`];
+                            if (!r || r.total === 0) return null;
+                            return (((r.ai_count + r.mixed_count) / r.total) * 100).toFixed(2);
+                        }),
+                        borderColor: color,
+                        backgroundColor: color + '14',
+                        tension: 0.35, fill: false, borderWidth: 2, pointRadius: 2, spanGaps: true
+                    };
+                });
+                yTitle = 'AI or Mixed (%)';
+                titleEl.textContent = 'AI or Mixed content by publisher';
+                subEl.textContent = 'Share of each outlet’s articles flagged as AI or Mixed, by month';
+            } else {
+                const t = data.time_series;
+                labels = t.map(x => monthLabel(x.month));
+                datasets = [
+                    { label: 'AI content %', data: t.map(x => ((x.ai_count / x.total) * 100).toFixed(2)),
+                      borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 2 },
+                    { label: 'Mixed content %', data: t.map(x => ((x.mixed_count / x.total) * 100).toFixed(2)),
+                      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 2 }
+                ];
+                yTitle = 'Percentage (%)';
+                titleEl.textContent = 'AI & Mixed content over time';
+                subEl.textContent = 'Share of articles flagged as AI or Mixed, by month';
+            }
+
+            charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
+                type: 'line',
+                data: { labels, datasets },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'top', labels: { font: { size: 13, weight: 'bold' }, padding: 18, usePointStyle: true, pointStyle: 'circle' } } },
+                    scales: {
+                        y: { beginAtZero: true, title: { display: true, text: yTitle, font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                        x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } }
+                    }
+                }
+            });
+        }
+
+        async function renderCharts(data) {
+            Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
+            charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
+            Chart.defaults.font.family = 'Inter';
+
+            const predictionData = ['Human', 'Mixed', 'AI'].map(label => ({
+                prediction: label,
+                count: data.prediction_distribution.find(p => p.prediction === label)?.count || 0
+            }));
+            const totalArticles = predictionData.reduce((s, i) => s + i.count, 0);
             const humanCount = predictionData.find(p => p.prediction === 'Human')?.count || 0;
             const mixedCount = predictionData.find(p => p.prediction === 'Mixed')?.count || 0;
             const aiCount = predictionData.find(p => p.prediction === 'AI')?.count || 0;
-            
+
             document.getElementById('summary-stats').innerHTML = `
-                <div class="bg-white rounded-xl border border-gray-200 p-5 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">${totalArticles.toLocaleString()}</div>
-                    <div class="text-xs text-gray-500 mt-1">Total Articles</div>
+                <div class="stat-cell">
+                    <div class="stat-label">Total Articles</div>
+                    <div class="stat-value">${totalArticles.toLocaleString()}</div>
+                    <div class="stat-sub">analyzed with Pangram v3.3</div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-0.5 bg-emerald-500"></div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">${((humanCount / totalArticles) * 100).toFixed(1)}%</div>
-                    <div class="text-xs text-gray-500 mt-1">Human-Written</div>
+                <div class="stat-cell">
+                    <div class="stat-label">Human-Written</div>
+                    <div class="stat-value">${((humanCount / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="stat-sub">${humanCount.toLocaleString()} articles</div>
                 </div>
-                <div class="bg-white rounded-xl border border-gray-200 p-5 relative overflow-hidden">
-                    <div class="absolute top-0 left-0 right-0 h-0.5 bg-red-500"></div>
-                    <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
-                    <div class="text-xs text-gray-500 mt-1">AI/Mixed Content</div>
+                <div class="stat-cell">
+                    <div class="stat-label">AI / Mixed</div>
+                    <div class="stat-value">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="stat-sub">${(aiCount + mixedCount).toLocaleString()} articles</div>
                 </div>
             `;
-            
-            const predictionColors = predictionData.map(p => {
-                if (p.prediction === 'Human') return '#10b981';
-                if (p.prediction === 'Mixed') return '#f59e0b';
-                if (p.prediction === 'AI') return '#ef4444';
-                return '#6b7280';
-            });
-            
-            const chartDefaults = {
-                font: { family: 'Inter' }
-            };
-            Chart.defaults.font.family = 'Inter';
-            
+
+            // Time series toggle: only meaningful for opinions (3 publishers)
+            const toggle = document.getElementById('timeseries-toggle');
+            const hasPublisherData = (data.time_series_by_publisher || []).length > 0;
+            if (currentDataset === 'opinions' && hasPublisherData) {
+                toggle.classList.remove('hidden');
+                toggle.querySelectorAll('.seg-btn').forEach(btn => {
+                    btn.classList.toggle('active', btn.dataset.mode === timeSeriesMode);
+                });
+            } else {
+                toggle.classList.add('hidden');
+            }
+            renderTimeSeries(data);
+
+            const predictionColors = predictionData.map(p =>
+                p.prediction === 'Human' ? '#10b981' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
+
             charts.prediction = new Chart(document.getElementById('predictionChart'), {
                 type: 'pie',
-                data: {
-                    labels: predictionData.map(p => p.prediction),
-                    datasets: [{
-                        data: predictionData.map(p => p.count),
-                        backgroundColor: predictionColors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
+                data: { labels: predictionData.map(p => p.prediction), datasets: [{ data: predictionData.map(p => p.count), backgroundColor: predictionColors, borderWidth: 2, borderColor: '#fff' }] },
                 options: {
                     responsive: true,
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const elementIndex = elements[0].index;
-                            const prediction = predictionData[elementIndex].prediction;
-                            window.open(`search.html?dataset_type=${currentDataset}&prediction=${encodeURIComponent(prediction)}`, '_blank');
-                        }
-                    },
+                    onClick: (e, els) => { if (els.length) window.open(`search.html?dataset_type=${currentDataset}&prediction=${encodeURIComponent(predictionData[els[0].index].prediction)}`, '_blank'); },
                     plugins: {
-                        legend: {
-                            position: 'bottom',
-                            labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const value = context.parsed;
-                                    const percentage = ((value / totalArticles) * 100).toFixed(1);
-                                    return `${context.label}: ${value.toLocaleString()} (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { position: 'bottom', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed.toLocaleString()} (${((c.parsed / totalArticles) * 100).toFixed(1)}%)` } }
                     }
                 }
             });
-            
-            const timeData = data.time_series;
-            charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
-                type: 'line',
-                data: {
-                    labels: timeData.map(t => t.month),
-                    datasets: [
-                        {
-                            label: 'AI Content %',
-                            data: timeData.map(t => ((t.ai_count / t.total) * 100).toFixed(2)),
-                            borderColor: '#ef4444',
-                            backgroundColor: 'rgba(239, 68, 68, 0.05)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 2,
-                            pointRadius: 3
-                        },
-                        {
-                            label: 'Mixed Content %',
-                            data: timeData.map(t => ((t.mixed_count / t.total) * 100).toFixed(2)),
-                            borderColor: '#f59e0b',
-                            backgroundColor: 'rgba(245, 158, 11, 0.05)',
-                            tension: 0.4,
-                            fill: true,
-                            borderWidth: 2,
-                            pointRadius: 3
-                        }
-                    ]
-                },
-                options: {
-                    responsive: true,
-                    plugins: { legend: { position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } } },
-                    scales: {
-                        y: {
-                            beginAtZero: true,
-                            title: { display: true, text: 'Percentage (%)', font: { size: 13, weight: '600' } },
-                            grid: { color: 'rgba(0,0,0,0.04)' }
-                        },
-                        x: {
-                            title: { display: true, text: 'Month', font: { size: 13, weight: '600' } },
-                            grid: { display: false }
-                        }
-                    }
-                }
-            });
-            
+
             const topicData = data.topic_distribution;
-            const colors = [
-                '#3b82f6', '#8b5cf6', '#ec4899', '#f59e0b', '#10b981',
-                '#06b6d4', '#6366f1', '#a855f7', '#d946ef', '#f43f5e',
-                '#84cc16', '#22c55e', '#14b8a6', '#0ea5e9', '#6366f1'
-            ];
-            
+            const colors = ['#3b82f6','#8b5cf6','#ec4899','#f59e0b','#10b981','#06b6d4','#6366f1','#a855f7','#d946ef','#f43f5e','#84cc16','#22c55e','#14b8a6','#0ea5e9','#6366f1'];
             charts.topic = new Chart(document.getElementById('topicChart'), {
                 type: 'pie',
-                data: {
-                    labels: topicData.map(t => t.primary_topic),
-                    datasets: [{
-                        data: topicData.map(t => t.count),
-                        backgroundColor: colors,
-                        borderWidth: 2,
-                        borderColor: '#fff'
-                    }]
-                },
+                data: { labels: topicData.map(t => t.primary_topic), datasets: [{ data: topicData.map(t => t.count), backgroundColor: colors, borderWidth: 2, borderColor: '#fff' }] },
                 options: {
                     responsive: true,
-                    onClick: (event, elements) => {
-                        if (elements.length > 0) {
-                            const topic = topicData[elements[0].index].primary_topic;
-                            window.open(`search.html?dataset_type=${currentDataset}&topic=${encodeURIComponent(topic)}`, '_blank');
-                        }
-                    },
+                    onClick: (e, els) => { if (els.length) window.open(`search.html?dataset_type=${currentDataset}&topic=${encodeURIComponent(topicData[els[0].index].primary_topic)}`, '_blank'); },
                     plugins: {
-                        legend: {
-                            position: 'right',
-                            labels: { font: { size: 13, weight: '600' }, padding: 12, usePointStyle: true, pointStyle: 'circle' }
-                        },
-                        tooltip: {
-                            callbacks: {
-                                label: function(context) {
-                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
-                                    const percentage = ((context.parsed / total) * 100).toFixed(1);
-                                    return `${context.label}: ${context.parsed.toLocaleString()} (${percentage}%)`;
-                                }
-                            }
-                        }
+                        legend: { position: 'right', labels: { font: { size: 13, weight: '600' }, padding: 12, usePointStyle: true, pointStyle: 'circle' } },
+                        tooltip: { callbacks: { label: (c) => { const tot = c.dataset.data.reduce((a, b) => a + b, 0); return `${c.label}: ${c.parsed.toLocaleString()} (${((c.parsed / tot) * 100).toFixed(1)}%)`; } } }
                     }
                 }
             });
-            
+
             const newspaperContainer = document.getElementById('newspaper-chart-container');
-            
             if (currentDataset === 'opinions') {
                 newspaperContainer.classList.remove('hidden');
-                
                 const newspaperData = data.newspaper_distribution || [];
-                
-                const processedNewspaperData = await Promise.all(
-                    newspaperData.map(async (newspaper) => {
-                        try {
-                            const articles = await window.dataLoader.getArticles({
-                                newspaper: newspaper.newspaper,
-                                dataset_type: currentDataset,
-                                limit: 1000
-                            });
-                            const predictionCounts = { Human: 0, Mixed: 0, AI: 0 };
-                            articles.articles.forEach(article => {
-                                const prediction = article.prediction;
-                                if (predictionCounts.hasOwnProperty(prediction)) {
-                                    predictionCounts[prediction]++;
-                                }
-                            });
-                            return {
-                                newspaper: newspaper.newspaper,
-                                total: newspaper.count,
-                                human: predictionCounts.Human,
-                                mixed: predictionCounts.Mixed,
-                                ai: predictionCounts.AI
-                            };
-                        } catch (error) {
-                            console.warn(`Error processing newspaper ${newspaper.newspaper}:`, error);
-                            const total = newspaper.count;
-                            return {
-                                newspaper: newspaper.newspaper,
-                                total: total,
-                                human: Math.floor(total * 0.6),
-                                mixed: Math.floor(total * 0.2),
-                                ai: Math.floor(total * 0.2)
-                            };
-                        }
-                    })
-                );
-                
+                const processedNewspaperData = await Promise.all(newspaperData.map(async (newspaper) => {
+                    try {
+                        const articles = await window.dataLoader.getArticles({ newspaper: newspaper.newspaper, dataset_type: currentDataset, limit: 1000 });
+                        const predictionCounts = { Human: 0, Mixed: 0, AI: 0 };
+                        articles.articles.forEach(article => { if (predictionCounts.hasOwnProperty(article.prediction)) predictionCounts[article.prediction]++; });
+                        return { newspaper: newspaper.newspaper, total: newspaper.count, human: predictionCounts.Human, mixed: predictionCounts.Mixed, ai: predictionCounts.AI };
+                    } catch (error) {
+                        const total = newspaper.count;
+                        return { newspaper: newspaper.newspaper, total, human: Math.floor(total * 0.6), mixed: Math.floor(total * 0.2), ai: Math.floor(total * 0.2) };
+                    }
+                }));
                 charts.newspaper = new Chart(document.getElementById('newspaperChart'), {
                     type: 'bar',
                     data: {
@@ -400,49 +366,42 @@
                     },
                     options: {
                         responsive: true,
-                        onClick: (event, elements) => {
-                            if (elements.length > 0) {
-                                const element = elements[0];
-                                const newspaper = processedNewspaperData[element.index].newspaper;
-                                let prediction = '';
-                                if (element.datasetIndex === 0) prediction = 'AI';
-                                else if (element.datasetIndex === 1) prediction = 'Mixed';
-                                else if (element.datasetIndex === 2) prediction = 'Human';
+                        onClick: (e, els) => {
+                            if (els.length) {
+                                const el = els[0];
+                                const newspaper = processedNewspaperData[el.index].newspaper;
+                                const prediction = el.datasetIndex === 0 ? 'AI' : el.datasetIndex === 1 ? 'Mixed' : 'Human';
                                 window.open(`search.html?dataset_type=${currentDataset}&newspaper=${encodeURIComponent(newspaper)}&prediction=${encodeURIComponent(prediction)}`, '_blank');
                             }
                         },
                         plugins: {
                             legend: { display: true, position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } },
-                            tooltip: {
-                                callbacks: {
-                                    label: function(context) {
-                                        const value = context.parsed.y;
-                                        const total = processedNewspaperData[context.dataIndex].total;
-                                        const percentage = ((value / total) * 100).toFixed(1);
-                                        return `${context.dataset.label}: ${value.toLocaleString()} (${percentage}%)`;
-                                    }
-                                }
-                            }
+                            tooltip: { callbacks: { label: (c) => { const total = processedNewspaperData[c.dataIndex].total; return `${c.dataset.label}: ${c.parsed.y.toLocaleString()} (${((c.parsed.y / total) * 100).toFixed(1)}%)`; } } }
                         },
                         scales: {
-                            x: { stacked: true, title: { display: true, text: 'Newspaper', font: { size: 13, weight: '600' } }, grid: { display: false } },
-                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Articles', font: { size: 13, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                            x: { stacked: true, title: { display: true, text: 'Newspaper', font: { size: 12, weight: '600' } }, grid: { display: false } },
+                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Articles', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
                         }
                     }
                 });
             } else {
                 newspaperContainer.classList.add('hidden');
-                if (charts.newspaper) {
-                    charts.newspaper.destroy();
-                    charts.newspaper = null;
-                }
+                if (charts.newspaper) { charts.newspaper.destroy(); charts.newspaper = null; }
             }
         }
 
+        // Time-series toggle handler
+        document.getElementById('timeseries-toggle').addEventListener('click', (e) => {
+            const btn = e.target.closest('.seg-btn');
+            if (!btn || btn.dataset.mode === timeSeriesMode || !currentStats) return;
+            timeSeriesMode = btn.dataset.mode;
+            document.querySelectorAll('#timeseries-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === timeSeriesMode));
+            renderTimeSeries(currentStats);
+        });
+
         document.addEventListener('DOMContentLoaded', () => {
             const urlParams = new URLSearchParams(window.location.search);
-            const datasetType = urlParams.get('type') || 'recent_news';
-            loadDataset(datasetType);
+            loadDataset(urlParams.get('type') || 'recent_news');
         });
     </script>
 </body>
