@@ -126,7 +126,7 @@ class StaticDataLoader {
         
         try {
             const response = await fetch('/additional_data/dataset_counts.json', {
-                cache: 'force-cache'
+                cache: 'no-cache'
             });
             
             if (response.ok) {
@@ -326,7 +326,7 @@ class StaticDataLoader {
 
         console.log(`🌊 Streaming ${datasetType} dataset from network...`);
 
-        const ndjsonUrl = `/data/${datasetType}_data.ndjson`;
+        const ndjsonUrl = `/data/${datasetType}_data.ndjson?v=${version}`;
         const startTime = performance.now();
         const articles = [];
         
@@ -423,7 +423,7 @@ class StaticDataLoader {
         console.log(`🔄 Loading ${datasetType} dataset from network...`);
 
         const filename = `${datasetType}_data.json.gz`;
-        const url = `/data/${filename}`;
+        const url = `/data/${filename}?v=${version}`;
         const startTime = performance.now();
 
         this.loadPromises[datasetType] = this.waitForPako().then(() => fetch(url, {
@@ -688,7 +688,7 @@ class StaticDataLoader {
         try {
             // Try to load from metadata file first (instant)
             const response = await fetch('/additional_data/dataset_counts.json', {
-                cache: 'force-cache'
+                cache: 'no-cache'
             });
             
             if (response.ok) {
@@ -753,8 +753,9 @@ class StaticDataLoader {
             return this.loadPromises[`${datasetType}_structure`];
         }
 
+        const version = await this.loadDataVersion();
         const filename = `${datasetType}_data.json.gz`;
-        const url = `/data/${filename}`;
+        const url = `/data/${filename}?v=${version}`;
         const startTime = performance.now();
 
         this.loadPromises[`${datasetType}_structure`] = this.waitForPako().then(() => fetch(url, {
@@ -1019,7 +1020,7 @@ class StaticDataLoader {
     async loadCountsFromMetadata() {
         try {
             const response = await fetch('/additional_data/dataset_counts.json', {
-                cache: 'force-cache'
+                cache: 'no-cache'
             });
             
             if (response.ok) {
