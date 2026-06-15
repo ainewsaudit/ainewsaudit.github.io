@@ -269,7 +269,7 @@
             charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
             Chart.defaults.font.family = 'Inter';
 
-            const predictionData = ['Human', 'AI-Assisted', 'Mixed', 'AI'].map(label => ({
+            const predictionData = ['Human', 'Mixed', 'AI'].map(label => ({
                 prediction: label,
                 count: data.prediction_distribution.find(p => p.prediction === label)?.count || 0
             }));
@@ -311,7 +311,7 @@
             renderTimeSeries(data);
 
             const predictionColors = predictionData.map(p =>
-                p.prediction === 'Human' ? '#10b981' : p.prediction === 'AI-Assisted' ? '#f97316' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
+                p.prediction === 'Human' ? '#10b981' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
 
             charts.prediction = new Chart(document.getElementById('predictionChart'), {
                 type: 'pie',

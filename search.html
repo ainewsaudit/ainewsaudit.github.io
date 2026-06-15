@@ -247,7 +247,7 @@
                     topicSelect.appendChild(option);
                 });
                 const predictionSelect = document.getElementById('prediction-filter');
-                ['Human', 'AI-Assisted', 'Mixed', 'AI'].forEach(pred => {
+                ['Human', 'Mixed', 'AI'].forEach(pred => {
                     const option = document.createElement('option');
                     option.value = pred;
                     option.textContent = pred;
@@ -262,7 +262,6 @@
             if (!prediction) return 'bg-gray-100 text-gray-600';
             const pred = prediction.toLowerCase();
             if (pred === 'human') return 'bg-emerald-50 text-emerald-700';
-            if (pred === 'ai-assisted') return 'bg-orange-50 text-orange-700';
             if (pred === 'mixed') return 'bg-amber-50 text-amber-700';
             if (pred === 'ai') return 'bg-red-50 text-red-700';
             return 'bg-gray-100 text-gray-600';

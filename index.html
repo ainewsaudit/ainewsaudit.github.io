@@ -282,7 +282,6 @@
             if (!prediction) return 'bg-gray-100 text-gray-600';
             const pred = prediction.toLowerCase();
             if (pred === 'human') return 'bg-emerald-50 text-emerald-700';
-            if (pred === 'ai-assisted') return 'bg-orange-50 text-orange-700';
             if (pred === 'mixed') return 'bg-amber-50 text-amber-700';
             if (pred === 'ai') return 'bg-red-50 text-red-700';
             return 'bg-gray-100 text-gray-600';
@@ -514,7 +513,6 @@
             document.getElementById('main-reset-button').addEventListener('click', resetFilters);
 
             document.getElementById('filter-ai').addEventListener('click', () => applyClassificationFilter('AI'));
-            document.getElementById('filter-ai-assisted').addEventListener('click', () => applyClassificationFilter('AI-Assisted'));
             document.getElementById('filter-mixed').addEventListener('click', () => applyClassificationFilter('Mixed'));
             document.getElementById('filter-human').addEventListener('click', () => applyClassificationFilter('Human'));
             document.getElementById('filter-recent-news').addEventListener('click', () => applyDatasetFilter('recent-news'));
@@ -638,11 +636,8 @@
     #filter-ai:hover { color: #b91c1c; border-color: #fecaca; background: #fef2f2; }
     #filter-ai.active { background: #ef4444; box-shadow: 0 2px 8px rgba(239,68,68,0.35); }
 
-    #filter-ai-assisted:hover { color: #c2410c; border-color: #fed7aa; background: #fff7ed; }
-    #filter-ai-assisted.active { background: #f97316; box-shadow: 0 2px 8px rgba(249,115,22,0.35); }
-
-    #filter-mixed:hover { color: #b45309; border-color: #fde68a; background: #fffbeb; }
-    #filter-mixed.active { background: #f59e0b; box-shadow: 0 2px 8px rgba(245,158,11,0.35); }
+    #filter-mixed:hover { color: #c2410c; border-color: #fed7aa; background: #fff7ed; }
+    #filter-mixed.active { background: #f97316; box-shadow: 0 2px 8px rgba(249,115,22,0.35); }
 
     #filter-human:hover { color: #15803d; border-color: #bbf7d0; background: #f0fdf4; }
     #filter-human.active { background: #22c55e; box-shadow: 0 2px 8px rgba(34,197,94,0.35); }
@@ -839,9 +834,8 @@
                             <!-- Classification Segmented Control -->
                             <div>
                                 <label class="filter-label">Classification</label>
-                                <div class="bg-gray-100 rounded-lg p-1 grid grid-cols-2 gap-1">
+                                <div class="bg-gray-100 rounded-lg p-1 grid grid-cols-3 gap-1">
                                     <button id="filter-ai" class="seg-btn seg-classification" data-value="AI">AI</button>
-                                    <button id="filter-ai-assisted" class="seg-btn seg-classification" data-value="AI-Assisted">AI-Assisted</button>
                                     <button id="filter-mixed" class="seg-btn seg-classification" data-value="Mixed">Mixed</button>
                                     <button id="filter-human" class="seg-btn seg-classification" data-value="Human">Human</button>
                                 </div>
@@ -876,7 +870,6 @@
                             </select>
                             <div id="prediction-filters" class="hidden">
                                 <input type="checkbox" value="Human" class="prediction-checkbox">
-                                <input type="checkbox" value="AI-Assisted" class="prediction-checkbox">
                                 <input type="checkbox" value="Mixed" class="prediction-checkbox">
                                 <input type="checkbox" value="AI" class="prediction-checkbox">
                             </div>
