@@ -90,7 +90,7 @@
                     </svg>
                 </button>
                 <input type="text" id="search-input"
-                       placeholder="Search articles by title, content, or author..."
+                       placeholder="Search articles by title, content, or newspaper..."
                        class="flex-1 py-2 text-sm sm:text-base text-gray-900 placeholder-gray-400 outline-none bg-transparent min-w-0">
                 <button id="main-reset-button"
                         class="text-xs text-gray-400 hover:text-gray-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
@@ -147,11 +147,6 @@
                                     <input type="date" id="start-date" class="filter-input">
                                     <input type="date" id="end-date" class="filter-input">
                                 </div>
-                            </div>
-                            <div>
-                                <label class="filter-label">Author</label>
-                                <input type="text" id="author-filter" list="author-list" placeholder="Search author..." class="filter-input">
-                                <datalist id="author-list"></datalist>
                             </div>
                             <div>
                                 <label class="filter-label">Newspaper</label>
@@ -286,7 +281,6 @@
             const sort = document.getElementById('sort-filter').value;
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
-            const author = document.getElementById('author-filter').value;
             const newspaper = document.getElementById('newspaper-filter').value;
             const aiMin = document.getElementById('ai-min').value;
             const aiMax = document.getElementById('ai-max').value;
@@ -302,7 +296,6 @@
             if (prediction) options.prediction = [prediction];
             if (startDate) options.start_date = startDate;
             if (endDate) options.end_date = endDate;
-            if (author) options.author = author;
             if (newspaper) options.newspaper = newspaper;
             if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
             if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
@@ -354,7 +347,6 @@
                             <h3 class="text-base font-semibold text-gray-900 mb-1.5 leading-snug">${article.title}</h3>
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
                                 <span>${date}</span>
-                                ${article.authors ? `<span class="text-gray-300">&middot;</span><span>${article.authors}</span>` : ''}
                                 ${article.newspaper ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
                             </div>
                             <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
@@ -438,7 +430,6 @@
             document.getElementById('sort-filter').value = 'date';
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
-            document.getElementById('author-filter').value = '';
             document.getElementById('newspaper-filter').value = '';
             document.getElementById('ai-min').value = 0;
             document.getElementById('ai-max').value = 1;

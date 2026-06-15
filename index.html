@@ -54,7 +54,6 @@
                 sort: document.getElementById('sort-filter').value,
                 startDate: document.getElementById('start-date').value,
                 endDate: document.getElementById('end-date').value,
-                author: document.getElementById('author-filter').value,
                 newspaper: document.getElementById('newspaper-filter').value,
                 aiMin: document.getElementById('ai-min').value,
                 aiMax: document.getElementById('ai-max').value,
@@ -78,7 +77,6 @@
             document.getElementById('sort-filter').value = state.sort || 'date';
             document.getElementById('start-date').value = state.startDate || '';
             document.getElementById('end-date').value = state.endDate || '';
-            document.getElementById('author-filter').value = state.author || '';
             document.getElementById('newspaper-filter').value = state.newspaper || '';
             document.getElementById('ai-min').value = state.aiMin || 0;
             document.getElementById('ai-max').value = state.aiMax || 1;
@@ -109,7 +107,6 @@
             const sort = document.getElementById('sort-filter').value;
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
-            const author = document.getElementById('author-filter').value;
             const newspaper = document.getElementById('newspaper-filter').value;
             const aiMin = document.getElementById('ai-min').value;
             const aiMax = document.getElementById('ai-max').value;
@@ -130,7 +127,6 @@
             if (prediction) options.prediction = prediction;
             if (startDate) options.start_date = startDate;
             if (endDate) options.end_date = endDate;
-            if (author) options.author = author;
             if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
             if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
             if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
@@ -233,7 +229,6 @@
                             </h3>
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
                                 <span>${date}</span>
-                                ${article.authors ? `<span class="text-gray-300">&middot;</span><span>${article.authors}</span>` : ''}
                                 ${article.newspaper ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
                             </div>
                             <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
@@ -366,24 +361,13 @@
 
         async function loadAuthorsAndNewspapers() {
             try {
-                console.log('📚 Loading authors and newspapers from all datasets...');
-                
+                console.log('📰 Loading newspapers from all datasets...');
+
                 const options = {
                     datasets: ['recent_news', 'opinions', 'reporters'],
                     limit: 10000
                 };
-                
-                const authors = await window.dataLoader.getUniqueAuthors(options);
-                const authorList = document.getElementById('author-list');
-                console.log('👤 Authors loaded:', authors.slice(0, 5));
-                authors.forEach(author => {
-                    const option = document.createElement('option');
-                    option.value = author;
-                    authorList.appendChild(option);
-                });
-                console.log(`✅ Loaded ${authors.length} unique authors from all datasets (Aug-Sep 2025)`);
-                console.log('👤 Author datalist options count:', authorList.children.length);
-                
+
                 const newspapers = await window.dataLoader.getUniqueNewspapers(options);
                 const newspaperList = document.getElementById('newspaper-list');
                 console.log('📰 Newspapers loaded:', newspapers.slice(0, 10));
@@ -408,7 +392,6 @@
             document.getElementById('sort-filter').value = 'date';
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
-            document.getElementById('author-filter').value = '';
             document.getElementById('newspaper-filter').value = '';
             document.getElementById('ai-min').value = 0;
             document.getElementById('ai-max').value = 1;
@@ -567,7 +550,7 @@
                 debounceTimer = setTimeout(liveSearch, 400);
             };
 
-            ['author-filter', 'newspaper-filter'].forEach(id => {
+            ['newspaper-filter'].forEach(id => {
                 document.getElementById(id).addEventListener('input', debouncedSearch);
             });
 
@@ -724,7 +707,7 @@
                 AI Use in American Newspapers
             </h1>
             <p class="text-base sm:text-lg text-slate-400 mb-6 max-w-2xl mx-auto">
-                Search and analyze 251,446 news articles for AI-generated content
+                Search and analyze 259,781 news articles for AI-generated content
             </p>
             <div class="flex flex-wrap justify-center gap-3 mb-8">
                 <a href="https://arxiv.org/abs/2510.18774" target="_blank"
@@ -767,7 +750,7 @@
                 </svg>
             </button>
             <input type="text" id="search-input"
-                   placeholder="Search articles by title, content, author, or newspaper..."
+                   placeholder="Search articles by title, content, or newspaper..."
                    class="flex-1 py-2 text-sm sm:text-base text-gray-900 placeholder-gray-400 outline-none bg-transparent min-w-0">
             <button id="main-reset-button"
                     class="text-xs text-gray-400 hover:text-gray-600 font-medium px-3 py-1.5 rounded-lg hover:bg-gray-100 transition-colors flex-shrink-0">
@@ -782,7 +765,7 @@
         <div class="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 mb-8" id="quick-stats">
             <div class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden">
                 <div class="absolute top-0 left-0 right-0 h-0.5 bg-blue-500"></div>
-                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-total">251,446</div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-total">259,781</div>
                 <div class="text-xs text-gray-500 mt-1">Total Articles</div>
             </div>
             <a href="dataset.html?type=recent_news" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-emerald-300 transition-colors group">
@@ -792,7 +775,7 @@
             </a>
             <a href="dataset.html?type=opinions" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-violet-300 transition-colors group">
                 <div class="absolute top-0 left-0 right-0 h-0.5 bg-violet-500"></div>
-                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-opinions">44,803</div>
+                <div class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight" id="stat-opinions">53,138</div>
                 <div class="text-xs text-gray-500 mt-1 group-hover:text-violet-600 transition-colors">Opinions</div>
             </a>
             <a href="dataset.html?type=reporters" class="bg-white rounded-xl border border-gray-200 p-4 sm:p-5 relative overflow-hidden hover:border-amber-300 transition-colors group">
@@ -881,13 +864,6 @@
                                     <input type="date" id="start-date" class="filter-input">
                                     <input type="date" id="end-date" class="filter-input">
                                 </div>
-                            </div>
-
-                            <!-- Author -->
-                            <div>
-                                <label class="filter-label">Author</label>
-                                <input type="text" id="author-filter" list="author-list" placeholder="Search author..." class="filter-input">
-                                <datalist id="author-list"></datalist>
                             </div>
 
                             <!-- Newspaper -->

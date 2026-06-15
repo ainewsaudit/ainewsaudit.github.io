@@ -388,9 +388,9 @@
                 <div class="sticky top-6">
                     <p class="eyebrow-muted mb-3 px-2">Timeline</p>
                     <nav class="flex flex-col gap-0.5">
-                        <a href="#upcoming" class="toc-link toc-upcoming">
+                        <a href="#update-2026-06-12" class="toc-link toc-upcoming">
                             <span class="toc-dot"></span>
-                            <span>Coming soon</span>
+                            <span>Jun 12, 2026</span>
                         </a>
                         <a href="#launch-2025-10-18" class="toc-link toc-launch">
                             <span class="toc-dot"></span>
@@ -402,22 +402,78 @@
 
             <!-- Updates feed -->
             <main class="relative">
-                <!-- Upcoming -->
-                <article id="upcoming" class="timeline-item relative pl-8 pb-12">
+                <!-- Data + model update (latest) -->
+                <article id="update-2026-06-12" class="timeline-item relative pl-8 pb-12">
                     <span class="timeline-rail"></span>
                     <span class="timeline-dot upcoming"></span>
 
-                    <div class="entry-card-upcoming">
-                        <div class="flex items-baseline gap-3 mb-2">
-                            <p class="eyebrow">Coming soon</p>
-                            <span class="eyebrow-muted">Next update</span>
+                    <div class="entry-card">
+                    <!-- Card eyebrow / announcement seal -->
+                    <div class="card-eyebrow">
+                        <span class="seal" aria-hidden="true"></span>
+                        <span>AI News Audit &middot; Update</span>
+                        <span class="divider" aria-hidden="true"></span>
+                        <span class="id">No. 02</span>
+                    </div>
+
+                    <!-- Date + chips row -->
+                    <div class="flex flex-col sm:flex-row sm:items-start sm:justify-between gap-4 mb-6">
+                        <div class="date-block">
+                            <span class="date-month">June</span>
+                            <span class="date-year">2026</span>
+                            <span class="date-day">the 12th</span>
                         </div>
-                        <h2 class="serif text-2xl font-semibold text-slate-900 tracking-tight mb-2">
-                            Next batch of articles
-                        </h2>
-                        <p class="text-[15px] text-slate-600 leading-relaxed max-w-prose">
-                            We're preparing the next batch of data. Check here for updates.
-                        </p>
+                        <div class="flex flex-wrap items-center gap-2 sm:pt-1">
+                            <span class="chip chip-launch">Latest</span>
+                            <span class="chip chip-data">Data refresh</span>
+                            <span class="chip chip-data">Model upgrade</span>
+                        </div>
+                    </div>
+
+                    <!-- Headline -->
+                    <h2 class="entry-title mb-5">New data and upgraded models</h2>
+
+                    <!-- Lede -->
+                    <p class="lede max-w-prose mb-8">
+                        We are refreshing AI News Audit with new articles published through
+                        <strong>June&nbsp;12, 2026</strong> and upgrading the models behind every prediction.
+                        AI-detection results are now produced with
+                        <a href="https://www.pangram.com/" target="_blank">Pangram&nbsp;3.3</a>,
+                        and topic classification now uses the <strong>Qwen&nbsp;3.5</strong> language model.
+                        The <strong>Opinions</strong> dataset has been fully reprocessed&mdash;<strong>53,138 articles</strong>
+                        re-scored with Pangram&nbsp;3.3 and re-classified with Qwen&nbsp;3.5&mdash;and the
+                        <strong>Recent News</strong> dataset is being reprocessed now.
+                    </p>
+
+                    <!-- Hero stat ribbon -->
+                    <div class="ribbon mb-8">
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Updated</div>
+                            <div class="ribbon-value">Jun&nbsp;12</div>
+                            <div class="ribbon-sub">2026</div>
+                        </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Opinions</div>
+                            <div class="ribbon-value">53,138</div>
+                            <div class="ribbon-sub">articles</div>
+                        </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Detector</div>
+                            <div class="ribbon-value">Pangram</div>
+                            <div class="ribbon-sub">v&nbsp;3.3</div>
+                        </div>
+                        <div class="ribbon-cell">
+                            <div class="ribbon-label">Topics</div>
+                            <div class="ribbon-value">Qwen</div>
+                            <div class="ribbon-sub">v&nbsp;3.5</div>
+                        </div>
+                    </div>
+
+                    <!-- Card sign-off -->
+                    <div class="card-signoff">
+                        <span class="sig">&mdash; The AI News Audit team</span>
+                        <span class="meta">Filed under &middot; Data &middot; Models</span>
+                    </div>
                     </div>
                 </article>
 
@@ -458,7 +514,7 @@
                         <strong>June&nbsp;15, 2025</strong> and <strong>September&nbsp;15, 2025</strong>. It includes
                         <strong>186,507 articles</strong> from online editions of <strong>1,528 American newspapers</strong>
                         published during that summer. The articles were tested with
-                        <a href="https://www.pangram.com/" target="_blank">Pangram&nbsp;2.0</a>,
+                        <a href="https://www.pangram.com/" target="_blank">Pangram&nbsp;3.3</a>,
                         which has a reported false positive rate of <strong>0.001</strong> for news articles.
                     </p>
 
@@ -482,7 +538,7 @@
                         <div class="ribbon-cell">
                             <div class="ribbon-label">Detector</div>
                             <div class="ribbon-value">Pangram</div>
-                            <div class="ribbon-sub">v&nbsp;2.0</div>
+                            <div class="ribbon-sub">v&nbsp;3.3</div>
                         </div>
                     </div>
 

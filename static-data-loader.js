@@ -1108,42 +1108,10 @@ class StaticDataLoader {
     }
 
     /**
-     * Get unique authors from specific datasets with optional date filtering
+     * Author names are not exposed publicly; always returns an empty list.
      */
-    async getUniqueAuthors(options = {}) {
-        const { 
-            datasets = ['opinions'], 
-            limit = 500,
-            startDate = null,
-            endDate = null
-        } = options;
-        
-        // Only load specific datasets
-        await this.loadSpecificDatasets(datasets);
-        const authorSet = new Set();
-        
-        // Get articles from specified datasets
-        const articles = datasets.flatMap(ds => this.data[ds] || []);
-        
-        articles.forEach(article => {
-            // Apply date filter if specified
-            if (startDate && article.publish_date && article.publish_date < startDate) return;
-            if (endDate && article.publish_date && article.publish_date > endDate) return;
-            
-            if (article.authors && article.authors.trim() !== '') {
-                // Split by comma for multiple authors
-                const authors = article.authors.split(',').map(a => a.trim());
-                authors.forEach(author => {
-                    if (author && author.length > 0) {
-                        authorSet.add(author);
-                    }
-                });
-            }
-        });
-        
-        // Convert to array and sort
-        const authors = Array.from(authorSet).sort();
-        return authors.slice(0, limit);
+    async getUniqueAuthors() {
+        return [];
     }
 
     /**
@@ -1336,7 +1304,6 @@ class StaticDataLoader {
                 const articleId = a.article_id || '';
                 return (a.title && a.title.toLowerCase().includes(searchLower)) ||
                        (a.text && a.text.toLowerCase().includes(searchLower)) ||
-                       (a.authors && a.authors.toLowerCase().includes(searchLower)) ||
                        newspaperField.toLowerCase().includes(searchLower) ||
                        articleId.toLowerCase().includes(searchLower);
             }
@@ -1355,11 +1322,10 @@ class StaticDataLoader {
         });
 
         // Apply remaining filters efficiently
-        if (topic || author || prediction || start_date || end_date || 
+        if (topic || prediction || start_date || end_date ||
             ai_min !== null || ai_max !== null || max_ai_min !== null || max_ai_max !== null) {
             filtered = filtered.filter(a => {
                 if (topic && a.primary_topic !== topic) return false;
-                if (author && (!a.authors || !a.authors.toLowerCase().includes(author.toLowerCase()))) return false;
                 if (prediction && prediction.length > 0) {
                     // Handle array of predictions (from checkboxes)
                     const normalize = (val) => (val || '').toString().trim();
@@ -1495,26 +1461,10 @@ class StaticDataLoader {
     }
 
     /**
-     * Get all unique authors
+     * Author names are not exposed publicly; always returns an empty list.
      */
     async getAuthors() {
-        await this.loadAllDatasets();
-
-        const authorCounts = {};
-        
-        this.allArticles
-            .filter(a => !a.prediction || !a.prediction.toLowerCase().includes('error'))
-            .forEach(article => {
-                if (article.authors) {
-                    authorCounts[article.authors] = 
-                        (authorCounts[article.authors] || 0) + 1;
-                }
-            });
-
-        return Object.entries(authorCounts)
-            .map(([authors, count]) => ({ authors, count }))
-            .sort((a, b) => b.count - a.count)
-            .slice(0, 100);
+        return [];
     }
 
     /**
