@@ -124,6 +124,7 @@
                 <div style="position:relative; height: 340px;">
                     <canvas id="timeSeriesChart"></canvas>
                 </div>
+                <p id="ts-caveat" class="hidden mt-4 text-xs leading-relaxed text-amber-900 bg-amber-50 border border-amber-200 rounded-md px-3 py-2"></p>
             </div>
 
             <!-- Charts Grid -->
@@ -315,35 +316,46 @@
                     : 'Number of articles flagged as AI or Mixed, by month';
             }
 
-            // ChatGPT launched 2022-11-30 — mark the boundary if the series covers it.
+            // Event markers — drawn only when the series spans the month in question.
+            // 2022-11: ChatGPT release. 2025-11: NYT moved from RSS to ProQuest collection.
             const monthsList = timeSeriesMode === 'publisher'
                 ? [...new Set((data.time_series_by_publisher || []).map(r => r.month))].sort()
                 : (data.time_series || []).map(x => x.month);
-            const markerIndex = monthsList.indexOf('2022-11');
-            const chatgptMarker = {
-                id: 'chatgptMarker',
+            const MARKERS = [
+                { month: '2022-11', label: 'ChatGPT released' },
+                { month: '2025-11', label: 'NYT: RSS → ProQuest' }
+            ];
+            const activeMarkers = MARKERS
+                .map(m => ({ label: m.label, index: monthsList.indexOf(m.month) }))
+                .filter(m => m.index >= 0);
+            const eventMarkers = {
+                id: 'eventMarkers',
                 afterDatasetsDraw(chart) {
-                    if (markerIndex < 0) return;
-                    const x = chart.scales.x.getPixelForValue(markerIndex);
-                    if (x == null || isNaN(x)) return;
-                    const { top, bottom } = chart.chartArea;
+                    if (!activeMarkers.length) return;
+                    const { top, bottom, right } = chart.chartArea;
                     const ctx = chart.ctx;
-                    ctx.save();
-                    ctx.beginPath();
-                    ctx.setLineDash([5, 4]);
-                    ctx.moveTo(x, top); ctx.lineTo(x, bottom);
-                    ctx.lineWidth = 1.5; ctx.strokeStyle = '#64748b'; ctx.stroke();
-                    ctx.setLineDash([]);
-                    ctx.font = '700 10px Inter'; ctx.fillStyle = '#475569'; ctx.textAlign = 'left';
-                    ctx.fillText('ChatGPT released', x + 5, top + 12);
-                    ctx.restore();
+                    activeMarkers.forEach(m => {
+                        const x = chart.scales.x.getPixelForValue(m.index);
+                        if (x == null || isNaN(x)) return;
+                        ctx.save();
+                        ctx.beginPath();
+                        ctx.setLineDash([5, 4]);
+                        ctx.moveTo(x, top); ctx.lineTo(x, bottom);
+                        ctx.lineWidth = 1.5; ctx.strokeStyle = '#64748b'; ctx.stroke();
+                        ctx.setLineDash([]);
+                        ctx.font = '700 10px Inter'; ctx.fillStyle = '#475569';
+                        const nearRight = x > right - 110;  // flip label inward near the edge
+                        ctx.textAlign = nearRight ? 'right' : 'left';
+                        ctx.fillText(m.label, x + (nearRight ? -5 : 5), top + 12);
+                        ctx.restore();
+                    });
                 }
             };
 
             charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
                 type: 'line',
                 data: { labels, datasets },
-                plugins: [chatgptMarker],
+                plugins: [eventMarkers],
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
@@ -402,6 +414,19 @@
                 timeSeriesMode = 'prediction';  // no publisher breakdown available
             }
             renderTimeSeries(data);
+
+            // Collection-change caveat: NYT moved from RSS feeds to ProQuest in Nov 2025.
+            const caveat = document.getElementById('ts-caveat');
+            const caveatText = {
+                recent_news: 'Note: starting November 2025, New York Times coverage moved from RSS feeds (roughly the top 20 stories) to full ProQuest collection. This sharply increased the number of NYT articles after that date, so aggregate trends and AI/Mixed rates from late 2025 onward are weighted more heavily toward the NYT than earlier periods.',
+                opinions: 'Note: starting November 2025, New York Times opinion pieces are sourced from ProQuest rather than RSS feeds. Monthly NYT volume is similar across the change, but the set of captured articles shifted, which can affect comparisons across that boundary.'
+            };
+            if (caveatText[currentDataset]) {
+                caveat.textContent = caveatText[currentDataset];
+                caveat.classList.remove('hidden');
+            } else {
+                caveat.classList.add('hidden');
+            }
 
             const predictionColors = predictionData.map(p =>
                 p.prediction === 'Human' ? '#10b981' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
