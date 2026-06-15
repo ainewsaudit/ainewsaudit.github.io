@@ -178,7 +178,8 @@
 
         async function loadDataset(datasetType) {
             currentDataset = datasetType;
-            timeSeriesMode = 'prediction';
+            // Opinions defaults to the per-publisher view; others to prediction.
+            timeSeriesMode = datasetType === 'opinions' ? 'publisher' : 'prediction';
             updateButtonStyles(datasetType);
 
             const info = datasetInfo[datasetType];
@@ -305,6 +306,7 @@
                 });
             } else {
                 toggle.classList.add('hidden');
+                timeSeriesMode = 'prediction';  // no publisher breakdown available
             }
             renderTimeSeries(data);
 
