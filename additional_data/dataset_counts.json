@@ -1,19 +1,19 @@
 {
-  "recent_news": 212130,
+  "recent_news": 212927,
   "opinions": 53138,
   "reporters": 20131,
-  "total": 285399,
-  "last_updated": "2026-06-15T211707Z",
+  "total": 286196,
+  "last_updated": "2026-06-15T212631Z",
   "active_update": {
     "recent_news": true,
     "status": "active",
     "message": "Recent-news Pangram scores and topic labels are being added now. Counts and search results may refresh every few minutes.",
     "pangram_queue_rows": 219234,
-    "pangram_terminal_rows": 53564,
-    "pangram_missing_rows": 165670,
+    "pangram_terminal_rows": 54362,
+    "pangram_missing_rows": 164872,
     "topic_queue_rows": 84548,
-    "topic_prediction_rows": 60587,
-    "topic_missing_rows": 23961,
-    "updated_at": "2026-06-15T21:17:07.614806+00:00"
+    "topic_prediction_rows": 64331,
+    "topic_missing_rows": 20217,
+    "updated_at": "2026-06-15T21:26:31.925281+00:00"
   }
 }
