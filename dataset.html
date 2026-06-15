@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260616"></script>
+    <script src="/static-data-loader.js?v=20260617"></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
     .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; font-optical-sizing: auto; }
@@ -268,7 +268,7 @@
             charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
             Chart.defaults.font.family = 'Inter';
 
-            const predictionData = ['Human', 'Mixed', 'AI'].map(label => ({
+            const predictionData = ['Human', 'AI-Assisted', 'Mixed', 'AI'].map(label => ({
                 prediction: label,
                 count: data.prediction_distribution.find(p => p.prediction === label)?.count || 0
             }));
@@ -289,9 +289,9 @@
                     <div class="stat-sub">${humanCount.toLocaleString()} articles</div>
                 </div>
                 <div class="stat-cell">
-                    <div class="stat-label">AI / Mixed</div>
-                    <div class="stat-value">${(((aiCount + mixedCount) / totalArticles) * 100).toFixed(1)}%</div>
-                    <div class="stat-sub">${(aiCount + mixedCount).toLocaleString()} articles</div>
+                    <div class="stat-label">Any AI use</div>
+                    <div class="stat-value">${(((totalArticles - humanCount) / totalArticles) * 100).toFixed(1)}%</div>
+                    <div class="stat-sub">${(totalArticles - humanCount).toLocaleString()} articles</div>
                 </div>
             `;
 
@@ -309,7 +309,7 @@
             renderTimeSeries(data);
 
             const predictionColors = predictionData.map(p =>
-                p.prediction === 'Human' ? '#10b981' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
+                p.prediction === 'Human' ? '#10b981' : p.prediction === 'AI-Assisted' ? '#f97316' : p.prediction === 'Mixed' ? '#f59e0b' : p.prediction === 'AI' ? '#ef4444' : '#6b7280');
 
             charts.prediction = new Chart(document.getElementById('predictionChart'), {
                 type: 'pie',

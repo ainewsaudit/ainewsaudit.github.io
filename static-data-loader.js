@@ -1554,8 +1554,12 @@ class StaticDataLoader {
         const timeSeries = {};
         let articlesForTime = validArticles;
         if (datasetType === 'recent_news') {
+            // Clip to the collection window. End is "now" so the chart grows with
+            // each data refresh; both bounds drop stray mis-dated outliers (some
+            // articles carry garbage publish dates far in the past or future).
             const start = new Date('2025-06-01');
-            const end = new Date('2025-09-15');
+            const end = new Date();
+            end.setHours(23, 59, 59, 999);
             articlesForTime = validArticles.filter(a => {
                 if (!a.publish_date) return false;
                 const d = new Date(a.publish_date);
