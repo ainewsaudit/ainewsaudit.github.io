@@ -131,11 +131,10 @@
 
             <p class="lede mb-8">
                 Every article on AI News Audit is analyzed with
-                <a href="https://www.pangram.com/" target="_blank">Pangram</a>, a state-of-the-art AI
-                detector. We have upgraded to <strong>version&nbsp;3.3</strong>, which doesn't just ask
-                <em>"is this AI?"</em>&mdash;it reads an article segment by segment and distinguishes
-                <strong>fully AI-generated</strong> text from text that was merely <strong>AI-assisted</strong>,
-                with a confidence level attached to every call.
+                <a href="https://www.pangram.com/" target="_blank">Pangram</a>, an AI detector.
+                We now use <strong>version&nbsp;3.3</strong>. It reads an article in short segments
+                and labels each one as <strong>human</strong>, <strong>AI-assisted</strong>, or
+                <strong>AI-generated</strong>, with a confidence level for each label.
             </p>
 
             <div class="ribbon">
@@ -169,21 +168,21 @@
             <div class="space-y-5">
                 <div class="flex gap-4">
                     <span class="step-num">1</span>
-                    <p class="prose-body pt-1.5"><strong>Split into windows.</strong> The article is broken into overlapping
-                    <strong>windows</strong> (short passages). Each is scored independently, so a single AI paragraph
-                    buried in an otherwise human piece won't slip through.</p>
+                    <p class="prose-body pt-1.5"><strong>Split into windows.</strong> The article is divided into short, overlapping
+                    passages called <strong>windows</strong>. Each window is scored on its own, so an AI passage inside
+                    an otherwise human article is still picked up.</p>
                 </div>
                 <div class="flex gap-4">
                     <span class="step-num">2</span>
-                    <p class="prose-body pt-1.5"><strong>Label every segment.</strong> Each window gets a label&mdash;from
-                    <em>Human Written</em> through <em>Moderately AI-Assisted</em> to <em>AI-Generated</em>&mdash;an
+                    <p class="prose-body pt-1.5"><strong>Label every window.</strong> Each window gets a label (such as
+                    <em>Human Written</em>, <em>Moderately AI-Assisted</em>, or <em>AI-Generated</em>), an
                     <strong>AI-assistance score</strong> from 0 to 1, and a <strong>confidence</strong> of High, Medium, or Low.</p>
                 </div>
                 <div class="flex gap-4">
                     <span class="step-num">3</span>
-                    <p class="prose-body pt-1.5"><strong>Roll up to a verdict.</strong> The segment results combine into one
-                    article-level call&mdash;<strong>Human</strong>, <strong>Mixed</strong>, or <strong>AI</strong>&mdash;plus
-                    the fraction of the text in each category.</p>
+                    <p class="prose-body pt-1.5"><strong>Combine into a verdict.</strong> The window results are combined into one
+                    rating for the whole article (<strong>Human</strong>, <strong>Mixed</strong>, or <strong>AI</strong>),
+                    along with the share of the text in each category.</p>
                 </div>
             </div>
         </section>
@@ -191,15 +190,15 @@
         <!-- Categories -->
         <section>
             <p class="eyebrow mb-2">The verdicts</p>
-            <h2 class="section-title mb-6">Four ways text gets classified</h2>
+            <h2 class="section-title mb-6">The four labels</h2>
             <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div class="cat-card" style="background:#ecfdf5; border-color:#a7f3d0;">
                     <div class="cat-name" style="color:#065f46;">Human</div>
-                    <p class="text-sm" style="color:#047857;">Written by a person, with no detectable AI involvement.</p>
+                    <p class="text-sm" style="color:#047857;">Written by a person, with no sign of AI.</p>
                 </div>
                 <div class="cat-card" style="background:#fffbeb; border-color:#fde68a;">
                     <div class="cat-name" style="color:#92400e;">AI-Assisted</div>
-                    <p class="text-sm" style="color:#b45309;">Human-authored text that shows signs of AI help&mdash;editing, rewriting, or polishing&mdash;rather than wholesale generation. <strong>New in v3.3.</strong></p>
+                    <p class="text-sm" style="color:#b45309;">Text a person wrote with some AI help, such as editing or rewriting, rather than text the AI produced on its own. <strong>New in v3.3.</strong></p>
                 </div>
                 <div class="cat-card" style="background:#fef2f2; border-color:#fecaca;">
                     <div class="cat-name" style="color:#991b1b;">AI</div>
@@ -207,7 +206,7 @@
                 </div>
                 <div class="cat-card" style="background:#f8fafc; border-color:#e2e8f0;">
                     <div class="cat-name" style="color:#334155;">Mixed</div>
-                    <p class="text-sm" style="color:#475569;">A blend&mdash;some passages read as human, others as AI or AI-assisted.</p>
+                    <p class="text-sm" style="color:#475569;">A mix: some passages read as human, others as AI or AI-assisted.</p>
                 </div>
             </div>
         </section>
@@ -216,34 +215,34 @@
         <section class="entry-card">
             <p class="eyebrow mb-2">On this site</p>
             <h2 class="section-title mb-3">The scores you'll see</h2>
-            <p class="prose-body mb-2">Each article card and detail page surfaces a few numbers, all derived from the v3.3 window analysis:</p>
+            <p class="prose-body mb-2">Each article card and detail page shows a few numbers, all based on the window analysis:</p>
 
             <div class="metric-row">
                 <span class="metric-badge" style="background:#eff6ff; color:#1d4ed8;">AI</span>
                 <div>
                     <h3 class="font-semibold text-slate-900 text-[15px] mb-1">AI Likelihood</h3>
-                    <p class="prose-body">The article's overall <strong>AI-assistance score</strong>&mdash;the average across all of its windows, on a 0&ndash;100% scale. Higher means more of the article reads as AI.</p>
+                    <p class="prose-body">The article's overall <strong>AI-assistance score</strong>, averaged across its windows and shown as a percentage. Higher means more of the article reads as AI.</p>
                 </div>
             </div>
             <div class="metric-row">
                 <span class="metric-badge" style="background:#f5f3ff; color:#6d28d9;">Max</span>
                 <div>
                     <h3 class="font-semibold text-slate-900 text-[15px] mb-1">Max AI</h3>
-                    <p class="prose-body">The <strong>single highest-scoring window</strong> in the article. Useful for catching a "hidden" AI passage even when the rest looks human.</p>
+                    <p class="prose-body">The <strong>highest score of any single window</strong>. This helps flag one AI passage even when the rest of the article looks human.</p>
                 </div>
             </div>
             <div class="metric-row">
                 <span class="metric-badge" style="background:#fef2f2; color:#b91c1c;">%</span>
                 <div>
                     <h3 class="font-semibold text-slate-900 text-[15px] mb-1">AI Content Fraction</h3>
-                    <p class="prose-body">How much of the text&mdash;as a share from 0 to 100%&mdash;was classified as AI-written. It answers <em>"how much,"</em> not just <em>"whether."</em></p>
+                    <p class="prose-body">The share of the text, from 0 to 100%, that was classified as AI-written.</p>
                 </div>
             </div>
             <div class="metric-row">
                 <span class="metric-badge" style="background:#fffbeb; color:#b45309;">◑</span>
                 <div>
                     <h3 class="font-semibold text-slate-900 text-[15px] mb-1">Confidence</h3>
-                    <p class="prose-body">Every segment-level call carries a <strong>High</strong>, <strong>Medium</strong>, or <strong>Low</strong> confidence, so a borderline result is never dressed up as a certain one. <strong>New in v3.3.</strong></p>
+                    <p class="prose-body">Each window also gets a confidence of <strong>High</strong>, <strong>Medium</strong>, or <strong>Low</strong>, showing how sure the model is about its label. <strong>New in v3.3.</strong></p>
                 </div>
             </div>
         </section>
@@ -254,10 +253,10 @@
             <h2 class="section-title mb-5">New in version&nbsp;3.3</h2>
             <div class="whatsnew">
                 <ul class="space-y-3 prose-body" style="color:#7c5410;">
-                    <li><strong style="color:#78350f;">An "AI-assisted" category.</strong> Earlier versions scored a single AI likelihood. v3.3 separates text a human wrote with AI help from text an AI generated outright.</li>
-                    <li><strong style="color:#78350f;">Segment-level confidence.</strong> Every window now reports High / Medium / Low confidence alongside its score.</li>
-                    <li><strong style="color:#78350f;">Richer window analysis.</strong> Descriptive per-passage labels (e.g. <em>Moderately AI-Assisted</em>) and AI-assistance scores replace a single overall probability.</li>
-                    <li><strong style="color:#78350f;">Fractions for each class.</strong> v3.3 reports the share of the article that is human, AI-assisted, and AI&mdash;not just one number.</li>
+                    <li><strong style="color:#78350f;">An AI-assisted category.</strong> Earlier versions gave a single AI likelihood. Version 3.3 separates text a person wrote with AI help from text an AI produced on its own.</li>
+                    <li><strong style="color:#78350f;">Confidence levels.</strong> Each window now reports High, Medium, or Low confidence along with its score.</li>
+                    <li><strong style="color:#78350f;">Per-window labels.</strong> Each passage gets its own label, such as <em>Moderately AI-Assisted</em>, instead of one overall probability.</li>
+                    <li><strong style="color:#78350f;">A breakdown by share.</strong> Version 3.3 reports how much of the article is human, AI-assisted, and AI, not just one number.</li>
                 </ul>
             </div>
             <p class="text-xs text-slate-400 mt-4 leading-relaxed">
