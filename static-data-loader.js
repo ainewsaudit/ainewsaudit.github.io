@@ -205,6 +205,121 @@ class StaticDataLoader {
     }
 
     /**
+     * Optional manifest for large datasets split into multiple gzip JSON arrays.
+     */
+    async fetchDatasetManifest(datasetType, version) {
+        const manifestUrl = `/data/${datasetType}_data_manifest.json?v=${version}`;
+        try {
+            const response = await fetch(manifestUrl, { cache: 'force-cache' });
+            if (response.status === 404) {
+                return null;
+            }
+            if (!response.ok) {
+                console.warn(`Dataset manifest unavailable for ${datasetType}: ${response.statusText}`);
+                return null;
+            }
+            const manifest = await response.json();
+            if (manifest && Array.isArray(manifest.parts) && manifest.parts.length > 0) {
+                return manifest;
+            }
+        } catch (error) {
+            console.warn(`Failed to load dataset manifest for ${datasetType}:`, error);
+        }
+        return null;
+    }
+
+    /**
+     * Fetch, decompress, sanitize, and parse one gzip JSON array.
+     */
+    async fetchCompressedJsonArray(url, filename) {
+        await this.waitForPako();
+        const response = await fetch(url, {
+            cache: 'force-cache',
+            headers: {
+                'Accept': 'application/gzip, application/octet-stream, */*'
+            }
+        });
+
+        if (!response.ok) {
+            throw new Error(`Failed to load ${filename}: ${response.statusText}`);
+        }
+
+        const buffer = await response.arrayBuffer();
+        const uint8Array = new Uint8Array(buffer);
+        let decompressed;
+        try {
+            if (uint8Array[0] === 0x5b) {
+                decompressed = new TextDecoder('utf-8').decode(uint8Array);
+            } else if (uint8Array[0] === 0x1f && uint8Array[1] === 0x8b) {
+                decompressed = pako.ungzip(uint8Array, { to: 'string' });
+            } else {
+                throw new Error(`Unknown file format for ${filename}`);
+            }
+        } catch (e) {
+            throw new Error(`Failed to decompress ${filename}: ${e.message}`);
+        }
+
+        const sanitized = decompressed
+            .replace(/:\s*NaN/gi, ': null')
+            .replace(/:\s*Infinity/gi, ': null')
+            .replace(/:\s*-Infinity/gi, ': null');
+
+        try {
+            return JSON.parse(sanitized);
+        } catch (e) {
+            console.error('JSON preview:', sanitized.slice(0, 200));
+            throw new Error(`Invalid JSON in ${filename}: ${e.message}`);
+        }
+    }
+
+    /**
+     * Load a dataset from either a shard manifest or the legacy single gzip.
+     */
+    async loadDatasetPayload(datasetType, version) {
+        const manifest = await this.fetchDatasetManifest(datasetType, version);
+        if (manifest) {
+            const combined = [];
+            for (const part of manifest.parts) {
+                const filename = part.file;
+                const rows = await this.fetchCompressedJsonArray(`/data/${filename}?v=${version}`, filename);
+                combined.push(...rows);
+            }
+            return combined;
+        }
+
+        const filename = `${datasetType}_data.json.gz`;
+        return this.fetchCompressedJsonArray(`/data/${filename}?v=${version}`, filename);
+    }
+
+    normalizeDatasetArticles(data, datasetType) {
+        const datasetPrefix = datasetType === 'recent_news' ? 1 : datasetType === 'opinions' ? 2 : 3;
+        const toNum = (val) => {
+            const n = typeof val === 'number' ? val : parseFloat(val);
+            return Number.isFinite(n) ? n : null;
+        };
+
+        for (let i = 0; i < data.length; i++) {
+            const article = data[i];
+            article.dataset_type = datasetType;
+            article.id = datasetPrefix * 1000000 + i;
+
+            if (article.ai_likelihood !== undefined) article.ai_likelihood = toNum(article.ai_likelihood);
+            if (article.avg_ai_likelihood !== undefined) article.avg_ai_likelihood = toNum(article.avg_ai_likelihood);
+            if (article.max_ai_likelihood !== undefined) article.max_ai_likelihood = toNum(article.max_ai_likelihood);
+            if (article.fraction_ai_content !== undefined) article.fraction_ai_content = toNum(article.fraction_ai_content);
+        }
+    }
+
+    async loadDatasetRecordCount(datasetType, version) {
+        const manifest = await this.fetchDatasetManifest(datasetType, version);
+        if (manifest && Number.isFinite(Number(manifest.records))) {
+            return Number(manifest.records);
+        }
+        const data = await this.loadDatasetPayload(datasetType, version);
+        return data.length;
+    }
+
+    /**
      * Load NDJSON file with streaming and progressive rendering
      * @param {string} url - URL to the NDJSON file
      * @param {function} onRow - Callback for each parsed row
@@ -422,77 +537,11 @@ class StaticDataLoader {
 
         console.log(`🔄 Loading ${datasetType} dataset from network...`);
 
-        const filename = `${datasetType}_data.json.gz`;
-        const url = `/data/${filename}?v=${version}`;
         const startTime = performance.now();
 
-        this.loadPromises[datasetType] = this.waitForPako().then(() => fetch(url, {
-            cache: 'force-cache',
-            headers: {
-                'Accept': 'application/gzip, application/octet-stream, */*'
-            }
-        }))
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to load ${filename}: ${response.statusText}`);
-                }
-                return response.arrayBuffer();
-            })
-            .then(buffer => {
-                // Decompress using pako (gzip) - optimized single-path decompression
-                const uint8Array = new Uint8Array(buffer);
-                let decompressed;
-                try {
-                    // Check if the data is already decompressed (starts with JSON)
-                    if (uint8Array[0] === 0x5b) { // '[' character - JSON array start
-                        decompressed = new TextDecoder('utf-8').decode(uint8Array);
-                    } else if (uint8Array[0] === 0x1f && uint8Array[1] === 0x8b) {
-                        // Standard gzip decompression
-                            decompressed = pako.ungzip(uint8Array, { to: 'string' });
-                    } else {
-                        throw new Error(`Unknown file format for ${filename}`);
-                    }
-                } catch (e) {
-                    throw new Error(`Failed to decompress ${filename}: ${e.message}`);
-                }
-
-                // Sanitize invalid JSON tokens produced by some writers (NaN/Infinity)
-                let sanitized = decompressed
-                    .replace(/:\s*NaN/gi, ': null')
-                    .replace(/:\s*Infinity/gi, ': null')
-                    .replace(/:\s*-Infinity/gi, ': null');
-
-                let data;
-                try {
-                    data = JSON.parse(sanitized);
-                } catch (e) {
-                    // Log a small preview to help debugging
-                    console.error('JSON preview:', sanitized.slice(0, 200));
-                    throw new Error(`Invalid JSON in ${filename}: ${e.message}`);
-                }
-                
-                // Normalize and annotate each article - optimized processing
-                    const datasetPrefix = datasetType === 'recent_news' ? 1 : datasetType === 'opinions' ? 2 : 3;
-                    const toNum = (val) => {
-                        const n = typeof val === 'number' ? val : parseFloat(val);
-                        return Number.isFinite(n) ? n : null;
-                    };
-
-                // Process articles in batch for better performance
-                for (let i = 0; i < data.length; i++) {
-                    const article = data[i];
-                    article.dataset_type = datasetType;
-                    article.id = datasetPrefix * 1000000 + i; // e.g., 1000001, 2000001, 3000001
-
-                    // Normalize numeric fields only if they exist
-                    if (article.ai_likelihood !== undefined) article.ai_likelihood = toNum(article.ai_likelihood);
-                    if (article.avg_ai_likelihood !== undefined) article.avg_ai_likelihood = toNum(article.avg_ai_likelihood);
-                    if (article.max_ai_likelihood !== undefined) article.max_ai_likelihood = toNum(article.max_ai_likelihood);
-                    if (article.fraction_ai_content !== undefined) article.fraction_ai_content = toNum(article.fraction_ai_content);
-                    
-                    // Authors are now pre-normalized in the data files
-                }
-                
+        this.loadPromises[datasetType] = this.loadDatasetPayload(datasetType, version)
+            .then(data => {
+                this.normalizeDatasetArticles(data, datasetType);
                 this.data[datasetType] = data;
                 
                 // Save to IndexedDB for instant loading on next visit
@@ -754,57 +803,13 @@ class StaticDataLoader {
         }
 
         const version = await this.loadDataVersion();
-        const filename = `${datasetType}_data.json.gz`;
-        const url = `/data/${filename}?v=${version}`;
         const startTime = performance.now();
 
-        this.loadPromises[`${datasetType}_structure`] = this.waitForPako().then(() => fetch(url, {
-            cache: 'force-cache',
-            headers: {
-                'Accept': 'application/gzip, application/octet-stream, */*'
-            }
-        }))
-            .then(response => {
-                if (!response.ok) {
-                    throw new Error(`Failed to load ${filename}: ${response.statusText}`);
-                }
-                return response.arrayBuffer();
-            })
-            .then(buffer => {
-                // Decompress using pako (gzip) - optimized single-path decompression
-                const uint8Array = new Uint8Array(buffer);
-                let decompressed;
-                try {
-                    // Check if the data is already decompressed (starts with JSON)
-                    if (uint8Array[0] === 0x5b) { // '[' character - JSON array start
-                        decompressed = new TextDecoder('utf-8').decode(uint8Array);
-                    } else if (uint8Array[0] === 0x1f && uint8Array[1] === 0x8b) {
-                        // Standard gzip decompression
-                        decompressed = pako.ungzip(uint8Array, { to: 'string' });
-                    } else {
-                        throw new Error(`Unknown file format for ${filename}`);
-                    }
-                } catch (e) {
-                    throw new Error(`Failed to decompress ${filename}: ${e.message}`);
-                }
-
-                // Just parse and count, don't process articles
-                let sanitized = decompressed
-                    .replace(/:\s*NaN/gi, ': null')
-                    .replace(/:\s*Infinity/gi, ': null')
-                    .replace(/:\s*-Infinity/gi, ': null');
-
-                let data;
-                try {
-                    data = JSON.parse(sanitized);
-                } catch (e) {
-                    throw new Error(`Invalid JSON in ${filename}: ${e.message}`);
-                }
-                
+        this.loadPromises[`${datasetType}_structure`] = this.loadDatasetRecordCount(datasetType, version)
+            .then(count => {
                 const endTime = performance.now();
-                console.log(`Loaded ${datasetType} structure: ${data.length} articles in ${(endTime - startTime).toFixed(2)}ms`);
-                
-                return data.length;
+                console.log(`Loaded ${datasetType} structure: ${count} articles in ${(endTime - startTime).toFixed(2)}ms`);
+                return count;
             });
 
         return this.loadPromises[`${datasetType}_structure`];
@@ -1602,21 +1607,61 @@ class StaticDataLoader {
             });
         }
 
-        // Topic distribution
+        // Resolved Human/Mixed/AI label (matches time-series logic above)
+        const labelOf = (a) => a.final_prediction || this.normalizePrediction(a.prediction) || '';
+
+        // Topic distribution, with prediction breakdown (powers "AI rate by topic")
         const topicDist = {};
         validArticles.forEach(a => {
-            if (a.primary_topic) {
-                topicDist[a.primary_topic] = (topicDist[a.primary_topic] || 0) + 1;
-            }
+            if (!a.primary_topic) return;
+            const t = topicDist[a.primary_topic] ||
+                (topicDist[a.primary_topic] = { primary_topic: a.primary_topic, count: 0, human: 0, mixed: 0, ai: 0 });
+            t.count++;
+            const label = labelOf(a);
+            if (label === 'AI') t.ai++;
+            else if (label === 'Mixed') t.mixed++;
+            else if (label === 'Human') t.human++;
         });
 
-        // Newspaper distribution
+        // Newspaper distribution, with prediction breakdown (powers per-outlet rate chart)
         const newspaperDist = {};
         validArticles.forEach(a => {
-            const newspaper = a.newspaper || a.newspaper_name || 'Unknown';
-            if (newspaper && newspaper.trim() !== '') {
-                newspaperDist[newspaper] = (newspaperDist[newspaper] || 0) + 1;
-            }
+            const newspaper = (a.newspaper || a.newspaper_name || 'Unknown').trim();
+            if (!newspaper) return;
+            const n = newspaperDist[newspaper] ||
+                (newspaperDist[newspaper] = { newspaper, count: 0, human: 0, mixed: 0, ai: 0 });
+            n.count++;
+            const label = labelOf(a);
+            if (label === 'AI') n.ai++;
+            else if (label === 'Mixed') n.mixed++;
+            else if (label === 'Human') n.human++;
+        });
+
+        // AI-likelihood histogram: 20 bins across [0,1] over all valid articles
+        const BIN_COUNT = 20;
+        const likelihoodHist = new Array(BIN_COUNT).fill(0);
+        validArticles.forEach(a => {
+            const v = parseFloat(a.ai_likelihood);
+            if (!Number.isFinite(v)) return;
+            let bin = Math.floor(v * BIN_COUNT);
+            if (bin < 0) bin = 0;
+            if (bin >= BIN_COUNT) bin = BIN_COUNT - 1;
+            likelihoodHist[bin]++;
+        });
+
+        // Fraction-of-article-AI histogram, flagged (Mixed/AI) pieces only
+        const fractionHist = new Array(BIN_COUNT).fill(0);
+        let flaggedWithFraction = 0;
+        validArticles.forEach(a => {
+            const label = labelOf(a);
+            if (label !== 'AI' && label !== 'Mixed') return;
+            const v = parseFloat(a.fraction_ai_content);
+            if (!Number.isFinite(v)) return;
+            let bin = Math.floor(v * BIN_COUNT);
+            if (bin < 0) bin = 0;
+            if (bin >= BIN_COUNT) bin = BIN_COUNT - 1;
+            fractionHist[bin]++;
+            flaggedWithFraction++;
         });
 
         return {
@@ -1628,14 +1673,16 @@ class StaticDataLoader {
                 .sort((a, b) => a.month.localeCompare(b.month)),
             time_series_by_publisher: Object.values(tsByPublisher)
                 .sort((a, b) => a.month.localeCompare(b.month)),
-            topic_distribution: Object.entries(topicDist)
-                .map(([primary_topic, count]) => ({ primary_topic, count }))
+            topic_distribution: Object.values(topicDist)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 15),
-            newspaper_distribution: Object.entries(newspaperDist)
-                .map(([newspaper, count]) => ({ newspaper, count }))
+            newspaper_distribution: Object.values(newspaperDist)
                 .sort((a, b) => b.count - a.count)
-                .slice(0, 20)
+                .slice(0, 20),
+            likelihood_histogram: likelihoodHist,
+            fraction_histogram: fractionHist,
+            flagged_count: flaggedWithFraction,
+            bin_count: BIN_COUNT
         };
     }
 }
@@ -1756,4 +1803,3 @@ window.testCurrentDateFilter = async () => {
     
     return result;
 };
-

@@ -103,9 +103,15 @@
                         <h2 class="card-title" id="timeseries-title">AI &amp; Mixed content over time</h2>
                         <p class="text-xs text-gray-400 mt-1" id="timeseries-sub">Share of articles flagged as AI or Mixed, by month</p>
                     </div>
-                    <div id="timeseries-toggle" class="seg-wrap hidden flex-shrink-0">
-                        <button class="seg-btn active" data-mode="prediction">By prediction</button>
-                        <button class="seg-btn" data-mode="publisher">By publisher</button>
+                    <div class="flex flex-wrap gap-2 flex-shrink-0">
+                        <div id="timeseries-toggle" class="seg-wrap hidden">
+                            <button class="seg-btn active" data-mode="prediction">By prediction</button>
+                            <button class="seg-btn" data-mode="publisher">By publisher</button>
+                        </div>
+                        <div id="timeseries-unit-toggle" class="seg-wrap">
+                            <button class="seg-btn active" data-unit="pct">Share (%)</button>
+                            <button class="seg-btn" data-unit="count">Count</button>
+                        </div>
                     </div>
                 </div>
                 <div style="position:relative; height: 340px;">
@@ -132,8 +138,39 @@
             <!-- Newspaper Chart (opinions only) -->
             <div id="newspaper-chart-container" class="panel p-5 sm:p-6 hidden">
                 <p class="eyebrow mb-1.5">By outlet</p>
-                <h2 class="card-title mb-4">Predictions by newspaper</h2>
+                <h2 class="card-title mb-1">AI &amp; Mixed rate by newspaper</h2>
+                <p class="text-xs text-gray-400 mb-4">Share of each outlet's articles flagged AI or Mixed (article counts in tooltip)</p>
                 <canvas id="newspaperChart"></canvas>
+            </div>
+
+            <!-- AI rate by topic -->
+            <div class="panel p-5 sm:p-6">
+                <p class="eyebrow mb-1.5">By topic</p>
+                <h2 class="card-title mb-1">AI &amp; Mixed rate by topic</h2>
+                <p class="text-xs text-gray-400 mb-4">Share of each topic's articles flagged AI or Mixed, top topics by volume</p>
+                <div style="position:relative; height: 420px;">
+                    <canvas id="topicRateChart"></canvas>
+                </div>
+            </div>
+
+            <!-- Distributions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">Detector confidence</p>
+                    <h2 class="card-title mb-1">AI-likelihood distribution</h2>
+                    <p class="text-xs text-gray-400 mb-4">All articles by Pangram score &mdash; log scale</p>
+                    <div style="position:relative; height: 300px;">
+                        <canvas id="likelihoodChart"></canvas>
+                    </div>
+                </div>
+                <div id="fraction-chart-container" class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">Within flagged pieces</p>
+                    <h2 class="card-title mb-1">How much of a flagged piece is AI</h2>
+                    <p class="text-xs text-gray-400 mb-4" id="fraction-sub">Fraction of AI content among Mixed/AI articles</p>
+                    <div style="position:relative; height: 300px;">
+                        <canvas id="fractionChart"></canvas>
+                    </div>
+                </div>
             </div>
         </div>
     </div>
@@ -148,7 +185,8 @@
         let currentDataset = null;
         let currentStats = null;
         let timeSeriesMode = 'prediction';
-        let charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
+        let timeSeriesUnit = 'pct';
+        let charts = { prediction: null, topic: null, newspaper: null, timeSeries: null, topicRate: null, likelihood: null, fraction: null };
 
         const datasetInfo = {
             'recent_news': { title: 'Recent News Analysis', description: 'Analysis of recent news articles' },
@@ -210,6 +248,8 @@
             const subEl = document.getElementById('timeseries-sub');
             let labels, datasets, yTitle;
 
+            const isPct = timeSeriesUnit === 'pct';
+
             if (timeSeriesMode === 'publisher') {
                 const rows = data.time_series_by_publisher || [];
                 const months = [...new Set(rows.map(r => r.month))].sort();
@@ -224,29 +264,35 @@
                         label: pub,
                         data: months.map(m => {
                             const r = byKey[`${pub}||${m}`];
-                            if (!r || r.total === 0) return null;
-                            return (((r.ai_count + r.mixed_count) / r.total) * 100).toFixed(2);
+                            if (!r) return null;
+                            const flagged = r.ai_count + r.mixed_count;
+                            if (isPct) return r.total === 0 ? null : ((flagged / r.total) * 100).toFixed(2);
+                            return flagged;
                         }),
                         borderColor: color,
                         backgroundColor: color + '14',
                         tension: 0.35, fill: false, borderWidth: 2, pointRadius: 2, spanGaps: true
                     };
                 });
-                yTitle = 'AI or Mixed (%)';
+                yTitle = isPct ? 'AI or Mixed (%)' : 'AI or Mixed (articles)';
                 titleEl.textContent = 'AI or Mixed content by publisher';
-                subEl.textContent = 'Share of each outlet’s articles flagged as AI or Mixed, by month';
+                subEl.textContent = isPct
+                    ? 'Share of each outlet’s articles flagged as AI or Mixed, by month'
+                    : 'Number of each outlet’s articles flagged as AI or Mixed, by month';
             } else {
                 const t = data.time_series;
                 labels = t.map(x => monthLabel(x.month));
                 datasets = [
-                    { label: 'AI content %', data: t.map(x => ((x.ai_count / x.total) * 100).toFixed(2)),
+                    { label: isPct ? 'AI content %' : 'AI content', data: t.map(x => isPct ? ((x.ai_count / x.total) * 100).toFixed(2) : x.ai_count),
                       borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.06)', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 2 },
-                    { label: 'Mixed content %', data: t.map(x => ((x.mixed_count / x.total) * 100).toFixed(2)),
+                    { label: isPct ? 'Mixed content %' : 'Mixed content', data: t.map(x => isPct ? ((x.mixed_count / x.total) * 100).toFixed(2) : x.mixed_count),
                       borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.06)', tension: 0.35, fill: true, borderWidth: 2, pointRadius: 2 }
                 ];
-                yTitle = 'Percentage (%)';
+                yTitle = isPct ? 'Percentage (%)' : 'Articles';
                 titleEl.textContent = 'AI & Mixed content over time';
-                subEl.textContent = 'Share of articles flagged as AI or Mixed, by month';
+                subEl.textContent = isPct
+                    ? 'Share of articles flagged as AI or Mixed, by month'
+                    : 'Number of articles flagged as AI or Mixed, by month';
             }
 
             charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
@@ -266,7 +312,7 @@
 
         async function renderCharts(data) {
             Object.values(charts).forEach(chart => { if (chart) chart.destroy(); });
-            charts = { prediction: null, topic: null, newspaper: null, timeSeries: null };
+            charts = { prediction: null, topic: null, newspaper: null, timeSeries: null, topicRate: null, likelihood: null, fraction: null };
             Chart.defaults.font.family = 'Inter';
 
             const predictionData = ['Human', 'Mixed', 'AI'].map(label => ({
@@ -341,48 +387,43 @@
                 }
             });
 
+            // Per-newspaper AI/Mixed RATE (opinions only). Stacked-percent bars so the
+            // tiny flagged share is actually visible against the ~99% Human majority.
             const newspaperContainer = document.getElementById('newspaper-chart-container');
             if (currentDataset === 'opinions') {
                 newspaperContainer.classList.remove('hidden');
-                const newspaperData = data.newspaper_distribution || [];
-                const processedNewspaperData = await Promise.all(newspaperData.map(async (newspaper) => {
-                    try {
-                        const articles = await window.dataLoader.getArticles({ newspaper: newspaper.newspaper, dataset_type: currentDataset, limit: 1000 });
-                        const predictionCounts = { Human: 0, Mixed: 0, AI: 0 };
-                        articles.articles.forEach(article => { if (predictionCounts.hasOwnProperty(article.prediction)) predictionCounts[article.prediction]++; });
-                        return { newspaper: newspaper.newspaper, total: newspaper.count, human: predictionCounts.Human, mixed: predictionCounts.Mixed, ai: predictionCounts.AI };
-                    } catch (error) {
-                        const total = newspaper.count;
-                        return { newspaper: newspaper.newspaper, total, human: Math.floor(total * 0.6), mixed: Math.floor(total * 0.2), ai: Math.floor(total * 0.2) };
-                    }
-                }));
+                const nd = (data.newspaper_distribution || []).filter(n => n.count > 0);
+                const rate = (v, n) => n.count ? +((v / n.count) * 100).toFixed(3) : 0;
                 charts.newspaper = new Chart(document.getElementById('newspaperChart'), {
                     type: 'bar',
                     data: {
-                        labels: processedNewspaperData.map(n => n.newspaper),
+                        labels: nd.map(n => n.newspaper),
                         datasets: [
-                            { label: 'AI', data: processedNewspaperData.map(n => n.ai), backgroundColor: '#ef4444', borderColor: '#dc2626', borderWidth: 1 },
-                            { label: 'Mixed', data: processedNewspaperData.map(n => n.mixed), backgroundColor: '#f59e0b', borderColor: '#d97706', borderWidth: 1 },
-                            { label: 'Human', data: processedNewspaperData.map(n => n.human), backgroundColor: '#10b981', borderColor: '#059669', borderWidth: 1 }
+                            { label: 'AI', data: nd.map(n => rate(n.ai, n)), backgroundColor: '#ef4444', borderColor: '#dc2626', borderWidth: 1 },
+                            { label: 'Mixed', data: nd.map(n => rate(n.mixed, n)), backgroundColor: '#f59e0b', borderColor: '#d97706', borderWidth: 1 }
                         ]
                     },
                     options: {
-                        responsive: true,
+                        responsive: true, maintainAspectRatio: true,
                         onClick: (e, els) => {
                             if (els.length) {
                                 const el = els[0];
-                                const newspaper = processedNewspaperData[el.index].newspaper;
-                                const prediction = el.datasetIndex === 0 ? 'AI' : el.datasetIndex === 1 ? 'Mixed' : 'Human';
+                                const newspaper = nd[el.index].newspaper;
+                                const prediction = el.datasetIndex === 0 ? 'AI' : 'Mixed';
                                 window.open(`search.html?dataset_type=${currentDataset}&newspaper=${encodeURIComponent(newspaper)}&prediction=${encodeURIComponent(prediction)}`, '_blank');
                             }
                         },
                         plugins: {
                             legend: { display: true, position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } },
-                            tooltip: { callbacks: { label: (c) => { const total = processedNewspaperData[c.dataIndex].total; return `${c.dataset.label}: ${c.parsed.y.toLocaleString()} (${((c.parsed.y / total) * 100).toFixed(1)}%)`; } } }
+                            tooltip: { callbacks: { label: (c) => {
+                                const n = nd[c.dataIndex];
+                                const cnt = c.dataset.label === 'AI' ? n.ai : n.mixed;
+                                return `${c.dataset.label}: ${c.parsed.y}% (${cnt.toLocaleString()} of ${n.count.toLocaleString()})`;
+                            } } }
                         },
                         scales: {
                             x: { stacked: true, title: { display: true, text: 'Newspaper', font: { size: 12, weight: '600' } }, grid: { display: false } },
-                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'Number of Articles', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                            y: { stacked: true, beginAtZero: true, title: { display: true, text: 'AI or Mixed (%)', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
                         }
                     }
                 });
@@ -390,14 +431,114 @@
                 newspaperContainer.classList.add('hidden');
                 if (charts.newspaper) { charts.newspaper.destroy(); charts.newspaper = null; }
             }
+
+            // AI & Mixed RATE by topic — horizontal bars sorted by flagged share.
+            const topicRate = (data.topic_distribution || [])
+                .filter(t => t.count > 0)
+                .map(t => ({ ...t, rate: ((t.ai + t.mixed) / t.count) * 100 }))
+                .sort((a, b) => b.rate - a.rate);
+            charts.topicRate = new Chart(document.getElementById('topicRateChart'), {
+                type: 'bar',
+                data: {
+                    labels: topicRate.map(t => t.primary_topic),
+                    datasets: [{
+                        label: 'AI or Mixed (%)',
+                        data: topicRate.map(t => +t.rate.toFixed(3)),
+                        backgroundColor: '#b45309', borderColor: '#92400e', borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true, maintainAspectRatio: false,
+                    onClick: (e, els) => { if (els.length) window.open(`search.html?dataset_type=${currentDataset}&topic=${encodeURIComponent(topicRate[els[0].index].primary_topic)}`, '_blank'); },
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { label: (c) => {
+                            const t = topicRate[c.dataIndex];
+                            return `${c.parsed.x}% flagged (${(t.ai + t.mixed).toLocaleString()} of ${t.count.toLocaleString()})`;
+                        } } }
+                    },
+                    scales: {
+                        x: { beginAtZero: true, title: { display: true, text: 'AI or Mixed (%)', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } },
+                        y: { grid: { display: false }, ticks: { font: { size: 11 } } }
+                    }
+                }
+            });
+
+            // AI-likelihood distribution — log scale (counts pile up near 0 with a tail near 1).
+            const binCount = data.bin_count || 20;
+            const binLabel = (i) => `${(i / binCount).toFixed(2)}–${((i + 1) / binCount).toFixed(2)}`;
+            const likHist = data.likelihood_histogram || [];
+            charts.likelihood = new Chart(document.getElementById('likelihoodChart'), {
+                type: 'bar',
+                data: {
+                    labels: likHist.map((_, i) => binLabel(i)),
+                    datasets: [{
+                        label: 'Articles',
+                        data: likHist,
+                        backgroundColor: likHist.map((_, i) => i / binCount < 0.5 ? '#10b981' : i / binCount < 0.8 ? '#f59e0b' : '#ef4444'),
+                        borderWidth: 0
+                    }]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: { callbacks: { title: (items) => `Score ${items[0].label}`, label: (c) => `${c.parsed.y.toLocaleString()} articles` } }
+                    },
+                    scales: {
+                        x: { title: { display: true, text: 'Pangram AI-likelihood', font: { size: 12, weight: '600' } }, grid: { display: false }, ticks: { maxRotation: 90, minRotation: 45, font: { size: 9 }, autoSkip: false } },
+                        y: { type: 'logarithmic', title: { display: true, text: 'Articles (log)', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                    }
+                }
+            });
+
+            // How much of a flagged piece is AI — fraction_ai_content for Mixed/AI pieces.
+            const fractionContainer = document.getElementById('fraction-chart-container');
+            const fracHist = data.fraction_histogram || [];
+            const flaggedCount = data.flagged_count || 0;
+            if (flaggedCount > 0) {
+                fractionContainer.classList.remove('hidden');
+                document.getElementById('fraction-sub').textContent =
+                    `Fraction of AI content across ${flaggedCount.toLocaleString()} Mixed/AI articles`;
+                charts.fraction = new Chart(document.getElementById('fractionChart'), {
+                    type: 'bar',
+                    data: {
+                        labels: fracHist.map((_, i) => binLabel(i)),
+                        datasets: [{ label: 'Flagged articles', data: fracHist, backgroundColor: '#8b5cf6', borderWidth: 0 }]
+                    },
+                    options: {
+                        responsive: true, maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { callbacks: { title: (items) => `${items[0].label} AI`, label: (c) => `${c.parsed.y.toLocaleString()} articles` } }
+                        },
+                        scales: {
+                            x: { title: { display: true, text: 'Fraction of article that is AI', font: { size: 12, weight: '600' } }, grid: { display: false }, ticks: { maxRotation: 90, minRotation: 45, font: { size: 9 }, autoSkip: false } },
+                            y: { beginAtZero: true, title: { display: true, text: 'Articles', font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } }
+                        }
+                    }
+                });
+            } else {
+                fractionContainer.classList.add('hidden');
+            }
         }
 
-        // Time-series toggle handler
+        // Time-series mode toggle (by prediction / by publisher)
         document.getElementById('timeseries-toggle').addEventListener('click', (e) => {
             const btn = e.target.closest('.seg-btn');
             if (!btn || btn.dataset.mode === timeSeriesMode || !currentStats) return;
             timeSeriesMode = btn.dataset.mode;
             document.querySelectorAll('#timeseries-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === timeSeriesMode));
+            renderTimeSeries(currentStats);
+        });
+
+        // Time-series unit toggle (share % / absolute count)
+        document.getElementById('timeseries-unit-toggle').addEventListener('click', (e) => {
+            const btn = e.target.closest('.seg-btn');
+            if (!btn || btn.dataset.unit === timeSeriesUnit || !currentStats) return;
+            timeSeriesUnit = btn.dataset.unit;
+            document.querySelectorAll('#timeseries-unit-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.unit === timeSeriesUnit));
             renderTimeSeries(currentStats);
         });
 
