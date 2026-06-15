@@ -194,8 +194,12 @@
 
             <!-- Results -->
             <main class="flex-1 min-w-0">
-                <div class="mb-4">
+                <div class="mb-4 flex items-center justify-between gap-3">
                     <p class="text-sm font-medium text-gray-500" id="results-count">Loading articles...</p>
+                    <span class="inline-flex items-center gap-1.5 text-xs text-gray-400 whitespace-nowrap flex-shrink-0" title="AI-detection scores produced with Pangram v3.3">
+                        <img src="/additional_data/pangram.png" alt="Pangram" class="h-3.5 w-3.5 opacity-60">
+                        AI scores by Pangram&nbsp;v3.3
+                    </span>
                 </div>
 
                 <div id="loading-indicator" class="hidden bg-white border border-gray-200 rounded-xl p-5 mb-4">

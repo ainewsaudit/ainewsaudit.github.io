@@ -6,17 +6,87 @@
     <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
     <meta http-equiv="Pragma" content="no-cache">
     <meta http-equiv="Expires" content="0">
-    <title>AI Metrics Explained</title>
+    <title>Metrics &amp; Methodology &mdash; AI News Audit</title>
     <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
 <style>
-    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
+    html { scroll-behavior: smooth; }
+    .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; font-optical-sizing: auto; }
+
+    /* ---------- Hero rule ---------- */
+    .gold-rule { height: 3px; width: 56px; background: linear-gradient(to right, #b45309 0%, #d97706 100%); border-radius: 2px; }
+
+    /* ---------- Typography helpers ---------- */
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; }
+    .eyebrow-muted { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: #94a3b8; }
+
+    /* ---------- Category chips ---------- */
+    .chip { display: inline-flex; align-items: center; font-size: 11px; font-weight: 600; padding: 3px 9px; border-radius: 9999px; letter-spacing: 0.04em; }
+    .chip-launch { background: #fef3c7; color: #92400e; border: 1px solid #fde68a; }
+    .chip-data { background: #f1f5f9; color: #334155; border: 1px solid #e2e8f0; }
+
+    /* ---------- Hero stat ribbon ---------- */
+    .ribbon { display: grid; grid-template-columns: repeat(2, minmax(0,1fr)); border-top: 1px solid #e2e8f0; border-bottom: 1px solid #e2e8f0; background: linear-gradient(to bottom, #fdfdfb 0%, #ffffff 100%); }
+    @media (min-width: 640px) { .ribbon { grid-template-columns: repeat(4, minmax(0,1fr)); } }
+    .ribbon-cell { padding: 18px 20px; border-right: 1px solid #e2e8f0; position: relative; }
+    .ribbon-cell:last-child { border-right: none; }
+    .ribbon-cell:nth-child(2) { border-right: none; }
+    @media (min-width: 640px) { .ribbon-cell:nth-child(2) { border-right: 1px solid #e2e8f0; } }
+    .ribbon-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; margin-bottom: 8px; }
+    .ribbon-value { font-family: 'Fraunces', serif; font-size: 24px; font-weight: 600; color: #0f172a; line-height: 1; letter-spacing: -0.01em; font-variant-numeric: tabular-nums; }
+    .ribbon-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; letter-spacing: 0.02em; }
+
+    /* ---------- Entry frame ---------- */
+    .entry-card { background: white; border: 1px solid #e5e7eb; border-radius: 10px; padding: 28px 28px; box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04), 0 6px 18px rgba(15, 23, 42, 0.05); }
+    @media (min-width: 640px) { .entry-card { padding: 36px 40px; } }
+
+    /* ---------- Announcement framing inside the card ---------- */
+    .card-eyebrow { display: flex; align-items: center; gap: 10px; padding-bottom: 18px; margin-bottom: 24px; border-bottom: 1px solid #f1f5f9; font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; }
+    .card-eyebrow .seal { display: inline-flex; align-items: center; justify-content: center; width: 18px; height: 18px; border-radius: 9999px; background: #fef3c7; border: 1px solid #fde68a; }
+    .card-eyebrow .seal::after { content: ""; display: block; width: 6px; height: 6px; border-radius: 9999px; background: #b45309; }
+    .card-eyebrow .divider { width: 1px; height: 12px; background: #fde68a; }
+    .card-eyebrow .id { color: #94a3b8; letter-spacing: 0.14em; }
+
+    /* ---------- Section headings ---------- */
+    .section-title { font-family: 'Fraunces', serif; font-size: 26px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.12; color: #0f172a; }
+    @media (min-width: 640px) { .section-title { font-size: 30px; } }
+
+    .lede { font-family: 'Inter', sans-serif; font-size: 16px; line-height: 1.65; color: #334155; }
+    .lede strong { color: #0f172a; font-weight: 600; }
+    .lede a, .body-link { color: #0f172a; text-decoration: underline; text-decoration-color: #d97706; text-underline-offset: 3px; text-decoration-thickness: 1.5px; }
+    .lede a:hover, .body-link:hover { text-decoration-color: #b45309; }
+
+    .prose-body { font-size: 15px; line-height: 1.7; color: #475569; }
+    .prose-body strong { color: #0f172a; font-weight: 600; }
+
+    /* ---------- Pipeline steps ---------- */
+    .step-num { font-family: 'Fraunces', serif; font-size: 20px; font-weight: 700; color: #b45309; line-height: 1; width: 34px; height: 34px; border-radius: 9999px; background: #fffbeb; border: 1px solid #fde68a; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* ---------- Category cards ---------- */
+    .cat-card { border-radius: 10px; padding: 18px 20px; border: 1px solid; }
+    .cat-name { font-family: 'Fraunces', serif; font-size: 18px; font-weight: 600; margin-bottom: 4px; }
+
+    /* ---------- Metric definition rows ---------- */
+    .metric-row { display: flex; gap: 16px; padding: 18px 0; border-bottom: 1px solid #f1f5f9; }
+    .metric-row:last-child { border-bottom: none; }
+    .metric-badge { font-family: 'Fraunces', serif; font-weight: 700; font-size: 13px; letter-spacing: 0.02em; width: 56px; height: 40px; border-radius: 8px; display: inline-flex; align-items: center; justify-content: center; flex-shrink: 0; }
+
+    /* ---------- New-in-3.3 callout ---------- */
+    .whatsnew { position: relative; padding: 20px 24px; background: linear-gradient(to right, #fffbeb 0%, #fffdf7 80%); border-left: 3px solid #b45309; border-radius: 2px; }
+
+    /* ---------- Footer back link ---------- */
+    .back-link { display: inline-flex; align-items: center; gap: 8px; font-size: 13px; font-weight: 600; letter-spacing: 0.06em; text-transform: uppercase; color: #b45309; text-decoration: none; transition: color 150ms ease, gap 150ms ease; }
+    .back-link:hover { color: #92400e; gap: 12px; }
+    .back-link .arrow { width: 22px; height: 1.5px; background: currentColor; position: relative; flex-shrink: 0; }
+    .back-link .arrow::before { content: ""; position: absolute; left: 0; top: 50%; width: 8px; height: 1.5px; background: currentColor; transform: translateY(-50%) rotate(-45deg); transform-origin: 0 50%; }
+    .back-link .arrow::after { content: ""; position: absolute; left: 0; top: 50%; width: 8px; height: 1.5px; background: currentColor; transform: translateY(-50%) rotate(45deg); transform-origin: 0 50%; }
 </style>
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-white min-h-screen">
     <!-- Navigation -->
     <header class="bg-slate-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
@@ -32,164 +102,177 @@
         </div>
     </header>
 
-    <!-- Main Content -->
-    <div class="max-w-3xl mx-auto px-4 sm:px-6 py-10">
-        <div class="mb-10">
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-gray-900 tracking-tight mb-2">AI Detection Metrics Explained</h1>
-            <p class="text-sm text-gray-500">Understanding how we measure AI-generated content in news articles</p>
-        </div>
+    <!-- Page header -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-10">
+        <p class="eyebrow mb-3">Methodology</p>
+        <h1 class="serif text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" style="letter-spacing:-0.025em;">How we measure AI</h1>
+        <p class="serif text-lg sm:text-xl italic text-slate-500 max-w-2xl">What the scores on this site mean, and how Pangram&nbsp;v3.3 reads an article.</p>
+        <div class="gold-rule mt-6"></div>
+    </div>
 
-        <!-- How It Works -->
-        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-            <div class="flex items-center gap-3 mb-4">
-                <a href="https://www.pangram.com/" target="_blank" class="hover:opacity-80 transition-opacity">
+    <!-- Main Content -->
+    <div class="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 pb-20 space-y-14">
+
+        <!-- Detector overview card -->
+        <section class="entry-card">
+            <div class="card-eyebrow">
+                <span class="seal" aria-hidden="true"></span>
+                <span>The Detector</span>
+                <span class="divider" aria-hidden="true"></span>
+                <span class="id">Pangram v3.3</span>
+            </div>
+
+            <div class="flex items-start justify-between gap-4 mb-5">
+                <h2 class="section-title">Powered by Pangram</h2>
+                <a href="https://www.pangram.com/" target="_blank" class="flex-shrink-0 hover:opacity-80 transition-opacity pt-1">
                     <img src="/additional_data/pangram.png" alt="Pangram" class="h-8">
                 </a>
-                <h2 class="text-lg font-bold text-gray-900">How does AI detection work?</h2>
             </div>
-            <div class="space-y-3 text-sm text-gray-600 leading-relaxed">
-                <p>
-                    We use <a href="https://www.pangram.com/" target="_blank" class="text-blue-600 hover:text-blue-800 font-medium">Pangram</a>, a state-of-the-art AI detector, which analyzes text on two levels:
-                </p>
-                <ul class="list-disc list-inside space-y-1.5 ml-2 text-gray-600">
-                    <li><strong class="text-gray-700">Chunk-level:</strong> Breaks the article into chunks and analyzes each one for AI use.</li>
-                    <li><strong class="text-gray-700">Article-level:</strong> Uses those chunk-level results to give an overall judgment for the entire article.</li>
-                </ul>
+
+            <p class="lede mb-8">
+                Every article on AI News Audit is analyzed with
+                <a href="https://www.pangram.com/" target="_blank">Pangram</a>, a state-of-the-art AI
+                detector. We have upgraded to <strong>version&nbsp;3.3</strong>, which doesn't just ask
+                <em>"is this AI?"</em>&mdash;it reads an article segment by segment and distinguishes
+                <strong>fully AI-generated</strong> text from text that was merely <strong>AI-assisted</strong>,
+                with a confidence level attached to every call.
+            </p>
+
+            <div class="ribbon">
+                <div class="ribbon-cell">
+                    <div class="ribbon-label">Detector</div>
+                    <div class="ribbon-value">Pangram</div>
+                    <div class="ribbon-sub">v&nbsp;3.3</div>
+                </div>
+                <div class="ribbon-cell">
+                    <div class="ribbon-label">Reads at</div>
+                    <div class="ribbon-value">Segment</div>
+                    <div class="ribbon-sub">&amp; whole article</div>
+                </div>
+                <div class="ribbon-cell">
+                    <div class="ribbon-label">Verdicts</div>
+                    <div class="ribbon-value">3&nbsp;+&nbsp;1</div>
+                    <div class="ribbon-sub">Human/Assisted/AI + Mixed</div>
+                </div>
+                <div class="ribbon-cell">
+                    <div class="ribbon-label">False positives</div>
+                    <div class="ribbon-value">0.001</div>
+                    <div class="ribbon-sub">reported, for news</div>
+                </div>
             </div>
-        </div>
+        </section>
+
+        <!-- How it reads an article -->
+        <section>
+            <p class="eyebrow mb-2">The pipeline</p>
+            <h2 class="section-title mb-6">How Pangram reads an article</h2>
+            <div class="space-y-5">
+                <div class="flex gap-4">
+                    <span class="step-num">1</span>
+                    <p class="prose-body pt-1.5"><strong>Split into windows.</strong> The article is broken into overlapping
+                    <strong>windows</strong> (short passages). Each is scored independently, so a single AI paragraph
+                    buried in an otherwise human piece won't slip through.</p>
+                </div>
+                <div class="flex gap-4">
+                    <span class="step-num">2</span>
+                    <p class="prose-body pt-1.5"><strong>Label every segment.</strong> Each window gets a label&mdash;from
+                    <em>Human Written</em> through <em>Moderately AI-Assisted</em> to <em>AI-Generated</em>&mdash;an
+                    <strong>AI-assistance score</strong> from 0 to 1, and a <strong>confidence</strong> of High, Medium, or Low.</p>
+                </div>
+                <div class="flex gap-4">
+                    <span class="step-num">3</span>
+                    <p class="prose-body pt-1.5"><strong>Roll up to a verdict.</strong> The segment results combine into one
+                    article-level call&mdash;<strong>Human</strong>, <strong>Mixed</strong>, or <strong>AI</strong>&mdash;plus
+                    the fraction of the text in each category.</p>
+                </div>
+            </div>
+        </section>
 
         <!-- Categories -->
-        <div class="bg-white border border-gray-200 rounded-xl p-6 mb-6">
-            <h2 class="text-lg font-bold text-gray-900 mb-4">Content Categories</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <div class="p-4 bg-emerald-50 border border-emerald-100 rounded-lg text-center">
-                    <h3 class="font-semibold text-emerald-800 text-sm mb-1">Human</h3>
-                    <p class="text-xs text-emerald-600">Written entirely by humans</p>
+        <section>
+            <p class="eyebrow mb-2">The verdicts</p>
+            <h2 class="section-title mb-6">Four ways text gets classified</h2>
+            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <div class="cat-card" style="background:#ecfdf5; border-color:#a7f3d0;">
+                    <div class="cat-name" style="color:#065f46;">Human</div>
+                    <p class="text-sm" style="color:#047857;">Written by a person, with no detectable AI involvement.</p>
                 </div>
-                <div class="p-4 bg-amber-50 border border-amber-100 rounded-lg text-center">
-                    <h3 class="font-semibold text-amber-800 text-sm mb-1">Mixed</h3>
-                    <p class="text-xs text-amber-600">A combination of human and AI content</p>
+                <div class="cat-card" style="background:#fffbeb; border-color:#fde68a;">
+                    <div class="cat-name" style="color:#92400e;">AI-Assisted</div>
+                    <p class="text-sm" style="color:#b45309;">Human-authored text that shows signs of AI help&mdash;editing, rewriting, or polishing&mdash;rather than wholesale generation. <strong>New in v3.3.</strong></p>
                 </div>
-                <div class="p-4 bg-red-50 border border-red-100 rounded-lg text-center">
-                    <h3 class="font-semibold text-red-800 text-sm mb-1">AI</h3>
-                    <p class="text-xs text-red-600">Generated primarily by AI</p>
+                <div class="cat-card" style="background:#fef2f2; border-color:#fecaca;">
+                    <div class="cat-name" style="color:#991b1b;">AI</div>
+                    <p class="text-sm" style="color:#b91c1c;">Generated primarily by an AI model.</p>
                 </div>
-            </div>
-        </div>
-
-        <!-- Metrics Grid -->
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
-            <!-- AI Likelihood -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-blue-600 text-sm font-bold">AI</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">AI Likelihood</h3>
-                        <p class="text-xs text-gray-400">Overall article score</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-3 leading-relaxed">
-                    The overall probability that the entire article contains AI-generated content.
-                </p>
-                <div class="bg-blue-50 border border-blue-100 p-3 rounded-lg text-xs text-blue-800 leading-relaxed">
-                    <strong>Range:</strong> 0% &ndash; 100%<br>
-                    <strong>Interpretation:</strong> Higher percentages indicate greater likelihood of AI generation
+                <div class="cat-card" style="background:#f8fafc; border-color:#e2e8f0;">
+                    <div class="cat-name" style="color:#334155;">Mixed</div>
+                    <p class="text-sm" style="color:#475569;">A blend&mdash;some passages read as human, others as AI or AI-assisted.</p>
                 </div>
             </div>
+        </section>
 
-            <!-- Max AI Likelihood -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-9 h-9 bg-violet-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-violet-600 text-sm font-bold">MX</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">Max AI Likelihood</h3>
-                        <p class="text-xs text-gray-400">Highest chunk score</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-3 leading-relaxed">
-                    The highest AI likelihood score found in any single <em>chunk</em> of the article. Useful for spotting a "hidden" AI paragraph, even if the rest looks human.
-                </p>
-                <div class="bg-violet-50 border border-violet-100 p-3 rounded-lg text-xs text-violet-800 leading-relaxed">
-                    <strong>Range:</strong> 0% &ndash; 100%<br>
-                    <strong>Use:</strong> Identifies specific AI-generated sections within the article
-                </div>
-            </div>
+        <!-- The scores on this site -->
+        <section class="entry-card">
+            <p class="eyebrow mb-2">On this site</p>
+            <h2 class="section-title mb-3">The scores you'll see</h2>
+            <p class="prose-body mb-2">Each article card and detail page surfaces a few numbers, all derived from the v3.3 window analysis:</p>
 
-            <!-- Average AI Likelihood -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-9 h-9 bg-emerald-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-emerald-600 text-sm font-bold">AV</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">Average AI Likelihood</h3>
-                        <p class="text-xs text-gray-400">Average chunk score</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-3 leading-relaxed">
-                    The average AI likelihood score across all chunks of the article.
-                </p>
-                <div class="bg-emerald-50 border border-emerald-100 p-3 rounded-lg text-xs text-emerald-800 leading-relaxed">
-                    <strong>Range:</strong> 0% &ndash; 100%<br>
-                    <strong>Use:</strong> Shows overall AI content consistency across the article
-                </div>
-            </div>
-
-            <!-- AI Delta -->
-            <div class="bg-white border border-gray-200 rounded-xl p-5">
-                <div class="flex items-center gap-3 mb-3">
-                    <div class="w-9 h-9 bg-amber-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                        <span class="text-amber-600 text-sm font-bold">&Delta;</span>
-                    </div>
-                    <div>
-                        <h3 class="text-sm font-semibold text-gray-900">AI Delta</h3>
-                        <p class="text-xs text-gray-400">Variation in chunk scores</p>
-                    </div>
-                </div>
-                <p class="text-sm text-gray-600 mb-3 leading-relaxed">
-                    The difference between the <em>maximum</em> and <em>average</em> AI likelihood scores. High delta means some parts have more AI content than others.
-                </p>
-                <div class="bg-amber-50 border border-amber-100 p-3 rounded-lg text-xs text-amber-800 leading-relaxed">
-                    <strong>Range:</strong> 0% &ndash; 100%<br>
-                    <strong>High Delta:</strong> Mixed human/AI content<br>
-                    <strong>Low Delta:</strong> Consistent content (AI or human)
-                </div>
-            </div>
-        </div>
-
-        <!-- AI Content Fraction -->
-        <div class="bg-white border border-gray-200 rounded-xl p-5 mb-6">
-            <div class="flex items-center gap-3 mb-3">
-                <div class="w-9 h-9 bg-red-50 rounded-lg flex items-center justify-center flex-shrink-0">
-                    <span class="text-red-600 text-sm font-bold">%</span>
-                </div>
+            <div class="metric-row">
+                <span class="metric-badge" style="background:#eff6ff; color:#1d4ed8;">AI</span>
                 <div>
-                    <h3 class="text-sm font-semibold text-gray-900">AI Content Fraction</h3>
-                    <p class="text-xs text-gray-400">Percentage of AI-generated content</p>
+                    <h3 class="font-semibold text-slate-900 text-[15px] mb-1">AI Likelihood</h3>
+                    <p class="prose-body">The article's overall <strong>AI-assistance score</strong>&mdash;the average across all of its windows, on a 0&ndash;100% scale. Higher means more of the article reads as AI.</p>
                 </div>
             </div>
-            <p class="text-sm text-gray-600 mb-3 leading-relaxed">
-                Estimates what percentage of the total text was written by AI. More specific than other scores &mdash; it tries to answer "how much" of the article is AI.
-            </p>
-            <div class="bg-red-50 border border-red-100 p-3 rounded-lg text-xs text-red-800 leading-relaxed">
-                <strong>Range:</strong> 0.0% &ndash; 100.0%<br>
-                <strong>Examples:</strong><br>
-                &bull; 0% = Fully human-written<br>
-                &bull; 50% = Half AI, half human<br>
-                &bull; 100% = Fully AI-generated
+            <div class="metric-row">
+                <span class="metric-badge" style="background:#f5f3ff; color:#6d28d9;">Max</span>
+                <div>
+                    <h3 class="font-semibold text-slate-900 text-[15px] mb-1">Max AI</h3>
+                    <p class="prose-body">The <strong>single highest-scoring window</strong> in the article. Useful for catching a "hidden" AI passage even when the rest looks human.</p>
+                </div>
             </div>
-        </div>
+            <div class="metric-row">
+                <span class="metric-badge" style="background:#fef2f2; color:#b91c1c;">%</span>
+                <div>
+                    <h3 class="font-semibold text-slate-900 text-[15px] mb-1">AI Content Fraction</h3>
+                    <p class="prose-body">How much of the text&mdash;as a share from 0 to 100%&mdash;was classified as AI-written. It answers <em>"how much,"</em> not just <em>"whether."</em></p>
+                </div>
+            </div>
+            <div class="metric-row">
+                <span class="metric-badge" style="background:#fffbeb; color:#b45309;">◑</span>
+                <div>
+                    <h3 class="font-semibold text-slate-900 text-[15px] mb-1">Confidence</h3>
+                    <p class="prose-body">Every segment-level call carries a <strong>High</strong>, <strong>Medium</strong>, or <strong>Low</strong> confidence, so a borderline result is never dressed up as a certain one. <strong>New in v3.3.</strong></p>
+                </div>
+            </div>
+        </section>
 
-        <!-- Back to Search -->
-        <div class="text-center">
-            <a href="/" class="inline-flex items-center gap-2 bg-slate-900 text-white text-sm font-medium px-5 py-2.5 rounded-lg hover:bg-slate-800 transition-colors">
-                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18"/></svg>
-                Back to Search
+        <!-- What's new in 3.3 -->
+        <section>
+            <p class="eyebrow mb-2">What changed</p>
+            <h2 class="section-title mb-5">New in version&nbsp;3.3</h2>
+            <div class="whatsnew">
+                <ul class="space-y-3 prose-body" style="color:#7c5410;">
+                    <li><strong style="color:#78350f;">An "AI-assisted" category.</strong> Earlier versions scored a single AI likelihood. v3.3 separates text a human wrote with AI help from text an AI generated outright.</li>
+                    <li><strong style="color:#78350f;">Segment-level confidence.</strong> Every window now reports High / Medium / Low confidence alongside its score.</li>
+                    <li><strong style="color:#78350f;">Richer window analysis.</strong> Descriptive per-passage labels (e.g. <em>Moderately AI-Assisted</em>) and AI-assistance scores replace a single overall probability.</li>
+                    <li><strong style="color:#78350f;">Fractions for each class.</strong> v3.3 reports the share of the article that is human, AI-assisted, and AI&mdash;not just one number.</li>
+                </ul>
+            </div>
+            <p class="text-xs text-slate-400 mt-4 leading-relaxed">
+                Field definitions follow Pangram's published <a href="https://pangram.readthedocs.io/en/latest/api/pangram.html#module-pangram.text_classifier" target="_blank" class="body-link">text-classifier API</a>.
+                The reported false-positive rate of 0.001 is for news articles.
+            </p>
+        </section>
+
+        <!-- Back -->
+        <div class="pt-6 border-t border-gray-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <a href="/" class="back-link">
+                <span class="arrow"></span>
+                Back to search
             </a>
+            <p class="text-xs text-slate-400 italic serif">AI scores by Pangram v3.3.</p>
         </div>
     </div>
 
