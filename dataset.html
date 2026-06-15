@@ -295,12 +295,39 @@
                     : 'Number of articles flagged as AI or Mixed, by month';
             }
 
+            // ChatGPT launched 2022-11-30 — mark the boundary if the series covers it.
+            const monthsList = timeSeriesMode === 'publisher'
+                ? [...new Set((data.time_series_by_publisher || []).map(r => r.month))].sort()
+                : (data.time_series || []).map(x => x.month);
+            const markerIndex = monthsList.indexOf('2022-11');
+            const chatgptMarker = {
+                id: 'chatgptMarker',
+                afterDatasetsDraw(chart) {
+                    if (markerIndex < 0) return;
+                    const x = chart.scales.x.getPixelForValue(markerIndex);
+                    if (x == null || isNaN(x)) return;
+                    const { top, bottom } = chart.chartArea;
+                    const ctx = chart.ctx;
+                    ctx.save();
+                    ctx.beginPath();
+                    ctx.setLineDash([5, 4]);
+                    ctx.moveTo(x, top); ctx.lineTo(x, bottom);
+                    ctx.lineWidth = 1.5; ctx.strokeStyle = '#64748b'; ctx.stroke();
+                    ctx.setLineDash([]);
+                    ctx.font = '700 10px Inter'; ctx.fillStyle = '#475569'; ctx.textAlign = 'left';
+                    ctx.fillText('ChatGPT released', x + 5, top + 12);
+                    ctx.restore();
+                }
+            };
+
             charts.timeSeries = new Chart(document.getElementById('timeSeriesChart'), {
                 type: 'line',
                 data: { labels, datasets },
+                plugins: [chatgptMarker],
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     interaction: { mode: 'index', intersect: false },
+                    layout: { padding: { top: 18 } },
                     plugins: { legend: { position: 'top', labels: { font: { size: 13, weight: 'bold' }, padding: 18, usePointStyle: true, pointStyle: 'circle' } } },
                     scales: {
                         y: { beginAtZero: true, title: { display: true, text: yTitle, font: { size: 12, weight: '600' } }, grid: { color: 'rgba(0,0,0,0.04)' } },
