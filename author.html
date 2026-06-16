@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260626"></script>
+    <script src="/static-data-loader.js?v=20260627"></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
     .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; }
@@ -44,7 +44,7 @@
         <p class="eyebrow mb-3">Authors</p>
         <h1 class="serif text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 mb-3" style="letter-spacing:-0.025em;">Rising AI use by author</h1>
         <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
-            Bylined authors with at least 20 articles, ranked by how much the
+            Bylined authors (at least 20 articles for news, 5 for opinions), ranked by how much the
             <strong>share of their articles Pangram flagged as AI or Mixed</strong> rose from the first half
             to the second half of their coverage. Author names are <strong>masked with aliases</strong>.
             Detection is imperfect &mdash; these are flagged shares, not proof an individual used AI.
@@ -92,25 +92,38 @@
             return `rgb(${Math.round(245 + t*(220-245))},${Math.round(158 + t*(38-158))},${Math.round(11 + t*(38-11))})`;
         };
 
-        function riseStats(months) {
+        function riseStats(months, minHalf) {
             const ms = Object.keys(months).sort();
-            if (ms.length < 3) return null;
+            if (ms.length < 2) return null;
             const half = Math.floor(ms.length / 2);
             const sum = keys => keys.reduce((a, m) => [a[0] + months[m][0], a[1] + months[m][1]], [0, 0]);
             const [et, ef] = sum(ms.slice(0, half));
             const [lt, lf] = sum(ms.slice(half));
-            if (et < 8 || lt < 8) return null;
+            if (et < minHalf || lt < minHalf) return null;
             const er = 100 * ef / et, lr = 100 * lf / lt;
             return { er, lr, delta: lr - er, ms };
         }
 
-        function sparkline(months) {
-            const ms = Object.keys(months).sort();
+        function monthRange(start, end) {
+            const out = [];
+            let [y, m] = start.slice(0, 7).split('-').map(Number);
+            const [ey, em] = end.slice(0, 7).split('-').map(Number);
+            while (y < ey || (y === ey && m <= em)) {
+                out.push(`${y}-${String(m).padStart(2, '0')}`);
+                if (++m > 12) { m = 1; y++; }
+            }
+            return out;
+        }
+
+        function sparkline(a) {
+            // Full active span (gaps shown as faint ticks) so it reads as the overall trend.
+            const ms = (a.start && a.end) ? monthRange(a.start, a.end) : Object.keys(a.months).sort();
             return '<span class="spark">' + ms.map(m => {
-                const [t, f] = months[m];
+                const [t, f] = a.months[m] || [0, 0];
                 const pct = t ? 100 * f / t : 0;
-                const h = Math.max(2, Math.round(pct / 100 * 26));
-                return `<i style="height:${h}px;background:${color(pct)}" title="${m}: ${pct.toFixed(0)}% (${f}/${t})"></i>`;
+                const h = t ? Math.max(2, Math.round(pct / 100 * 26)) : 1;
+                const col = t ? color(pct) : '#e5e7eb';
+                return `<i style="height:${h}px;background:${col}" title="${m}: ${t ? pct.toFixed(0) + '% (' + f + '/' + t + ')' : 'no articles'}"></i>`;
             }).join('') + '</span>';
         }
 
@@ -119,8 +132,9 @@
             for (const ds of ['recent_news', 'opinions']) {
                 try {
                     const stats = await window.dataLoader.getDatasetStats(ds);
+                    const minHalf = ds === 'opinions' ? 2 : 8;
                     (stats.author_trends || []).forEach(a => {
-                        const rs = riseStats(a.months);
+                        const rs = riseStats(a.months, minHalf);
                         out.push({ ...a, dataset: ds, rise: rs });
                     });
                 } catch (e) { console.warn(ds, e); }
@@ -144,8 +158,8 @@
             document.getElementById('rows').innerHTML = shown.map(a => {
                 const overall = 100 * a.flagged / a.total;
                 const arrow = a.rise ? `${a.rise.er.toFixed(0)}% <span class="text-gray-400">&rarr;</span> <strong>${a.rise.lr.toFixed(0)}%</strong>` : '&mdash;';
-                const fmt = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) : '';
-                const span = (a.start && a.end) ? `${fmt(a.start)}&ndash;${fmt(a.end)}` : '';
+                const fmt = d => { if (!d) return ''; const dt = new Date(d + 'T00:00:00'); return dt.toLocaleDateString('en-US', { month: 'short' }) + " '" + String(dt.getFullYear()).slice(2); };
+                const span = (a.start && a.end) ? `${fmt(a.start)} &ndash; ${fmt(a.end)}` : '';
                 const paper = a.top_paper ? `${a.top_paper}` : '<span class="text-gray-300">&mdash;</span>';
                 const link = `search.html?dataset_type=${a.dataset}&author_alias=${encodeURIComponent(a.alias)}`;
                 return `<tr class="border-b border-gray-100 hover:bg-amber-50/40">
@@ -156,13 +170,13 @@
                     <td class="py-2 px-2 text-right tabular-nums text-slate-600">${a.total.toLocaleString()}</td>
                     <td class="py-2 px-2 text-right tabular-nums font-semibold">${overall.toFixed(1)}%</td>
                     <td class="py-2 px-2 text-right tabular-nums text-xs">${arrow}</td>
-                    <td class="py-2 px-4">${sparkline(a.months)}</td>
+                    <td class="py-2 px-4">${sparkline(a)}</td>
                 </tr>`;
             }).join('');
             const total = rows.length;
             document.getElementById('count-note').textContent =
                 `Showing ${shown.length} of ${total} authors` +
-                (sortMode === 'rising' ? ' with a rising AI-flagged share (≥ +5 points, ≥20 articles).' : ' (≥20 articles), highest AI+Mixed share first.');
+                (sortMode === 'rising' ? ' with a rising AI-flagged share (≥ +5 points; ≥20 news / ≥5 opinion articles).' : ' (≥20 news / ≥5 opinion articles), highest AI+Mixed share first.');
         }
 
         document.getElementById('ds-toggle').addEventListener('click', e => {

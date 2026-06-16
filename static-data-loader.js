@@ -1814,7 +1814,7 @@ class StaticDataLoader {
                 .sort((a, b) => a.month.localeCompare(b.month)),
             last_30_days: last30,
             author_trends: Object.values(authorAgg)
-                .filter(o => o.total >= 20)
+                .filter(o => o.total >= (datasetType === 'opinions' ? 5 : 20))
                 .sort((a, b) => b.total - a.total),
             topic_distribution: Object.values(topicDist)
                 .sort((a, b) => b.count - a.count)
