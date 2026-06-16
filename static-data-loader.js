@@ -1639,6 +1639,54 @@ class StaticDataLoader {
             });
         }
 
+        // Last-30-day AI use, kept PROPORTIONAL: reweighted to the pre-update
+        // Big-3-vs-local mix so the headline isn't diluted by the post-update
+        // surge of near-zero-AI Big 3 articles.
+        let last30 = null;
+        if (datasetType === 'recent_news') {
+            const big3Group = (name) => {
+                const n = (name || '').toLowerCase().replace(/^the\s+/, '').trim();
+                return (n.includes('new york times') || n.includes('washington post') || n.includes('wall street journal'))
+                    ? 'Big 3' : 'Local papers';
+            };
+            const CUTOFF = '2025-09';
+            // Baseline group weights from the pre-update period.
+            const base = { 'Big 3': 0, 'Local papers': 0 };
+            Object.values(tsByGroup).forEach(r => { if (r.month < CUTOFF) base[r.group] += r.total; });
+            const baseSum = base['Big 3'] + base['Local papers'];
+            // 30-day window anchored at the latest article date.
+            let maxTs = 0;
+            articlesForTime.forEach(a => { const t = Date.parse(a.publish_date); if (t > maxTs) maxTs = t; });
+            const windowStart = maxTs - 30 * 86400000;
+            const grp = { 'Big 3': { t: 0, f: 0 }, 'Local papers': { t: 0, f: 0 } };
+            let rawT = 0, rawF = 0;
+            articlesForTime.forEach(a => {
+                const t = Date.parse(a.publish_date);
+                if (!(t >= windowStart && t <= maxTs)) return;
+                const g = grp[big3Group(a.newspaper || a.newspaper_name)];
+                const label = a.final_prediction || this.normalizePrediction(a.prediction);
+                const flagged = (label === 'AI' || label === 'Mixed') ? 1 : 0;
+                g.t++; g.f += flagged; rawT++; rawF += flagged;
+            });
+            // Proportional rate = baseline-weighted blend of each group's window rate.
+            let num = 0, wsum = 0;
+            if (baseSum) {
+                ['Big 3', 'Local papers'].forEach(k => {
+                    const w = base[k] / baseSum;
+                    if (grp[k].t > 0) { num += w * (grp[k].f / grp[k].t); wsum += w; }
+                });
+            }
+            last30 = {
+                start: new Date(windowStart).toISOString().slice(0, 10),
+                end: new Date(maxTs).toISOString().slice(0, 10),
+                total: rawT,
+                raw_pct: rawT ? +(100 * rawF / rawT).toFixed(2) : null,
+                proportional_pct: wsum ? +(100 * num / wsum).toFixed(2) : null,
+                big3_pct: grp['Big 3'].t ? +(100 * grp['Big 3'].f / grp['Big 3'].t).toFixed(2) : null,
+                local_pct: grp['Local papers'].t ? +(100 * grp['Local papers'].f / grp['Local papers'].t).toFixed(2) : null
+            };
+        }
+
         // Resolved Human/Mixed/AI label (matches time-series logic above)
         const labelOf = (a) => a.final_prediction || this.normalizePrediction(a.prediction) || '';
 
@@ -1735,6 +1783,7 @@ class StaticDataLoader {
                 .sort((a, b) => a.month.localeCompare(b.month)),
             time_series_by_group: Object.values(tsByGroup)
                 .sort((a, b) => a.month.localeCompare(b.month)),
+            last_30_days: last30,
             topic_distribution: Object.values(topicDist)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 15),
