@@ -117,6 +117,10 @@
                             <button class="seg-btn" data-mode="publisher" data-only="opinions">By publisher</button>
                             <button class="seg-btn" data-mode="group" data-only="recent_news">Big 3 vs local</button>
                         </div>
+                        <div id="timeseries-mix-toggle" class="seg-wrap hidden">
+                            <button class="seg-btn active" data-mix="actual">Actual mix</button>
+                            <button class="seg-btn" data-mix="fixed">Pre-update mix</button>
+                        </div>
                     </div>
                 </div>
                 <div style="position:relative; height: 340px;">
@@ -215,6 +219,7 @@
         let currentStats = null;
         let timeSeriesMode = 'prediction';
         let timeSeriesUnit = 'pct';
+        let predictionMix = 'actual';  // 'actual' | 'fixed' (constant pre-update publisher mix)
         let charts = { prediction: null, topic: null, newspaper: null, owner: null, timeSeries: null, topicRate: null, likelihood: null, fraction: null };
 
         const datasetInfo = {
@@ -348,17 +353,60 @@
                 stackY = true;
                 const t = data.time_series;
                 labels = t.map(x => monthLabel(x.month));
+
+                // Optional composition adjustment (recent_news): the NYT RSS->ProQuest
+                // switch (Nov 2025) flooded the corpus with near-zero-AI Big 3 articles,
+                // dragging the raw aggregate down. The "fixed mix" view reweights each
+                // month to the pre-update Big-3-vs-local share, isolating the real trend.
+                const MIX_CUTOFF = '2025-11';
+                const groupRows = data.time_series_by_group || [];
+                const fixedMix = predictionMix === 'fixed' && groupRows.length > 0;
+                let aiSeries, mixedSeries;
+                if (fixedMix) {
+                    const byKey = {};
+                    groupRows.forEach(r => { byKey[`${r.group}||${r.month}`] = r; });
+                    const groups = ['Big 3', 'Local papers'];
+                    const baseTotals = {}; let baseSum = 0;
+                    groupRows.forEach(r => {
+                        if (r.month < MIX_CUTOFF) { baseTotals[r.group] = (baseTotals[r.group] || 0) + r.total; baseSum += r.total; }
+                    });
+                    const w = {};
+                    groups.forEach(g => { w[g] = baseSum ? (baseTotals[g] || 0) / baseSum : 0; });
+                    const adjust = (month, key) => {
+                        let num = 0, wsum = 0;
+                        groups.forEach(g => {
+                            const r = byKey[`${g}||${month}`];
+                            if (r && r.total > 0) { num += w[g] * (r[key] / r.total); wsum += w[g]; }
+                        });
+                        return wsum ? +((num / wsum) * 100).toFixed(2) : null;
+                    };
+                    aiSeries = t.map(x => adjust(x.month, 'ai_count'));
+                    mixedSeries = t.map(x => adjust(x.month, 'mixed_count'));
+                } else {
+                    aiSeries = t.map(x => x.total ? +((x.ai_count / x.total) * 100).toFixed(2) : null);
+                    mixedSeries = t.map(x => x.total ? +((x.mixed_count / x.total) * 100).toFixed(2) : null);
+                }
                 datasets = [
-                    { label: isPct ? 'AI content %' : 'AI content', data: t.map(x => isPct ? ((x.ai_count / x.total) * 100).toFixed(2) : x.ai_count),
-                      borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.55)', tension: 0.35, fill: 'origin', borderWidth: 2, pointRadius: 1 },
-                    { label: isPct ? 'Mixed content %' : 'Mixed content', data: t.map(x => isPct ? ((x.mixed_count / x.total) * 100).toFixed(2) : x.mixed_count),
-                      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.55)', tension: 0.35, fill: '-1', borderWidth: 2, pointRadius: 1 }
+                    { label: 'AI content %', data: aiSeries,
+                      borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.55)', tension: 0.35, fill: 'origin', borderWidth: 2, pointRadius: 1, spanGaps: true },
+                    { label: 'Mixed content %', data: mixedSeries,
+                      borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.55)', tension: 0.35, fill: '-1', borderWidth: 2, pointRadius: 1, spanGaps: true }
                 ];
-                yTitle = isPct ? 'AI + Mixed (%)' : 'AI + Mixed (articles)';
-                titleEl.textContent = 'AI & Mixed content over time';
-                subEl.textContent = isPct
-                    ? 'Share of articles flagged AI (bottom) and Mixed (stacked on top), by month'
-                    : 'Articles flagged AI (bottom) and Mixed (stacked on top), by month';
+                yTitle = 'AI + Mixed (%)';
+                titleEl.textContent = fixedMix ? 'AI & Mixed content over time (constant publisher mix)' : 'AI & Mixed content over time';
+                subEl.textContent = fixedMix
+                    ? 'Stacked AI + Mixed share, reweighted to the pre-Nov-2025 Big-3-vs-local mix'
+                    : 'Share of articles flagged AI (bottom) and Mixed (stacked on top), by month';
+            }
+
+            // The "Actual mix / Pre-update mix" toggle only applies to the recent_news
+            // by-prediction view (needs the per-group series to reweight).
+            const mixToggle = document.getElementById('timeseries-mix-toggle');
+            if (currentDataset === 'recent_news' && timeSeriesMode === 'prediction' && (data.time_series_by_group || []).length > 0) {
+                mixToggle.classList.remove('hidden');
+                mixToggle.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mix === predictionMix));
+            } else {
+                mixToggle.classList.add('hidden');
             }
 
             // Event markers — drawn only when the series spans the month in question.
@@ -711,6 +759,14 @@
             if (!btn || btn.dataset.mode === timeSeriesMode || !currentStats) return;
             timeSeriesMode = btn.dataset.mode;
             document.querySelectorAll('#timeseries-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === timeSeriesMode));
+            renderTimeSeries(currentStats);
+        });
+
+        document.getElementById('timeseries-mix-toggle').addEventListener('click', (e) => {
+            const btn = e.target.closest('.seg-btn');
+            if (!btn || btn.dataset.mix === predictionMix || !currentStats) return;
+            predictionMix = btn.dataset.mix;
+            document.querySelectorAll('#timeseries-mix-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mix === predictionMix));
             renderTimeSeries(currentStats);
         });
 
