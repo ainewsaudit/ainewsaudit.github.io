@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260620"></script>
+    <script src="/static-data-loader.js?v=20260621"></script>
     <script src="/site-update-banner.js?v=20260615" defer></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
@@ -167,7 +167,7 @@
             <div id="owner-topic-container" class="panel p-5 sm:p-6 hidden">
                 <p class="eyebrow mb-1.5">By owner &amp; topic</p>
                 <h2 class="card-title mb-1">AI use by owner and topic</h2>
-                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use, green = less; blank cells have too few articles. Owners sorted most&rarr;least AI use (top 20 by volume).</p>
+                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use, green = less; blank cells have too few articles. Major newspaper chains plus the highest-volume owners, sorted most&rarr;least AI use.</p>
                 <div class="overflow-x-auto">
                     <div id="ownerTopicHeatmap" class="text-xs"></div>
                 </div>
@@ -333,10 +333,12 @@
                 return (t < 0.18 || t > 0.62) ? '#fff' : '#1f2937';  // white on the dark green/red ends
             };
 
+            // Use the matrix's own per-owner totals so curated low-volume chains
+            // (e.g. CherryRoad) are covered, not just the top-20-by-volume set.
             const ownerTotal = {}, ownerRate = {};
-            (data.owner_distribution || []).forEach(o => {
+            (m.owner_totals || []).forEach(o => {
                 ownerTotal[o.owner] = o.count;
-                ownerRate[o.owner] = o.count ? (o.ai + o.mixed) / o.count : 0;
+                ownerRate[o.owner] = o.count ? o.flagged / o.count : 0;
             });
 
             // Order rows by overall AI use, most -> least.

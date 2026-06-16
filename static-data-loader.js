@@ -1745,14 +1745,31 @@ class StaticDataLoader {
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 20),
             owner_topic_matrix: (() => {
-                const owners = Object.values(ownerDist).sort((a, b) => b.count - a.count).slice(0, 20).map(o => o.owner);
+                // Curated major chains (paper's owner set) are always shown — even
+                // low-volume ones like CherryRoad — plus the other highest-volume
+                // owners (Big 3, etc.). Rows are sorted most->least AI use downstream.
+                const CURATED = [
+                    'New York Times Company', 'Dow Jones & Company (News Corp)', 'Nash Holdings (Jeff Bezos)',
+                    'Gannett/Gatehouse', 'Alden/MediaNews Group', 'Advance Publications', 'Hearst Communications',
+                    'Lee Enterprises', 'Adams Publishing Group', 'Paxton Media Group', 'Boone Newsmedia',
+                    'Carpenter Media Group', 'CNHI', 'CherryRoad Media', 'Community Media Group',
+                    'Ogden Newspapers', 'Horizon Publications', 'Forum Communications'
+                ];
+                const byVolume = Object.values(ownerDist).sort((a, b) => b.count - a.count).map(o => o.owner);
+                const ownerSet = [...new Set([...CURATED.filter(o => ownerDist[o]), ...byVolume.slice(0, 20)])];
                 const topics = Object.values(topicDist)
                     .filter(t => t.primary_topic && t.primary_topic !== 'Other' && t.primary_topic !== 'Unknown')
                     .sort((a, b) => b.count - a.count).map(t => t.primary_topic);
                 return {
-                    owners,
+                    owners: ownerSet,
                     topics,
-                    cells: owners.map(o => topics.map(t => {
+                    // per-owner overall totals so the heatmap can sort by AI use and
+                    // label counts even for owners outside the top-20-by-volume.
+                    owner_totals: ownerSet.map(o => {
+                        const od = ownerDist[o] || { count: 0, ai: 0, mixed: 0 };
+                        return { owner: o, count: od.count, flagged: (od.ai || 0) + (od.mixed || 0) };
+                    }),
+                    cells: ownerSet.map(o => topics.map(t => {
                         const c = (ownerTopic[o] || {})[t];
                         return c ? { total: c.total, flagged: c.flagged } : { total: 0, flagged: 0 };
                     }))
