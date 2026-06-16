@@ -3,7 +3,7 @@
   "opinions": 53138,
   "reporters": 20131,
   "total": 451059,
-  "last_updated": "2026-06-16T095537Z",
+  "last_updated": "2026-06-16T100539Z",
   "active_update": {
     "recent_news": false,
     "status": "complete",
@@ -14,6 +14,6 @@
     "topic_queue_rows": 84548,
     "topic_prediction_rows": 84548,
     "topic_missing_rows": 0,
-    "updated_at": "2026-06-16T09:55:37.469740+00:00"
+    "updated_at": "2026-06-16T10:05:39.394179+00:00"
   }
 }
