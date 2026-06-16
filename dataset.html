@@ -448,7 +448,7 @@
                 // switch (Nov 2025) flooded the corpus with near-zero-AI Big 3 articles,
                 // dragging the raw aggregate down. The "fixed mix" view reweights each
                 // month to the pre-update Big-3-vs-local share, isolating the real trend.
-                const MIX_CUTOFF = '2025-11';
+                const MIX_CUTOFF = '2025-09';
                 const groupRows = data.time_series_by_group || [];
                 const fixedMix = predictionMix === 'fixed' && groupRows.length > 0;
                 let aiSeries, mixedSeries;
@@ -485,7 +485,7 @@
                 yTitle = 'AI + Mixed (%)';
                 titleEl.textContent = fixedMix ? 'AI & Mixed content over time (constant publisher mix)' : 'AI & Mixed content over time';
                 subEl.textContent = fixedMix
-                    ? 'Stacked AI + Mixed share, reweighted to the pre-Nov-2025 Big-3-vs-local mix'
+                    ? 'Stacked AI + Mixed share, reweighted to the pre-update (pre-Sep 2025) Big-3-vs-local mix'
                     : 'Share of articles flagged AI (bottom) and Mixed (stacked on top), by month';
             }
 
@@ -507,7 +507,7 @@
                 ? [...new Set((data.time_series_by_group || []).map(r => r.month))].sort()
                 : (data.time_series || []).map(x => x.month);
             const MARKERS = [
-                { month: '2025-11', label: 'Pre / post update' }
+                { month: '2025-09', label: 'Pre / post update' }
             ];
             const activeMarkers = MARKERS
                 .map(m => ({ label: m.label, index: monthsList.indexOf(m.month) }))
