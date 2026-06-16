@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Authors &mdash; AI News Audit</title>
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js?v=20260623"></script>
+<style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
+    .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; }
+    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05); }
+    .seg-wrap { display: inline-flex; background: #f1f5f9; border-radius: 9999px; padding: 3px; gap: 2px; }
+    .seg-btn { font-size: 12px; font-weight: 600; padding: 5px 14px; border-radius: 9999px; color: #64748b; border: none; background: transparent; cursor: pointer; }
+    .seg-btn.active { background: white; color: #0f172a; box-shadow: 0 1px 2px rgba(15,23,42,0.12); }
+    .spark { display: inline-flex; align-items: flex-end; gap: 1px; height: 26px; }
+    .spark > i { width: 4px; border-radius: 1px; display: inline-block; }
+</style>
+</head>
+<body class="bg-white min-h-screen">
+    <header class="bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <a href="/" class="text-white font-semibold text-sm">AI News Audit</a>
+                <nav class="flex items-center gap-6">
+                    <a href="/" class="text-slate-400 hover:text-white text-sm transition-colors">Search</a>
+                    <a href="dataset.html" class="text-slate-400 hover:text-white text-sm transition-colors">Statistics</a>
+                    <a href="author.html" class="text-white text-sm font-medium">Authors</a>
+                    <a href="metrics.html" class="text-slate-400 hover:text-white text-sm transition-colors">Metrics</a>
+                    <a href="updates.html" class="text-slate-400 hover:text-white text-sm transition-colors">Updates</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-6">
+        <p class="eyebrow mb-3">Authors</p>
+        <h1 class="serif text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 mb-3" style="letter-spacing:-0.025em;">Rising AI use by author</h1>
+        <p class="text-sm text-slate-600 max-w-2xl leading-relaxed">
+            Bylined authors with at least 20 articles, ranked by how much the
+            <strong>share of their articles Pangram flagged as AI or Mixed</strong> rose from the first half
+            to the second half of their coverage. Author names are <strong>masked with aliases</strong>.
+            Detection is imperfect &mdash; these are flagged shares, not proof an individual used AI.
+        </p>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div class="flex flex-wrap gap-2 mb-5">
+            <div id="ds-toggle" class="seg-wrap">
+                <button class="seg-btn active" data-ds="all">All</button>
+                <button class="seg-btn" data-ds="recent_news">Recent News</button>
+                <button class="seg-btn" data-ds="opinions">Opinions</button>
+            </div>
+            <div id="sort-toggle" class="seg-wrap">
+                <button class="seg-btn active" data-sort="rising">Rising</button>
+                <button class="seg-btn" data-sort="overall">Highest AI use</button>
+            </div>
+        </div>
+
+        <div id="loading" class="text-center py-20 text-slate-400 text-sm">Loading author data&hellip;</div>
+        <div class="panel overflow-hidden hidden" id="table-wrap">
+            <table class="w-full text-sm">
+                <thead><tr class="text-left text-xs text-gray-400 border-b border-gray-200 bg-gray-50">
+                    <th class="py-2.5 px-4">Author</th>
+                    <th class="py-2.5 px-2">Set</th>
+                    <th class="py-2.5 px-2 text-right">Articles</th>
+                    <th class="py-2.5 px-2 text-right">AI+Mixed</th>
+                    <th class="py-2.5 px-2 text-right">Early&rarr;Late</th>
+                    <th class="py-2.5 px-4">Monthly trend</th>
+                </tr></thead>
+                <tbody id="rows"></tbody>
+            </table>
+        </div>
+        <p id="count-note" class="text-xs text-gray-400 mt-3"></p>
+    </div>
+
+    <script>
+        let authors = [];
+        let dsFilter = 'all', sortMode = 'rising';
+
+        const color = (v) => { // amber -> red by flagged %
+            const t = Math.max(0, Math.min(1, v / 40));
+            return `rgb(${Math.round(245 + t*(220-245))},${Math.round(158 + t*(38-158))},${Math.round(11 + t*(38-11))})`;
+        };
+
+        function riseStats(months) {
+            const ms = Object.keys(months).sort();
+            if (ms.length < 3) return null;
+            const half = Math.floor(ms.length / 2);
+            const sum = keys => keys.reduce((a, m) => [a[0] + months[m][0], a[1] + months[m][1]], [0, 0]);
+            const [et, ef] = sum(ms.slice(0, half));
+            const [lt, lf] = sum(ms.slice(half));
+            if (et < 8 || lt < 8) return null;
+            const er = 100 * ef / et, lr = 100 * lf / lt;
+            return { er, lr, delta: lr - er, ms };
+        }
+
+        function sparkline(months) {
+            const ms = Object.keys(months).sort();
+            return '<span class="spark">' + ms.map(m => {
+                const [t, f] = months[m];
+                const pct = t ? 100 * f / t : 0;
+                const h = Math.max(2, Math.round(pct / 100 * 26));
+                return `<i style="height:${h}px;background:${color(pct)}" title="${m}: ${pct.toFixed(0)}% (${f}/${t})"></i>`;
+            }).join('') + '</span>';
+        }
+
+        async function load() {
+            const out = [];
+            for (const ds of ['recent_news', 'opinions']) {
+                try {
+                    const stats = await window.dataLoader.getDatasetStats(ds);
+                    (stats.author_trends || []).forEach(a => {
+                        const rs = riseStats(a.months);
+                        out.push({ ...a, dataset: ds, rise: rs });
+                    });
+                } catch (e) { console.warn(ds, e); }
+            }
+            authors = out;
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('table-wrap').classList.remove('hidden');
+            render();
+        }
+
+        function render() {
+            let rows = authors.filter(a => dsFilter === 'all' || a.dataset === dsFilter);
+            if (sortMode === 'rising') {
+                rows = rows.filter(a => a.rise && a.rise.delta >= 5)
+                           .sort((a, b) => b.rise.delta - a.rise.delta);
+            } else {
+                rows = rows.sort((a, b) => (b.flagged / b.total) - (a.flagged / a.total));
+            }
+            const shown = rows.slice(0, 150);
+            const dsLabel = { recent_news: 'News', opinions: 'Opinion' };
+            document.getElementById('rows').innerHTML = shown.map(a => {
+                const overall = 100 * a.flagged / a.total;
+                const arrow = a.rise ? `${a.rise.er.toFixed(0)}% <span class="text-gray-400">&rarr;</span> <strong>${a.rise.lr.toFixed(0)}%</strong>` : '&mdash;';
+                return `<tr class="border-b border-gray-100 hover:bg-amber-50/40">
+                    <td class="py-2 px-4 font-mono text-xs text-slate-700">${a.alias}</td>
+                    <td class="py-2 px-2"><span class="text-xs px-1.5 py-0.5 rounded ${a.dataset === 'opinions' ? 'bg-purple-50 text-purple-700' : 'bg-sky-50 text-sky-700'}">${dsLabel[a.dataset]}</span></td>
+                    <td class="py-2 px-2 text-right tabular-nums text-slate-600">${a.total.toLocaleString()}</td>
+                    <td class="py-2 px-2 text-right tabular-nums font-semibold">${overall.toFixed(1)}%</td>
+                    <td class="py-2 px-2 text-right tabular-nums text-xs">${arrow}</td>
+                    <td class="py-2 px-4">${sparkline(a.months)}</td>
+                </tr>`;
+            }).join('');
+            const total = rows.length;
+            document.getElementById('count-note').textContent =
+                `Showing ${shown.length} of ${total} authors` +
+                (sortMode === 'rising' ? ' with a rising AI-flagged share (≥ +5 points, ≥20 articles).' : ' (≥20 articles), highest AI+Mixed share first.');
+        }
+
+        document.getElementById('ds-toggle').addEventListener('click', e => {
+            const b = e.target.closest('.seg-btn'); if (!b) return;
+            dsFilter = b.dataset.ds;
+            document.querySelectorAll('#ds-toggle .seg-btn').forEach(x => x.classList.toggle('active', x.dataset.ds === dsFilter));
+            render();
+        });
+        document.getElementById('sort-toggle').addEventListener('click', e => {
+            const b = e.target.closest('.seg-btn'); if (!b) return;
+            sortMode = b.dataset.sort;
+            document.querySelectorAll('#sort-toggle .seg-btn').forEach(x => x.classList.toggle('active', x.dataset.sort === sortMode));
+            render();
+        });
+
+        document.addEventListener('DOMContentLoaded', load);
+    </script>
+</body>
+</html>

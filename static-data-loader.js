@@ -1745,6 +1745,21 @@ class StaticDataLoader {
             if (label === 'AI' || label === 'Mixed') cell.flagged++;
         });
 
+        // Per-author (masked alias) monthly AI-use trend — powers the author page.
+        const authorAgg = {};
+        validArticles.forEach(a => {
+            const alias = (a.author_alias || '').trim();
+            if (!alias || !a.publish_date) return;
+            const m = String(a.publish_date).slice(0, 7);
+            const o = authorAgg[alias] || (authorAgg[alias] = { alias, total: 0, flagged: 0, months: {} });
+            o.total++;
+            const label = labelOf(a);
+            const fl = (label === 'AI' || label === 'Mixed') ? 1 : 0;
+            o.flagged += fl;
+            const mm = o.months[m] || (o.months[m] = [0, 0]);
+            mm[0]++; mm[1] += fl;
+        });
+
         // AI-likelihood histogram: 20 bins across [0,1] over all valid articles
         const BIN_COUNT = 20;
         const likelihoodHist = new Array(BIN_COUNT).fill(0);
@@ -1784,6 +1799,9 @@ class StaticDataLoader {
             time_series_by_group: Object.values(tsByGroup)
                 .sort((a, b) => a.month.localeCompare(b.month)),
             last_30_days: last30,
+            author_trends: Object.values(authorAgg)
+                .filter(o => o.total >= 20)
+                .sort((a, b) => b.total - a.total),
             topic_distribution: Object.values(topicDist)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 15),
