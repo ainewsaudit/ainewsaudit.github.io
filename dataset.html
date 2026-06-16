@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260627"></script>
+    <script src="/static-data-loader.js?v=20260628"></script>
     <script src="/site-update-banner.js?v=20260615" defer></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
@@ -168,7 +168,7 @@
             <div id="owner-topic-container" class="panel p-5 sm:p-6 hidden">
                 <p class="eyebrow mb-1.5">By owner &amp; topic</p>
                 <h2 class="card-title mb-1">AI use by owner and topic</h2>
-                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use (scale caps at 40%), green = less; blank cells have too few articles. Owners (rows) and topics (columns) both sorted most&rarr;least AI use. Major newspaper chains plus the highest-volume owners.</p>
+                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = high AI use (25%+), green = low; blank cells have too few articles. Owners (rows) and topics (columns) both sorted most&rarr;least AI use. Major newspaper chains plus the highest-volume owners.</p>
                 <div class="overflow-x-auto">
                     <div id="ownerTopicHeatmap" class="text-xs"></div>
                 </div>
@@ -314,21 +314,17 @@
             container.classList.remove('hidden');
 
             const MIN_ARTICLES = 30;  // blank out low-volume cells (matches the PNG generator)
-            const vmax = 40;  // color scale caps at 40% AI use (red)
-            // Diverging ramp: green (least AI) -> yellow -> red (most AI).
+            // Value-based diverging ramp: green (low) -> yellow (~12%) -> full red at >=25%.
             const lerp = (a, b, t) => Math.round(a + (b - a) * t);
             const color = (v) => {
-                const t = Math.max(0, Math.min(1, v / vmax));
                 const green = [22, 163, 74], yellow = [250, 204, 21], red = [220, 38, 38];
                 let c;
-                if (t < 0.5) { const k = t / 0.5; c = [lerp(green[0], yellow[0], k), lerp(green[1], yellow[1], k), lerp(green[2], yellow[2], k)]; }
-                else { const k = (t - 0.5) / 0.5; c = [lerp(yellow[0], red[0], k), lerp(yellow[1], red[1], k), lerp(yellow[2], red[2], k)]; }
+                if (v <= 12) { const k = v / 12; c = [lerp(green[0], yellow[0], k), lerp(green[1], yellow[1], k), lerp(green[2], yellow[2], k)]; }
+                else if (v < 25) { const k = (v - 12) / 13; c = [lerp(yellow[0], red[0], k), lerp(yellow[1], red[1], k), lerp(yellow[2], red[2], k)]; }
+                else { c = red; }
                 return `rgb(${c[0]},${c[1]},${c[2]})`;
             };
-            const textColor = (v) => {
-                const t = Math.max(0, Math.min(1, v / vmax));
-                return (t < 0.18 || t > 0.62) ? '#fff' : '#1f2937';  // white on the dark green/red ends
-            };
+            const textColor = (v) => (v <= 1.5 || v >= 19) ? '#fff' : '#1f2937';  // white on dark green/red ends
 
             // Use the matrix's own per-owner totals so curated low-volume chains
             // (e.g. CherryRoad) are covered, not just the top-20-by-volume set.
