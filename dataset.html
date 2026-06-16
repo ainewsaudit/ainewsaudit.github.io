@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260623"></script>
+    <script src="/static-data-loader.js?v=20260624"></script>
     <script src="/site-update-banner.js?v=20260615" defer></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
@@ -168,7 +168,7 @@
             <div id="owner-topic-container" class="panel p-5 sm:p-6 hidden">
                 <p class="eyebrow mb-1.5">By owner &amp; topic</p>
                 <h2 class="card-title mb-1">AI use by owner and topic</h2>
-                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use, green = less; blank cells have too few articles. Major newspaper chains plus the highest-volume owners, sorted most&rarr;least AI use.</p>
+                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use (scale caps at 40%), green = less; blank cells have too few articles. Owners (rows) and topics (columns) both sorted most&rarr;least AI use. Major newspaper chains plus the highest-volume owners.</p>
                 <div class="overflow-x-auto">
                     <div id="ownerTopicHeatmap" class="text-xs"></div>
                 </div>
@@ -314,11 +314,7 @@
             container.classList.remove('hidden');
 
             const MIN_ARTICLES = 30;  // blank out low-volume cells (matches the PNG generator)
-            // Cell rates and a 95th-percentile cap so a few extreme cells don't wash out the scale.
-            const rates = [];
-            m.cells.forEach(row => row.forEach(c => { if (c.total >= MIN_ARTICLES) rates.push(100 * c.flagged / c.total); }));
-            rates.sort((a, b) => a - b);
-            const vmax = Math.max(5, rates.length ? rates[Math.floor(rates.length * 0.95)] : 10);
+            const vmax = 40;  // color scale caps at 40% AI use (red)
             // Diverging ramp: green (least AI) -> yellow -> red (most AI).
             const lerp = (a, b, t) => Math.round(a + (b - a) * t);
             const color = (v) => {

@@ -1826,7 +1826,8 @@ class StaticDataLoader {
                 const ownerSet = [...new Set([...CURATED.filter(o => ownerDist[o]), ...byVolume.slice(0, 20)])];
                 const topics = Object.values(topicDist)
                     .filter(t => t.primary_topic && t.primary_topic !== 'Other' && t.primary_topic !== 'Unknown')
-                    .sort((a, b) => b.count - a.count).map(t => t.primary_topic);
+                    .sort((a, b) => ((b.ai + b.mixed) / b.count) - ((a.ai + a.mixed) / a.count))
+                    .map(t => t.primary_topic);
                 return {
                     owners: ownerSet,
                     topics,
