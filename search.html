@@ -163,6 +163,11 @@
                                 <datalist id="newspaper-list"></datalist>
                             </div>
                             <div>
+                                <label class="filter-label">Owner</label>
+                                <input type="text" id="owner-filter" list="owner-list" placeholder="Parent company (e.g. Gannett)..." class="filter-input">
+                                <datalist id="owner-list"></datalist>
+                            </div>
+                            <div>
                                 <label class="filter-label">AI Likelihood</label>
                                 <div class="space-y-2">
                                     <div class="flex items-center gap-2">
@@ -324,6 +329,7 @@
             const startDate = document.getElementById('start-date').value;
             const endDate = document.getElementById('end-date').value;
             const newspaper = document.getElementById('newspaper-filter').value;
+            const owner = document.getElementById('owner-filter').value;
             const aiMin = document.getElementById('ai-min').value;
             const aiMax = document.getElementById('ai-max').value;
             const maxAiMin = document.getElementById('max-ai-min').value;
@@ -339,6 +345,7 @@
             if (startDate) options.start_date = startDate;
             if (endDate) options.end_date = endDate;
             if (newspaper) options.newspaper = newspaper;
+            if (owner) options.owner = owner;
             if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
             if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
             if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
@@ -389,7 +396,8 @@
                             <h3 class="text-base font-semibold text-gray-900 mb-1.5 leading-snug">${article.title}</h3>
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
                                 <span>${date}</span>
-                                ${article.newspaper ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
+                                ${article.newspaper && article.newspaper !== 'Unknown' ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
+                                ${article.news_deserts_owner_name && article.news_deserts_owner_name !== 'Unknown' ? `<span class="text-gray-300">&middot;</span><span class="text-gray-400">${article.news_deserts_owner_name}</span>` : ''}
                             </div>
                             <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
                             <div class="flex flex-wrap items-center gap-2">
@@ -473,6 +481,7 @@
             document.getElementById('start-date').value = '';
             document.getElementById('end-date').value = '';
             document.getElementById('newspaper-filter').value = '';
+            document.getElementById('owner-filter').value = '';
             document.getElementById('ai-min').value = 0;
             document.getElementById('ai-max').value = 1;
             document.getElementById('max-ai-min').value = 0;
@@ -520,11 +529,15 @@
             const datasetType = urlParams.get('dataset_type');
             const topic = urlParams.get('topic');
             const prediction = urlParams.get('prediction');
-            
+            const newspaper = urlParams.get('newspaper');
+            const owner = urlParams.get('owner');
+
             if (datasetType) document.getElementById('dataset-filter').value = datasetType;
             if (topic) document.getElementById('topic-filter').value = topic;
             if (prediction) document.getElementById('prediction-filter').value = prediction;
-            
+            if (newspaper) document.getElementById('newspaper-filter').value = newspaper;
+            if (owner) document.getElementById('owner-filter').value = owner;
+
             searchArticles();
         });
     </script>

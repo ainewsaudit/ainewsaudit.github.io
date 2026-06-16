@@ -1239,6 +1239,7 @@ class StaticDataLoader {
             dataset_type = null,
             search = '',
             newspaper = null,
+            owner = null,
             topic = null,
             author = null,
             prediction = null,
@@ -1328,10 +1329,11 @@ class StaticDataLoader {
         });
 
         // Apply remaining filters efficiently
-        if (topic || prediction || start_date || end_date ||
+        if (topic || owner || prediction || start_date || end_date ||
             ai_min !== null || ai_max !== null || max_ai_min !== null || max_ai_max !== null) {
             filtered = filtered.filter(a => {
                 if (topic && a.primary_topic !== topic) return false;
+                if (owner && !(a.news_deserts_owner_name || '').toLowerCase().includes(owner.toLowerCase())) return false;
                 if (prediction && prediction.length > 0) {
                     // Handle array of predictions (from checkboxes)
                     const normalize = (val) => (val || '').toString().trim();
@@ -1664,6 +1666,20 @@ class StaticDataLoader {
             else if (label === 'Human') n.human++;
         });
 
+        // Owner (parent-company) distribution — powers "AI & Mixed rate by owner".
+        const ownerDist = {};
+        validArticles.forEach(a => {
+            const owner = (a.news_deserts_owner_name || '').trim();
+            if (!owner || owner === 'Unknown') return;
+            const o = ownerDist[owner] ||
+                (ownerDist[owner] = { owner, count: 0, human: 0, mixed: 0, ai: 0 });
+            o.count++;
+            const label = labelOf(a);
+            if (label === 'AI') o.ai++;
+            else if (label === 'Mixed') o.mixed++;
+            else if (label === 'Human') o.human++;
+        });
+
         // AI-likelihood histogram: 20 bins across [0,1] over all valid articles
         const BIN_COUNT = 20;
         const likelihoodHist = new Array(BIN_COUNT).fill(0);
@@ -1706,6 +1722,9 @@ class StaticDataLoader {
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 15),
             newspaper_distribution: Object.values(newspaperDist)
+                .sort((a, b) => b.count - a.count)
+                .slice(0, 20),
+            owner_distribution: Object.values(ownerDist)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 20),
             likelihood_histogram: likelihoodHist,
