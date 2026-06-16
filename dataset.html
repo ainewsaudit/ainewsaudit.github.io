@@ -14,7 +14,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260624"></script>
+    <script src="/static-data-loader.js?v=20260625"></script>
     <script src="/site-update-banner.js?v=20260615" defer></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
@@ -625,7 +625,7 @@
             // Collection-change caveat: NYT moved from RSS feeds to ProQuest in Nov 2025.
             const caveat = document.getElementById('ts-caveat');
             const caveatText = {
-                recent_news: 'Note: starting November 2025, New York Times coverage moved from RSS feeds (roughly the top 20 stories) to full ProQuest collection. This sharply increased the number of NYT articles after that date, so aggregate trends and AI/Mixed rates from late 2025 onward are weighted more heavily toward the NYT than earlier periods.',
+                recent_news: 'Note: after the mid-September 2025 update, the Big 3 national papers (NYT, Washington Post, Wall Street Journal — collected via ProQuest) make up a much larger proportion of the corpus than before the update, while local-paper volume dropped sharply. Because the Big 3 use almost no AI, this composition shift drags the raw aggregate down. The "Pre-update mix" view reweights each month to the pre-update Big-3-vs-local proportion so the trend reflects real changes in AI use rather than the changed mix.',
                 opinions: 'Note: starting November 2025, New York Times opinion pieces are sourced from ProQuest rather than RSS feeds. Monthly NYT volume is similar across the change, but the set of captured articles shifted, which can affect comparisons across that boundary.'
             };
             if (caveatText[currentDataset]) {
