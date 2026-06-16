@@ -11,7 +11,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260625"></script>
+    <script src="/static-data-loader.js?v=20260626"></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
     .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; }
@@ -70,6 +70,8 @@
                 <thead><tr class="text-left text-xs text-gray-400 border-b border-gray-200 bg-gray-50">
                     <th class="py-2.5 px-4">Author</th>
                     <th class="py-2.5 px-2">Set</th>
+                    <th class="py-2.5 px-2">Writes for</th>
+                    <th class="py-2.5 px-2">Active</th>
                     <th class="py-2.5 px-2 text-right">Articles</th>
                     <th class="py-2.5 px-2 text-right">AI+Mixed</th>
                     <th class="py-2.5 px-2 text-right">Early&rarr;Late</th>
@@ -142,9 +144,15 @@
             document.getElementById('rows').innerHTML = shown.map(a => {
                 const overall = 100 * a.flagged / a.total;
                 const arrow = a.rise ? `${a.rise.er.toFixed(0)}% <span class="text-gray-400">&rarr;</span> <strong>${a.rise.lr.toFixed(0)}%</strong>` : '&mdash;';
+                const fmt = d => d ? new Date(d + 'T00:00:00').toLocaleDateString('en-US', { month: 'short', year: '2-digit' }) : '';
+                const span = (a.start && a.end) ? `${fmt(a.start)}&ndash;${fmt(a.end)}` : '';
+                const paper = a.top_paper ? `${a.top_paper}` : '<span class="text-gray-300">&mdash;</span>';
+                const link = `search.html?dataset_type=${a.dataset}&author_alias=${encodeURIComponent(a.alias)}`;
                 return `<tr class="border-b border-gray-100 hover:bg-amber-50/40">
-                    <td class="py-2 px-4 font-mono text-xs text-slate-700">${a.alias}</td>
+                    <td class="py-2 px-4"><a href="${link}" class="font-mono text-xs text-blue-600 hover:text-blue-800" title="See this author's articles">${a.alias}</a></td>
                     <td class="py-2 px-2"><span class="text-xs px-1.5 py-0.5 rounded ${a.dataset === 'opinions' ? 'bg-purple-50 text-purple-700' : 'bg-sky-50 text-sky-700'}">${dsLabel[a.dataset]}</span></td>
+                    <td class="py-2 px-2 text-xs text-slate-600 max-w-[160px] truncate" title="${a.top_paper || ''}">${paper}</td>
+                    <td class="py-2 px-2 text-xs text-slate-500 whitespace-nowrap tabular-nums">${span}</td>
                     <td class="py-2 px-2 text-right tabular-nums text-slate-600">${a.total.toLocaleString()}</td>
                     <td class="py-2 px-2 text-right tabular-nums font-semibold">${overall.toFixed(1)}%</td>
                     <td class="py-2 px-2 text-right tabular-nums text-xs">${arrow}</td>

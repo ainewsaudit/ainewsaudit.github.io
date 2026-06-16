@@ -13,7 +13,7 @@
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
-    <script src="/static-data-loader.js?v=20260625"></script>
+    <script src="/static-data-loader.js?v=20260626"></script>
     <script src="/site-update-banner.js?v=20260615" defer></script>
 <style>
     body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; }
@@ -167,6 +167,10 @@
                                 <label class="filter-label">Publisher (owner)</label>
                                 <input type="text" id="owner-filter" list="owner-list" placeholder="Parent company (e.g. Gannett)..." class="filter-input">
                                 <datalist id="owner-list"></datalist>
+                            </div>
+                            <div>
+                                <label class="filter-label">Author alias</label>
+                                <input type="text" id="alias-filter" placeholder="e.g. A01234" class="filter-input">
                             </div>
                             <div>
                                 <label class="filter-label">AI Likelihood</label>
@@ -331,6 +335,7 @@
             const endDate = document.getElementById('end-date').value;
             const newspaper = document.getElementById('newspaper-filter').value;
             const owner = document.getElementById('owner-filter').value;
+            const aliasVal = document.getElementById('alias-filter').value.trim();
             const aiMin = document.getElementById('ai-min').value;
             const aiMax = document.getElementById('ai-max').value;
             const maxAiMin = document.getElementById('max-ai-min').value;
@@ -347,6 +352,7 @@
             if (endDate) options.end_date = endDate;
             if (newspaper) options.newspaper = newspaper;
             if (owner) options.owner = owner;
+            if (aliasVal) options.author_alias = aliasVal;
             if (aiMin !== '0') options.ai_min = parseFloat(aiMin);
             if (aiMax !== '1') options.ai_max = parseFloat(aiMax);
             if (maxAiMin !== '0') options.max_ai_min = parseFloat(maxAiMin);
@@ -403,6 +409,7 @@
                             <div class="flex flex-wrap items-center gap-2">
                                 ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' && article.primary_topic !== 'Other' ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${article.primary_topic}</span>` : ''}
                                 ${article.news_deserts_owner_name && article.news_deserts_owner_name !== 'Unknown' ? `<a href="publisher.html?owner=${encodeURIComponent(article.news_deserts_owner_name)}" onclick="event.stopPropagation()" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-0.5 rounded-full font-medium" title="View publisher profile">${article.news_deserts_owner_name}</a>` : ''}
+                                ${article.author_alias ? `<a href="search.html?dataset_type=${article.dataset_type}&author_alias=${encodeURIComponent(article.author_alias)}" onclick="event.stopPropagation()" class="text-xs bg-slate-100 text-slate-600 hover:bg-slate-200 px-2 py-0.5 rounded-full font-mono" title="See this author's articles">${article.author_alias}</a>` : ''}
                                 <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${getPredictionBadge(article.prediction)}">${getPredictionLabel(article.prediction)}</span>
                                 <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">${article.dataset_type}</span>
                             </div>
@@ -483,6 +490,7 @@
             document.getElementById('end-date').value = '';
             document.getElementById('newspaper-filter').value = '';
             document.getElementById('owner-filter').value = '';
+            document.getElementById('alias-filter').value = '';
             document.getElementById('ai-min').value = 0;
             document.getElementById('ai-max').value = 1;
             document.getElementById('max-ai-min').value = 0;
@@ -532,11 +540,13 @@
             const prediction = urlParams.get('prediction');
             const newspaper = urlParams.get('newspaper');
             const owner = urlParams.get('owner');
+            const aliasParam = urlParams.get('author_alias');
 
             if (datasetType) document.getElementById('dataset-filter').value = datasetType;
             if (topic) document.getElementById('topic-filter').value = topic;
             if (prediction) document.getElementById('prediction-filter').value = prediction;
             if (newspaper) document.getElementById('newspaper-filter').value = newspaper;
+            if (aliasParam) document.getElementById('alias-filter').value = aliasParam;
             if (owner) document.getElementById('owner-filter').value = owner;
 
             searchArticles();

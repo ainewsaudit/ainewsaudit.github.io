@@ -1240,6 +1240,7 @@ class StaticDataLoader {
             search = '',
             newspaper = null,
             owner = null,
+            author_alias = null,
             topic = null,
             author = null,
             prediction = null,
@@ -1329,11 +1330,12 @@ class StaticDataLoader {
         });
 
         // Apply remaining filters efficiently
-        if (topic || owner || prediction || start_date || end_date ||
+        if (topic || owner || author_alias || prediction || start_date || end_date ||
             ai_min !== null || ai_max !== null || max_ai_min !== null || max_ai_max !== null) {
             filtered = filtered.filter(a => {
                 if (topic && a.primary_topic !== topic) return false;
                 if (owner && !(a.news_deserts_owner_name || '').toLowerCase().includes(owner.toLowerCase())) return false;
+                if (author_alias && (a.author_alias || '').toLowerCase() !== author_alias.toLowerCase()) return false;
                 if (prediction && prediction.length > 0) {
                     // Handle array of predictions (from checkboxes)
                     const normalize = (val) => (val || '').toString().trim();
@@ -1750,14 +1752,26 @@ class StaticDataLoader {
         validArticles.forEach(a => {
             const alias = (a.author_alias || '').trim();
             if (!alias || !a.publish_date) return;
-            const m = String(a.publish_date).slice(0, 7);
-            const o = authorAgg[alias] || (authorAgg[alias] = { alias, total: 0, flagged: 0, months: {} });
+            const day = String(a.publish_date).slice(0, 10);
+            const m = day.slice(0, 7);
+            const o = authorAgg[alias] || (authorAgg[alias] = { alias, total: 0, flagged: 0, months: {}, papers: {}, start: day, end: day });
             o.total++;
             const label = labelOf(a);
             const fl = (label === 'AI' || label === 'Mixed') ? 1 : 0;
             o.flagged += fl;
             const mm = o.months[m] || (o.months[m] = [0, 0]);
             mm[0]++; mm[1] += fl;
+            const np = (a.newspaper || '').trim();
+            if (np && np !== 'Unknown') o.papers[np] = (o.papers[np] || 0) + 1;
+            if (day < o.start) o.start = day;
+            if (day > o.end) o.end = day;
+        });
+        // Reduce each author's paper counts to the single most frequent outlet.
+        Object.values(authorAgg).forEach(o => {
+            let top = null, n = 0;
+            for (const [p, c] of Object.entries(o.papers)) if (c > n) { top = p; n = c; }
+            o.top_paper = top; o.top_paper_n = n;
+            delete o.papers;
         });
 
         // AI-likelihood histogram: 20 bins across [0,1] over all valid articles
