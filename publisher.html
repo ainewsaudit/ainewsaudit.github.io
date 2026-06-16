@@ -1,0 +1,204 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+    <title>Publisher &mdash; AI News Audit</title>
+    <link rel="icon" type="image/svg+xml" href="/additional_data/favicon.svg">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700;9..144,800&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pako/2.1.0/pako.min.js"></script>
+    <script src="/static-data-loader.js?v=20260618"></script>
+<style>
+    body { font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; color: #0f172a; }
+    .serif { font-family: 'Fraunces', 'Times New Roman', Georgia, serif; font-optical-sizing: auto; }
+    .eyebrow { font-size: 11px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; }
+    .card-title { font-family: 'Fraunces', serif; font-size: 21px; font-weight: 700; letter-spacing: -0.01em; color: #0f172a; }
+    .panel { background: white; border: 1px solid #e5e7eb; border-radius: 10px; box-shadow: 0 1px 2px rgba(15,23,42,0.04), 0 6px 18px rgba(15,23,42,0.05); }
+    .stat-cell { padding: 20px 22px; border-right: 1px solid #e2e8f0; }
+    .stat-cell:last-child { border-right: none; }
+    .stat-label { font-size: 10.5px; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: #b45309; margin-bottom: 8px; }
+    .stat-value { font-family: 'Fraunces', serif; font-size: 32px; font-weight: 700; color: #0f172a; line-height: 1; letter-spacing: -0.02em; font-variant-numeric: tabular-nums; }
+    .stat-sub { font-size: 11px; color: #94a3b8; margin-top: 6px; }
+</style>
+</head>
+<body class="bg-white min-h-screen">
+    <header class="bg-slate-900">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-14">
+                <a href="/" class="text-white font-semibold text-sm">AI News Audit</a>
+                <nav class="flex items-center gap-6">
+                    <a href="/" class="text-slate-400 hover:text-white text-sm transition-colors">Search</a>
+                    <a href="dataset.html" class="text-slate-400 hover:text-white text-sm transition-colors">Statistics</a>
+                    <a href="metrics.html" class="text-slate-400 hover:text-white text-sm transition-colors">Metrics</a>
+                    <a href="updates.html" class="text-slate-400 hover:text-white text-sm transition-colors">Updates</a>
+                </nav>
+            </div>
+        </div>
+    </header>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-12 pb-8">
+        <a href="dataset.html" class="text-xs text-blue-600 hover:text-blue-800 font-medium">&larr; All statistics</a>
+        <p class="eyebrow mt-4 mb-2">Publisher (owner)</p>
+        <h1 class="serif text-4xl sm:text-5xl font-bold tracking-tight text-slate-900 mb-2" id="owner-title" style="letter-spacing:-0.025em;">&hellip;</h1>
+        <p class="text-sm text-slate-500" id="owner-sub">Recent-news AI-use profile</p>
+    </div>
+
+    <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pb-16">
+        <div id="loading" class="text-center py-20 text-slate-400 text-sm">Loading publisher data&hellip;</div>
+        <div id="empty" class="hidden bg-white border border-gray-200 text-gray-500 p-8 rounded-xl text-center text-sm">
+            No recent-news articles found for this publisher.
+        </div>
+
+        <div id="content" class="hidden space-y-6">
+            <div class="panel overflow-hidden">
+                <div class="grid grid-cols-2 sm:grid-cols-4" id="summary-stats"></div>
+            </div>
+
+            <div class="panel p-5 sm:p-7">
+                <p class="eyebrow mb-1.5">Trend over time</p>
+                <h2 class="card-title">AI &amp; Mixed content over time</h2>
+                <p class="text-xs text-gray-400 mt-1 mb-4">Share of this publisher's articles flagged AI (bottom) and Mixed (stacked on top), by month</p>
+                <div style="position:relative; height: 320px;"><canvas id="trendChart"></canvas></div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                <div class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">Breakdown</p>
+                    <h2 class="card-title mb-4">Prediction distribution</h2>
+                    <div class="max-w-xs mx-auto"><canvas id="predictionChart"></canvas></div>
+                </div>
+                <div class="panel p-5 sm:p-6">
+                    <p class="eyebrow mb-1.5">By topic</p>
+                    <h2 class="card-title mb-1">AI &amp; Mixed rate by topic</h2>
+                    <p class="text-xs text-gray-400 mb-4">Top topics by volume for this publisher</p>
+                    <div style="position:relative; height: 360px;"><canvas id="topicChart"></canvas></div>
+                </div>
+            </div>
+
+            <div class="panel p-5 sm:p-6">
+                <p class="eyebrow mb-1.5">Outlets</p>
+                <h2 class="card-title mb-1">Newspapers under this publisher</h2>
+                <p class="text-xs text-gray-400 mb-4">Top 20 by volume &mdash; click a row to see its articles</p>
+                <div class="overflow-x-auto"><table class="w-full text-sm" id="papers-table"></table></div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="border-t border-gray-200 mt-12 py-6">
+        <p class="text-center text-xs text-gray-400">Website made with the help of coding agents (Codex and Claude Code)</p>
+    </footer>
+
+    <script>
+        let owner = '';
+        const charts = {};
+
+        function monthLabel(ym) {
+            const [y, m] = ym.split('-').map(Number);
+            return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: '2-digit' });
+        }
+        const rate = (v, n) => n ? +((v / n) * 100).toFixed(2) : 0;
+
+        async function load() {
+            const params = new URLSearchParams(window.location.search);
+            owner = params.get('owner') || '';
+            document.getElementById('owner-title').textContent = owner || 'Unknown publisher';
+            if (!owner) { showEmpty(); return; }
+
+            try {
+                const data = await window.dataLoader.getDatasetStats(
+                    'recent_news', a => (a.news_deserts_owner_name || '').trim() === owner);
+                render(data);
+            } catch (e) {
+                console.error(e);
+                showEmpty();
+            }
+        }
+
+        function showEmpty() {
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('empty').classList.remove('hidden');
+        }
+
+        function render(data) {
+            const preds = data.prediction_distribution || [];
+            const total = preds.reduce((s, p) => s + p.count, 0);
+            if (!total) { showEmpty(); return; }
+            const get = (label) => (preds.find(p => p.prediction === label) || {}).count || 0;
+            const ai = get('AI'), mixed = get('Mixed'), human = get('Human');
+            const papers = (data.newspaper_distribution || []).filter(n => n.count > 0);
+
+            document.getElementById('owner-sub').textContent =
+                `${total.toLocaleString()} recent-news articles across ${papers.length}${papers.length === 20 ? '+' : ''} outlets`;
+
+            document.getElementById('summary-stats').innerHTML = `
+                <div class="stat-cell"><div class="stat-label">Articles</div><div class="stat-value">${total.toLocaleString()}</div></div>
+                <div class="stat-cell"><div class="stat-label">AI + Mixed</div><div class="stat-value">${(((ai + mixed) / total) * 100).toFixed(1)}%</div><div class="stat-sub">${(ai + mixed).toLocaleString()} articles</div></div>
+                <div class="stat-cell"><div class="stat-label">AI</div><div class="stat-value">${((ai / total) * 100).toFixed(1)}%</div><div class="stat-sub">${ai.toLocaleString()} articles</div></div>
+                <div class="stat-cell"><div class="stat-label">Mixed</div><div class="stat-value">${((mixed / total) * 100).toFixed(1)}%</div><div class="stat-sub">${mixed.toLocaleString()} articles</div></div>`;
+
+            // Trend (stacked area: AI bottom, Mixed on top)
+            const t = data.time_series || [];
+            charts.trend = new Chart(document.getElementById('trendChart'), {
+                type: 'line',
+                data: {
+                    labels: t.map(x => monthLabel(x.month)),
+                    datasets: [
+                        { label: 'AI %', data: t.map(x => x.total ? rate(x.ai_count, x.total) : null), borderColor: '#ef4444', backgroundColor: 'rgba(239,68,68,0.55)', fill: 'origin', tension: 0.35, borderWidth: 2, pointRadius: 1, spanGaps: true },
+                        { label: 'Mixed %', data: t.map(x => x.total ? rate(x.mixed_count, x.total) : null), borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.55)', fill: '-1', tension: 0.35, borderWidth: 2, pointRadius: 1, spanGaps: true }
+                    ]
+                },
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: { mode: 'index', intersect: false },
+                    plugins: { legend: { position: 'top', labels: { usePointStyle: true, pointStyle: 'circle', font: { weight: 'bold' } } } },
+                    scales: { y: { beginAtZero: true, stacked: true, title: { display: true, text: 'AI + Mixed (%)' } }, x: { grid: { display: false }, ticks: { maxRotation: 0, autoSkip: true, maxTicksLimit: 12 } } }
+                }
+            });
+
+            // Prediction pie
+            charts.prediction = new Chart(document.getElementById('predictionChart'), {
+                type: 'pie',
+                data: { labels: ['Human', 'Mixed', 'AI'], datasets: [{ data: [human, mixed, ai], backgroundColor: ['#10b981', '#f59e0b', '#ef4444'], borderWidth: 2, borderColor: '#fff' }] },
+                options: { responsive: true, plugins: { legend: { position: 'bottom', labels: { usePointStyle: true, pointStyle: 'circle', font: { weight: 'bold' } } },
+                    tooltip: { callbacks: { label: (c) => `${c.label}: ${c.parsed.toLocaleString()} (${((c.parsed / total) * 100).toFixed(1)}%)` } } } }
+            });
+
+            // AI+Mixed rate by topic
+            const topics = (data.topic_distribution || []).filter(x => x.count > 0)
+                .map(x => ({ ...x, r: rate(x.ai + x.mixed, x.count) })).sort((a, b) => b.r - a.r);
+            charts.topic = new Chart(document.getElementById('topicChart'), {
+                type: 'bar',
+                data: { labels: topics.map(x => x.primary_topic), datasets: [{ label: 'AI or Mixed (%)', data: topics.map(x => x.r), backgroundColor: '#b45309' }] },
+                options: { indexAxis: 'y', responsive: true, maintainAspectRatio: false,
+                    plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => { const x = topics[c.dataIndex]; return `${c.parsed.x}%  (${(x.ai + x.mixed).toLocaleString()} of ${x.count.toLocaleString()})`; } } } },
+                    scales: { x: { beginAtZero: true, title: { display: true, text: 'AI or Mixed (%)' } }, y: { ticks: { font: { size: 10 } } } } }
+            });
+
+            // Newspapers table
+            const sorted = papers.map(n => ({ ...n, r: rate(n.ai + n.mixed, n.count) })).sort((a, b) => b.count - a.count);
+            let rows = '<thead><tr class="text-left text-xs text-gray-400 border-b border-gray-200"><th class="py-2 pr-4">Newspaper</th><th class="py-2 px-2 text-right">Articles</th><th class="py-2 px-2 text-right">AI</th><th class="py-2 px-2 text-right">Mixed</th><th class="py-2 pl-2 text-right">AI + Mixed</th></tr></thead><tbody>';
+            sorted.forEach(n => {
+                const url = `search.html?dataset_type=recent_news&newspaper=${encodeURIComponent(n.newspaper)}`;
+                rows += `<tr class="border-b border-gray-100 hover:bg-amber-50 cursor-pointer" onclick="window.open('${url}','_blank')">
+                    <td class="py-2 pr-4 font-medium text-slate-800">${n.newspaper}</td>
+                    <td class="py-2 px-2 text-right tabular-nums text-slate-600">${n.count.toLocaleString()}</td>
+                    <td class="py-2 px-2 text-right tabular-nums text-slate-600">${rate(n.ai, n.count).toFixed(1)}%</td>
+                    <td class="py-2 px-2 text-right tabular-nums text-slate-600">${rate(n.mixed, n.count).toFixed(1)}%</td>
+                    <td class="py-2 pl-2 text-right tabular-nums font-semibold text-slate-900">${n.r.toFixed(1)}%</td></tr>`;
+            });
+            rows += '</tbody>';
+            document.getElementById('papers-table').innerHTML = rows;
+
+            document.getElementById('loading').classList.add('hidden');
+            document.getElementById('content').classList.remove('hidden');
+        }
+
+        document.addEventListener('DOMContentLoaded', load);
+    </script>
+</body>
+</html>

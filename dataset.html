@@ -167,7 +167,7 @@
             <div id="owner-topic-container" class="panel p-5 sm:p-6 hidden">
                 <p class="eyebrow mb-1.5">By owner &amp; topic</p>
                 <h2 class="card-title mb-1">AI use by owner and topic</h2>
-                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Darker = more AI use; blank cells have too few articles. Top 20 owners by volume.</p>
+                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Red = more AI use, green = less; blank cells have too few articles. Owners sorted most&rarr;least AI use (top 20 by volume).</p>
                 <div class="overflow-x-auto">
                     <div id="ownerTopicHeatmap" class="text-xs"></div>
                 </div>
@@ -260,11 +260,11 @@
 
         async function loadDataset(datasetType) {
             currentDataset = datasetType;
-            // Opinions defaults to per-publisher, recent_news to Big-3-vs-local,
-            // everything else to the plain prediction view.
-            timeSeriesMode = datasetType === 'opinions' ? 'publisher'
-                : datasetType === 'recent_news' ? 'group'
-                : 'prediction';
+            // Opinions defaults to per-publisher; everything else to by-prediction.
+            // recent_news additionally defaults to the constant pre-update mix, which
+            // best surfaces the real AI-use trend through the Nov-2025 data shift.
+            timeSeriesMode = datasetType === 'opinions' ? 'publisher' : 'prediction';
+            predictionMix = datasetType === 'recent_news' ? 'fixed' : 'actual';
             updateButtonStyles(datasetType);
 
             const info = datasetInfo[datasetType];
@@ -318,15 +318,30 @@
             m.cells.forEach(row => row.forEach(c => { if (c.total >= MIN_ARTICLES) rates.push(100 * c.flagged / c.total); }));
             rates.sort((a, b) => a - b);
             const vmax = Math.max(5, rates.length ? rates[Math.floor(rates.length * 0.95)] : 10);
+            // Diverging ramp: green (least AI) -> yellow -> red (most AI).
+            const lerp = (a, b, t) => Math.round(a + (b - a) * t);
             const color = (v) => {
-                // white -> amber -> red ramp
                 const t = Math.max(0, Math.min(1, v / vmax));
-                const r = 255, g = Math.round(255 - t * 200), b = Math.round(235 - t * 235);
-                return `rgb(${r},${g},${b})`;
+                const green = [22, 163, 74], yellow = [250, 204, 21], red = [220, 38, 38];
+                let c;
+                if (t < 0.5) { const k = t / 0.5; c = [lerp(green[0], yellow[0], k), lerp(green[1], yellow[1], k), lerp(green[2], yellow[2], k)]; }
+                else { const k = (t - 0.5) / 0.5; c = [lerp(yellow[0], red[0], k), lerp(yellow[1], red[1], k), lerp(yellow[2], red[2], k)]; }
+                return `rgb(${c[0]},${c[1]},${c[2]})`;
+            };
+            const textColor = (v) => {
+                const t = Math.max(0, Math.min(1, v / vmax));
+                return (t < 0.18 || t > 0.62) ? '#fff' : '#1f2937';  // white on the dark green/red ends
             };
 
-            const ownerTotal = {};
-            (data.owner_distribution || []).forEach(o => { ownerTotal[o.owner] = o.count; });
+            const ownerTotal = {}, ownerRate = {};
+            (data.owner_distribution || []).forEach(o => {
+                ownerTotal[o.owner] = o.count;
+                ownerRate[o.owner] = o.count ? (o.ai + o.mixed) / o.count : 0;
+            });
+
+            // Order rows by overall AI use, most -> least.
+            const order = m.owners.map((owner, i) => ({ owner, i }))
+                .sort((a, b) => (ownerRate[b.owner] || 0) - (ownerRate[a.owner] || 0));
 
             let html = '<table style="border-collapse:collapse;font-size:11px"><thead><tr>';
             html += '<th style="position:sticky;left:0;background:#fff;text-align:left;padding:4px 8px;z-index:1"></th>';
@@ -334,16 +349,16 @@
                 html += `<th style="padding:4px 3px;text-align:center;font-weight:600;color:#475569"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto">${shortTopicLabel(t)}</div></th>`;
             });
             html += '</tr></thead><tbody>';
-            m.owners.forEach((owner, i) => {
+            order.forEach(({ owner, i }) => {
                 const tot = ownerTotal[owner] ? ` (${ownerTotal[owner].toLocaleString()})` : '';
-                html += `<tr><td style="position:sticky;left:0;background:#fff;text-align:left;padding:3px 8px;white-space:nowrap;font-weight:500;color:#0f172a">${owner}<span style="color:#94a3b8;font-weight:400">${tot}</span></td>`;
+                const ownerLink = `publisher.html?owner=${encodeURIComponent(owner)}`;
+                html += `<tr><td style="position:sticky;left:0;background:#fff;text-align:left;padding:3px 8px;white-space:nowrap;font-weight:500"><a href="${ownerLink}" style="color:#0f172a;text-decoration:none">${owner}<span style="color:#94a3b8;font-weight:400">${tot}</span></a></td>`;
                 m.cells[i].forEach(c => {
                     if (c.total < MIN_ARTICLES) {
                         html += '<td style="background:#f1f5f9;border:1px solid #fff"></td>';
                     } else {
                         const v = 100 * c.flagged / c.total;
-                        const txt = v >= vmax * 0.6 ? '#fff' : '#1f2937';
-                        html += `<td title="${owner} — ${c.flagged} of ${c.total} flagged" style="background:${color(v)};color:${txt};border:1px solid #fff;text-align:center;padding:3px 5px;min-width:30px">${v.toFixed(1)}</td>`;
+                        html += `<td title="${owner} — ${c.flagged} of ${c.total} flagged" style="background:${color(v)};color:${textColor(v)};border:1px solid #fff;text-align:center;padding:3px 5px;min-width:30px">${v.toFixed(1)}</td>`;
                     }
                 });
                 html += '</tr>';
@@ -492,8 +507,7 @@
                 ? [...new Set((data.time_series_by_group || []).map(r => r.month))].sort()
                 : (data.time_series || []).map(x => x.month);
             const MARKERS = [
-                { month: '2022-11', label: 'ChatGPT released' },
-                { month: '2025-11', label: 'NYT: RSS → ProQuest' }
+                { month: '2025-11', label: 'Pre / post update' }
             ];
             const activeMarkers = MARKERS
                 .map(m => ({ label: m.label, index: monthsList.indexOf(m.month) }))
@@ -710,12 +724,7 @@
                         indexAxis: 'y',
                         responsive: true, maintainAspectRatio: false,
                         onClick: (e, els) => {
-                            if (els.length) {
-                                const el = els[0];
-                                const owner = od[el.index].owner;
-                                const prediction = el.datasetIndex === 0 ? 'AI' : 'Mixed';
-                                window.open(`search.html?dataset_type=${currentDataset}&owner=${encodeURIComponent(owner)}&prediction=${encodeURIComponent(prediction)}`, '_blank');
-                            }
+                            if (els.length) window.open(`publisher.html?owner=${encodeURIComponent(od[els[0].index].owner)}`, '_blank');
                         },
                         plugins: {
                             legend: { display: true, position: 'top', labels: { font: { size: 14, weight: 'bold' }, padding: 20, usePointStyle: true, pointStyle: 'circle' } },

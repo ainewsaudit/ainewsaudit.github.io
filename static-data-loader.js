@@ -1541,12 +1541,15 @@ class StaticDataLoader {
     /**
      * Get dataset statistics
      */
-    async getDatasetStats(datasetType) {
+    async getDatasetStats(datasetType, filterFn = null) {
         const articles = await this.loadDataset(datasetType);
-        
-        const validArticles = articles.filter(a => 
+
+        let validArticles = articles.filter(a =>
             !a.prediction || !a.prediction.toLowerCase().includes('error')
         );
+        // Optional subset (e.g. a single owner) — the whole stats pipeline below
+        // then computes over just that slice.
+        if (typeof filterFn === 'function') validArticles = validArticles.filter(filterFn);
 
         // Prediction distribution
         const predictionDist = {};

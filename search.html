@@ -163,7 +163,7 @@
                                 <datalist id="newspaper-list"></datalist>
                             </div>
                             <div>
-                                <label class="filter-label">Owner</label>
+                                <label class="filter-label">Publisher (owner)</label>
                                 <input type="text" id="owner-filter" list="owner-list" placeholder="Parent company (e.g. Gannett)..." class="filter-input">
                                 <datalist id="owner-list"></datalist>
                             </div>
@@ -397,11 +397,11 @@
                             <div class="flex flex-wrap items-center gap-1.5 text-xs text-gray-400 mb-3">
                                 <span>${date}</span>
                                 ${article.newspaper && article.newspaper !== 'Unknown' ? `<span class="text-gray-300">&middot;</span><span>${article.newspaper}</span>` : ''}
-                                ${article.news_deserts_owner_name && article.news_deserts_owner_name !== 'Unknown' ? `<span class="text-gray-300">&middot;</span><span class="text-gray-400">${article.news_deserts_owner_name}</span>` : ''}
                             </div>
                             <p class="text-sm text-gray-600 mb-3 leading-relaxed line-clamp-2">${article.text_preview}</p>
                             <div class="flex flex-wrap items-center gap-2">
-                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${article.primary_topic}</span>` : ''}
+                                ${article.primary_topic && article.primary_topic.toLowerCase() !== 'unknown' && article.primary_topic !== 'Other' ? `<span class="text-xs bg-gray-100 text-gray-500 px-2 py-0.5 rounded-full">${article.primary_topic}</span>` : ''}
+                                ${article.news_deserts_owner_name && article.news_deserts_owner_name !== 'Unknown' ? `<a href="publisher.html?owner=${encodeURIComponent(article.news_deserts_owner_name)}" onclick="event.stopPropagation()" class="text-xs bg-amber-50 text-amber-700 hover:bg-amber-100 px-2 py-0.5 rounded-full font-medium" title="View publisher profile">${article.news_deserts_owner_name}</a>` : ''}
                                 <span class="inline-flex items-center text-xs px-2 py-0.5 rounded-full font-medium ${getPredictionBadge(article.prediction)}">${getPredictionLabel(article.prediction)}</span>
                                 <span class="text-xs text-gray-400 bg-gray-50 px-2 py-0.5 rounded">${article.dataset_type}</span>
                             </div>
