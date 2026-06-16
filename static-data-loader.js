@@ -1607,6 +1607,33 @@ class StaticDataLoader {
             });
         }
 
+        // Per-group monthly series for recent_news: Big 3 national outlets
+        // (NYT / WaPo / WSJ, incl. "The ..." variants) vs. everything else.
+        const tsByGroup = {};
+        if (datasetType === 'recent_news') {
+            const big3Group = (name) => {
+                const n = (name || '').toLowerCase().replace(/^the\s+/, '').trim();
+                if (n.includes('new york times')) return 'Big 3';
+                if (n.includes('washington post')) return 'Big 3';
+                if (n.includes('wall street journal')) return 'Big 3';
+                return 'Local papers';
+            };
+            articlesForTime.forEach(a => {
+                if (!a.publish_date) return;
+                const date = new Date(a.publish_date);
+                const month = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                const group = big3Group(a.newspaper || a.newspaper_name);
+                const key = `${group}||${month}`;
+                if (!tsByGroup[key]) {
+                    tsByGroup[key] = { month, group, total: 0, ai_count: 0, mixed_count: 0 };
+                }
+                tsByGroup[key].total++;
+                const label = a.final_prediction || this.normalizePrediction(a.prediction);
+                if (label === 'AI') tsByGroup[key].ai_count++;
+                if (label === 'Mixed') tsByGroup[key].mixed_count++;
+            });
+        }
+
         // Resolved Human/Mixed/AI label (matches time-series logic above)
         const labelOf = (a) => a.final_prediction || this.normalizePrediction(a.prediction) || '';
 
@@ -1672,6 +1699,8 @@ class StaticDataLoader {
             time_series: Object.values(timeSeries)
                 .sort((a, b) => a.month.localeCompare(b.month)),
             time_series_by_publisher: Object.values(tsByPublisher)
+                .sort((a, b) => a.month.localeCompare(b.month)),
+            time_series_by_group: Object.values(tsByGroup)
                 .sort((a, b) => a.month.localeCompare(b.month)),
             topic_distribution: Object.values(topicDist)
                 .sort((a, b) => b.count - a.count)

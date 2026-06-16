@@ -114,7 +114,8 @@
                     <div class="flex flex-wrap gap-2 flex-shrink-0">
                         <div id="timeseries-toggle" class="seg-wrap hidden">
                             <button class="seg-btn active" data-mode="prediction">By prediction</button>
-                            <button class="seg-btn" data-mode="publisher">By publisher</button>
+                            <button class="seg-btn" data-mode="publisher" data-only="opinions">By publisher</button>
+                            <button class="seg-btn" data-mode="group" data-only="recent_news">Big 3 vs local</button>
                         </div>
                         <div id="timeseries-unit-toggle" class="seg-wrap">
                             <button class="seg-btn active" data-unit="pct">Share (%)</button>
@@ -238,8 +239,11 @@
 
         async function loadDataset(datasetType) {
             currentDataset = datasetType;
-            // Opinions defaults to the per-publisher view; others to prediction.
-            timeSeriesMode = datasetType === 'opinions' ? 'publisher' : 'prediction';
+            // Opinions defaults to per-publisher, recent_news to Big-3-vs-local,
+            // everything else to the plain prediction view.
+            timeSeriesMode = datasetType === 'opinions' ? 'publisher'
+                : datasetType === 'recent_news' ? 'group'
+                : 'prediction';
             updateButtonStyles(datasetType);
 
             const info = datasetInfo[datasetType];
@@ -301,6 +305,40 @@
                 subEl.textContent = isPct
                     ? 'Share of each outlet’s articles flagged as AI or Mixed, by month'
                     : 'Number of each outlet’s articles flagged as AI or Mixed, by month';
+            } else if (timeSeriesMode === 'group') {
+                // Big 3 (NYT/WaPo/WSJ) vs. local papers, with AI and Mixed split out.
+                // Color encodes content type (AI = red, Mixed = amber); dashes encode
+                // the Big 3, solid lines the local papers.
+                const rows = data.time_series_by_group || [];
+                const months = [...new Set(rows.map(r => r.month))].sort();
+                const byKey = {};
+                rows.forEach(r => { byKey[`${r.group}||${r.month}`] = r; });
+                labels = months.map(monthLabel);
+                const groupDash = { 'Big 3': [5, 4], 'Local papers': [] };
+                const seriesDefs = [
+                    { group: 'Local papers', kind: 'ai_count',    label: 'Local AI',    color: '#ef4444' },
+                    { group: 'Local papers', kind: 'mixed_count', label: 'Local Mixed', color: '#f59e0b' },
+                    { group: 'Big 3',        kind: 'ai_count',    label: 'Big 3 AI',    color: '#ef4444' },
+                    { group: 'Big 3',        kind: 'mixed_count', label: 'Big 3 Mixed', color: '#f59e0b' }
+                ];
+                datasets = seriesDefs.map(s => ({
+                    label: s.label,
+                    data: months.map(m => {
+                        const r = byKey[`${s.group}||${m}`];
+                        if (!r) return null;
+                        if (isPct) return r.total === 0 ? null : ((r[s.kind] / r.total) * 100).toFixed(2);
+                        return r[s.kind];
+                    }),
+                    borderColor: s.color,
+                    backgroundColor: s.color + '14',
+                    borderDash: groupDash[s.group],
+                    tension: 0.35, fill: false, borderWidth: 2, pointRadius: 2, spanGaps: true
+                }));
+                yTitle = isPct ? 'AI / Mixed (%)' : 'AI / Mixed (articles)';
+                titleEl.textContent = 'Big 3 vs local papers over time';
+                subEl.textContent = isPct
+                    ? 'Share flagged AI or Mixed — Big 3 (NYT/WaPo/WSJ, dashed) vs. local papers (solid)'
+                    : 'Articles flagged AI or Mixed — Big 3 (NYT/WaPo/WSJ, dashed) vs. local papers (solid)';
             } else {
                 const t = data.time_series;
                 labels = t.map(x => monthLabel(x.month));
@@ -321,6 +359,8 @@
             // 2022-11: ChatGPT release. 2025-11: NYT moved from RSS to ProQuest collection.
             const monthsList = timeSeriesMode === 'publisher'
                 ? [...new Set((data.time_series_by_publisher || []).map(r => r.month))].sort()
+                : timeSeriesMode === 'group'
+                ? [...new Set((data.time_series_by_group || []).map(r => r.month))].sort()
                 : (data.time_series || []).map(x => x.month);
             const MARKERS = [
                 { month: '2022-11', label: 'ChatGPT released' },
@@ -402,17 +442,29 @@
                 </div>
             `;
 
-            // Time series toggle: only meaningful for opinions (3 publishers)
+            // Time-series toggle: opinions gets a per-publisher view; recent_news
+            // gets a Big 3 (NYT/WaPo/WSJ) vs. local-papers view.
             const toggle = document.getElementById('timeseries-toggle');
             const hasPublisherData = (data.time_series_by_publisher || []).length > 0;
-            if (currentDataset === 'opinions' && hasPublisherData) {
+            const hasGroupData = (data.time_series_by_group || []).length > 0;
+            const extraMode = currentDataset === 'opinions' && hasPublisherData ? 'publisher'
+                : currentDataset === 'recent_news' && hasGroupData ? 'group'
+                : null;
+            if (extraMode) {
                 toggle.classList.remove('hidden');
+                // Show only the extra-view button that applies to this dataset.
+                toggle.querySelectorAll('.seg-btn[data-only]').forEach(btn => {
+                    btn.classList.toggle('hidden', btn.dataset.only !== currentDataset);
+                });
+                if (timeSeriesMode !== 'prediction' && timeSeriesMode !== extraMode) {
+                    timeSeriesMode = extraMode;  // drop a stale mode from a prior dataset
+                }
                 toggle.querySelectorAll('.seg-btn').forEach(btn => {
                     btn.classList.toggle('active', btn.dataset.mode === timeSeriesMode);
                 });
             } else {
                 toggle.classList.add('hidden');
-                timeSeriesMode = 'prediction';  // no publisher breakdown available
+                timeSeriesMode = 'prediction';  // no per-group breakdown available
             }
             renderTimeSeries(data);
 
