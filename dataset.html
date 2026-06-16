@@ -163,6 +163,16 @@
                 </div>
             </div>
 
+            <!-- Owner x Topic heatmap (recent_news only) -->
+            <div id="owner-topic-container" class="panel p-5 sm:p-6 hidden">
+                <p class="eyebrow mb-1.5">By owner &amp; topic</p>
+                <h2 class="card-title mb-1">AI use by owner and topic</h2>
+                <p class="text-xs text-gray-400 mb-4">Share of each owner's articles flagged AI or Mixed, per topic. Darker = more AI use; blank cells have too few articles. Top 20 owners by volume.</p>
+                <div class="overflow-x-auto">
+                    <div id="ownerTopicHeatmap" class="text-xs"></div>
+                </div>
+            </div>
+
             <!-- AI rate by topic -->
             <div class="panel p-5 sm:p-6">
                 <p class="eyebrow mb-1.5">By topic</p>
@@ -275,6 +285,71 @@
                 alert('Error loading dataset statistics. Please try again.');
                 document.getElementById('loading').classList.add('hidden');
             }
+        }
+
+        // Short topic labels for the heatmap column headers.
+        function shortTopicLabel(t) {
+            const map = {
+                'arts, culture, entertainment and media': 'arts & media',
+                'economy, business and finance': 'economy',
+                'politics and government': 'politics',
+                'crime, law and justice': 'crime',
+                'disaster, accident and emergency incident': 'disaster',
+                'conflict, war and peace': 'conflict',
+                'science and technology': 'sci/tech',
+                'lifestyle and leisure': 'lifestyle',
+                'human interest': 'human int.'
+            };
+            return map[t] || t;
+        }
+
+        function renderOwnerTopicHeatmap(data) {
+            const container = document.getElementById('owner-topic-container');
+            const m = data.owner_topic_matrix;
+            if (currentDataset !== 'recent_news' || !m || !m.owners.length) {
+                container.classList.add('hidden');
+                return;
+            }
+            container.classList.remove('hidden');
+
+            const MIN_ARTICLES = 30;  // blank out low-volume cells (matches the PNG generator)
+            // Cell rates and a 95th-percentile cap so a few extreme cells don't wash out the scale.
+            const rates = [];
+            m.cells.forEach(row => row.forEach(c => { if (c.total >= MIN_ARTICLES) rates.push(100 * c.flagged / c.total); }));
+            rates.sort((a, b) => a - b);
+            const vmax = Math.max(5, rates.length ? rates[Math.floor(rates.length * 0.95)] : 10);
+            const color = (v) => {
+                // white -> amber -> red ramp
+                const t = Math.max(0, Math.min(1, v / vmax));
+                const r = 255, g = Math.round(255 - t * 200), b = Math.round(235 - t * 235);
+                return `rgb(${r},${g},${b})`;
+            };
+
+            const ownerTotal = {};
+            (data.owner_distribution || []).forEach(o => { ownerTotal[o.owner] = o.count; });
+
+            let html = '<table style="border-collapse:collapse;font-size:11px"><thead><tr>';
+            html += '<th style="position:sticky;left:0;background:#fff;text-align:left;padding:4px 8px;z-index:1"></th>';
+            m.topics.forEach(t => {
+                html += `<th style="padding:4px 3px;text-align:center;font-weight:600;color:#475569"><div style="writing-mode:vertical-rl;transform:rotate(180deg);white-space:nowrap;margin:0 auto">${shortTopicLabel(t)}</div></th>`;
+            });
+            html += '</tr></thead><tbody>';
+            m.owners.forEach((owner, i) => {
+                const tot = ownerTotal[owner] ? ` (${ownerTotal[owner].toLocaleString()})` : '';
+                html += `<tr><td style="position:sticky;left:0;background:#fff;text-align:left;padding:3px 8px;white-space:nowrap;font-weight:500;color:#0f172a">${owner}<span style="color:#94a3b8;font-weight:400">${tot}</span></td>`;
+                m.cells[i].forEach(c => {
+                    if (c.total < MIN_ARTICLES) {
+                        html += '<td style="background:#f1f5f9;border:1px solid #fff"></td>';
+                    } else {
+                        const v = 100 * c.flagged / c.total;
+                        const txt = v >= vmax * 0.6 ? '#fff' : '#1f2937';
+                        html += `<td title="${owner} — ${c.flagged} of ${c.total} flagged" style="background:${color(v)};color:${txt};border:1px solid #fff;text-align:center;padding:3px 5px;min-width:30px">${v.toFixed(1)}</td>`;
+                    }
+                });
+                html += '</tr>';
+            });
+            html += '</tbody></table>';
+            document.getElementById('ownerTopicHeatmap').innerHTML = html;
         }
 
         function renderTimeSeries(data) {
@@ -660,6 +735,8 @@
                 ownerContainer.classList.add('hidden');
                 if (charts.owner) { charts.owner.destroy(); charts.owner = null; }
             }
+
+            renderOwnerTopicHeatmap(data);
 
             // AI & Mixed RATE by topic — horizontal bars sorted by flagged share.
             const topicRate = (data.topic_distribution || [])

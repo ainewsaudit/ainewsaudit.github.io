@@ -1680,6 +1680,20 @@ class StaticDataLoader {
             else if (label === 'Human') o.human++;
         });
 
+        // Owner x topic AI-use matrix (powers the heatmap on the recent_news page).
+        // owner -> topic -> { total, flagged }, flagged = AI + Mixed.
+        const ownerTopic = {};
+        validArticles.forEach(a => {
+            const owner = (a.news_deserts_owner_name || '').trim();
+            const topic = (a.primary_topic || '').trim();
+            if (!owner || owner === 'Unknown' || !topic || topic === 'Other' || topic === 'Unknown') return;
+            const byOwner = ownerTopic[owner] || (ownerTopic[owner] = {});
+            const cell = byOwner[topic] || (byOwner[topic] = { total: 0, flagged: 0 });
+            cell.total++;
+            const label = labelOf(a);
+            if (label === 'AI' || label === 'Mixed') cell.flagged++;
+        });
+
         // AI-likelihood histogram: 20 bins across [0,1] over all valid articles
         const BIN_COUNT = 20;
         const likelihoodHist = new Array(BIN_COUNT).fill(0);
@@ -1727,6 +1741,20 @@ class StaticDataLoader {
             owner_distribution: Object.values(ownerDist)
                 .sort((a, b) => b.count - a.count)
                 .slice(0, 20),
+            owner_topic_matrix: (() => {
+                const owners = Object.values(ownerDist).sort((a, b) => b.count - a.count).slice(0, 20).map(o => o.owner);
+                const topics = Object.values(topicDist)
+                    .filter(t => t.primary_topic && t.primary_topic !== 'Other' && t.primary_topic !== 'Unknown')
+                    .sort((a, b) => b.count - a.count).map(t => t.primary_topic);
+                return {
+                    owners,
+                    topics,
+                    cells: owners.map(o => topics.map(t => {
+                        const c = (ownerTopic[o] || {})[t];
+                        return c ? { total: c.total, flagged: c.flagged } : { total: 0, flagged: 0 };
+                    }))
+                };
+            })(),
             likelihood_histogram: likelihoodHist,
             fraction_histogram: fractionHist,
             flagged_count: flaggedWithFraction,
