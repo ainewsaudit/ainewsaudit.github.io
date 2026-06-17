@@ -20,10 +20,13 @@ class StaticDataLoader {
         this.keepAllDatasets = false; // Flag to keep all datasets in memory
         
         // IndexedDB caching
-        this.DB_NAME = 'news-cache-v9'; // Bump version to bust cache after newspaper search fix
+        this.DB_NAME = 'news-cache-v10'; // Bump: streamed complete-record browse index
         this.STORE_NAME = 'datasets';
         this.DATA_VERSION = null; // Will be loaded from dataset_counts.json
         this.dbReady = this.initDB();
+
+        // Global progress-bar state (byte-based, driven by streamed index loads).
+        this._prog = { tasks: new Map(), el: null, hideTimer: null };
     }
 
     /**
@@ -513,49 +516,211 @@ class StaticDataLoader {
     /**
      * Load a dataset from static JSON file - with performance monitoring and IndexedDB caching
      */
+    // Loads the SLIM browse index (no full text / window_likelihoods) used by the
+    // search/browse pages and by filtered stats. The full per-article record is
+    // fetched separately, on demand, by getArticle().
     async loadDataset(datasetType) {
         // Check memory cache first
         if (this.data[datasetType]) {
-            console.log(`✅ Using cached ${datasetType} dataset (${this.data[datasetType].length} articles)`);
+            console.log(`✅ Using cached ${datasetType} index (${this.data[datasetType].length} articles)`);
             return this.data[datasetType];
         }
 
         // Check if another request is already loading this dataset
         if (this.loadPromises[datasetType]) {
-            console.log(`⏳ Waiting for ${datasetType} dataset to finish loading...`);
+            console.log(`⏳ Waiting for ${datasetType} index to finish loading...`);
             return this.loadPromises[datasetType];
         }
 
-        // Check IndexedDB cache
+        // Check IndexedDB cache (keyed separately from the legacy full payload)
         const version = await this.loadDataVersion();
-        const cachedData = await this.getFromIndexedDB(datasetType, version);
+        const cacheKey = `index_${datasetType}`;
+        const cachedData = await this.getFromIndexedDB(cacheKey, version);
         if (cachedData) {
-            console.log(`💾 Loaded ${datasetType} from IndexedDB (${cachedData.length} articles) - instant!`);
+            console.log(`💾 Loaded ${datasetType} index from IndexedDB (${cachedData.length} articles) - instant!`);
             this.data[datasetType] = cachedData;
             return cachedData;
         }
 
-        console.log(`🔄 Loading ${datasetType} dataset from network...`);
-
+        console.log(`🔄 Streaming ${datasetType} index from network...`);
         const startTime = performance.now();
 
-        this.loadPromises[datasetType] = this.loadDatasetPayload(datasetType, version)
+        this.loadPromises[datasetType] = this.streamIndex(datasetType, version)
             .then(data => {
-                this.normalizeDatasetArticles(data, datasetType);
                 this.data[datasetType] = data;
-                
                 // Save to IndexedDB for instant loading on next visit
-                this.putInIndexedDB(datasetType, version, data).catch(err => {
+                this.putInIndexedDB(cacheKey, version, data).catch(err => {
                     console.warn('Failed to cache in IndexedDB:', err);
                 });
-                
                 const endTime = performance.now();
-                console.log(`Loaded ${datasetType} dataset: ${data.length} articles in ${(endTime - startTime).toFixed(2)}ms`);
+                console.log(`Loaded ${datasetType} index: ${data.length} articles in ${(endTime - startTime).toFixed(2)}ms`);
                 return data;
+            })
+            .catch(err => {
+                // Fall back to the legacy monolithic payload if the slim index is
+                // missing (e.g. an old deploy), so the site degrades gracefully.
+                console.warn(`Slim index unavailable for ${datasetType}, falling back to full payload:`, err);
+                return this.loadDatasetPayload(datasetType, version).then(data => {
+                    this.normalizeDatasetArticles(data, datasetType);
+                    this.data[datasetType] = data;
+                    this.putInIndexedDB(cacheKey, version, data).catch(() => {});
+                    return data;
+                });
             });
 
         return this.loadPromises[datasetType];
     }
+
+    /**
+     * Stream a gzipped NDJSON slim index, decompressing incrementally so peak
+     * memory stays low on mobile, while reporting byte-level download progress.
+     */
+    async streamIndex(datasetType, version) {
+        const url = `/data/index/${datasetType}_index.ndjson.gz?v=${version}`;
+        const label = this.datasetLabel(datasetType);
+        const rows = [];
+        await this.streamNdjsonGz(url, (rec) => {
+            rec.dataset_type = datasetType;   // constant per file, stamped here
+            rows.push(rec);
+        }, (p) => this.updateProgress(label, p));
+        this.finishProgress(label);
+        return rows;
+    }
+
+    /**
+     * Fetch a gzipped NDJSON file and invoke onRow(record) for each line.
+     * Uses the streaming DecompressionStream API when available (low memory),
+     * otherwise falls back to a whole-file pako decompress. onProgress receives
+     * { received, total } compressed-byte counts for the loading bar.
+     */
+    async streamNdjsonGz(url, onRow, onProgress = null) {
+        const response = await fetch(url, { cache: 'force-cache' });
+        if (!response.ok) {
+            throw new Error(`Failed to load ${url}: ${response.statusText}`);
+        }
+        const total = parseInt(response.headers.get('Content-Length') || '0', 10) || 0;
+        let received = 0;
+
+        const handleLine = (line) => {
+            if (!line) return;
+            try { onRow(JSON.parse(line)); }
+            catch (e) { console.warn('Bad NDJSON line skipped:', e); }
+        };
+
+        if (typeof DecompressionStream !== 'undefined' && response.body) {
+            const counter = new TransformStream({
+                transform: (chunk, ctrl) => {
+                    received += chunk.byteLength;
+                    if (onProgress) onProgress({ received, total });
+                    ctrl.enqueue(chunk);
+                }
+            });
+            const reader = response.body
+                .pipeThrough(counter)
+                .pipeThrough(new DecompressionStream('gzip'))
+                .pipeThrough(new TextDecoderStream())
+                .getReader();
+            let buffer = '';
+            for (;;) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                buffer += value;
+                let idx;
+                while ((idx = buffer.indexOf('\n')) >= 0) {
+                    handleLine(buffer.slice(0, idx));
+                    buffer = buffer.slice(idx + 1);
+                }
+            }
+            if (buffer.trim()) handleLine(buffer.trim());
+        } else {
+            // Fallback: count bytes while downloading, then pako-decompress once.
+            await this.waitForPako();
+            const reader = response.body.getReader();
+            const chunks = [];
+            for (;;) {
+                const { value, done } = await reader.read();
+                if (done) break;
+                chunks.push(value);
+                received += value.byteLength;
+                if (onProgress) onProgress({ received, total });
+            }
+            let size = 0;
+            chunks.forEach(c => { size += c.byteLength; });
+            const all = new Uint8Array(size);
+            let off = 0;
+            chunks.forEach(c => { all.set(c, off); off += c.byteLength; });
+            const text = pako.ungzip(all, { to: 'string' });
+            let start = 0, idx;
+            while ((idx = text.indexOf('\n', start)) >= 0) {
+                handleLine(text.slice(start, idx));
+                start = idx + 1;
+            }
+            if (start < text.length) handleLine(text.slice(start).trim());
+        }
+        if (onProgress) onProgress({ received: total || received, total, complete: true });
+    }
+
+    datasetLabel(datasetType) {
+        return ({ recent_news: 'Recent News', opinions: 'Opinions', reporters: 'Reporters' })[datasetType] || datasetType;
+    }
+
+    // ---- Global loading bar (byte-based, auto-injected) ----
+    ensureProgressEl() {
+        if (this._prog.el || typeof document === 'undefined' || !document.body) return this._prog.el;
+        const wrap = document.createElement('div');
+        wrap.id = 'global-load-bar';
+        wrap.style.cssText = 'position:fixed;top:0;left:0;right:0;height:3px;z-index:9999;opacity:0;transition:opacity .3s;pointer-events:none;';
+        const fill = document.createElement('div');
+        fill.style.cssText = 'height:100%;width:0%;background:linear-gradient(90deg,#6366f1,#8b5cf6);box-shadow:0 0 8px rgba(99,102,241,.7);transition:width .2s ease;';
+        wrap.appendChild(fill);
+        const lbl = document.createElement('div');
+        lbl.style.cssText = 'position:fixed;top:9px;right:12px;z-index:9999;font:600 11px Inter,system-ui,sans-serif;color:#4f46e5;background:rgba(255,255,255,.92);border:1px solid #e5e7eb;padding:2px 9px;border-radius:11px;opacity:0;transition:opacity .3s;pointer-events:none;';
+        document.body.appendChild(wrap);
+        document.body.appendChild(lbl);
+        this._prog.el = { wrap, fill, lbl };
+        return this._prog.el;
+    }
+
+    renderProgress() {
+        const el = this.ensureProgressEl();
+        if (!el) return;
+        let received = 0, total = 0, known = true;
+        this._prog.tasks.forEach(t => { received += t.received; total += t.total; if (!t.total) known = false; });
+        const pct = (known && total) ? Math.min(99, Math.round(100 * received / total)) : null;
+        el.wrap.style.opacity = '1';
+        el.lbl.style.opacity = '1';
+        if (pct != null) {
+            el.fill.style.width = pct + '%';
+            el.lbl.textContent = `Loading data… ${pct}%`;
+        } else {
+            // Indeterminate: gently advance with bytes received.
+            el.fill.style.width = Math.min(95, 20 + (received / 1e6)) + '%';
+            el.lbl.textContent = `Loading data… ${(received / 1e6).toFixed(1)} MB`;
+        }
+    }
+
+    updateProgress(label, p) {
+        if (this._prog.hideTimer) { clearTimeout(this._prog.hideTimer); this._prog.hideTimer = null; }
+        this._prog.tasks.set(label, { received: p.received || 0, total: p.total || 0 });
+        this.renderProgress();
+    }
+
+    finishProgress(label) {
+        this._prog.tasks.delete(label);
+        const el = this._prog.el;
+        if (!el) return;
+        if (this._prog.tasks.size === 0) {
+            el.fill.style.width = '100%';
+            this._prog.hideTimer = setTimeout(() => {
+                el.wrap.style.opacity = '0';
+                el.lbl.style.opacity = '0';
+                setTimeout(() => { el.fill.style.width = '0%'; }, 350);
+            }, 400);
+        } else {
+            this.renderProgress();
+        }
+    }
+
 
     /**
      * Load all datasets - optimized for lazy loading
@@ -1305,25 +1470,28 @@ class StaticDataLoader {
                 if (articleDate > currentDate) return false;
             }
             
-            // Apply search filter
+            // Apply search filter. The slim index has no full body text, so body
+            // matches fall back to the preview; the URL (== old article_id)
+            // covers domain searches.
             if (search) {
                 const searchLower = search.toLowerCase();
                 const newspaperField = a.newspaper || a.newspaper_name || '';
-                const articleId = a.article_id || '';
+                const urlField = a.url || a.article_id || '';
                 return (a.title && a.title.toLowerCase().includes(searchLower)) ||
                        (a.text && a.text.toLowerCase().includes(searchLower)) ||
+                       (a.text_preview && a.text_preview.toLowerCase().includes(searchLower)) ||
                        newspaperField.toLowerCase().includes(searchLower) ||
-                       articleId.toLowerCase().includes(searchLower);
+                       urlField.toLowerCase().includes(searchLower);
             }
-            
+
             // Apply newspaper search filter
             if (newspaper) {
                 const newspaperLower = newspaper.toLowerCase();
                 const newspaperField = a.newspaper || a.newspaper_name || '';
-                const articleId = a.article_id || '';
-                // Also search in article_id for domain names (e.g., nytimes.com, washingtonpost.com)
+                const urlField = a.url || a.article_id || '';
+                // Also search the URL for domain names (e.g., nytimes.com, washingtonpost.com)
                 return newspaperField.toLowerCase().includes(newspaperLower) ||
-                       articleId.toLowerCase().includes(newspaperLower);
+                       urlField.toLowerCase().includes(newspaperLower);
             }
             
             return true;
@@ -1395,10 +1563,11 @@ class StaticDataLoader {
         const total = filtered.length;
         const paginatedArticles = filtered.slice(offset, offset + limit);
 
-        // Add text preview
+        // Add text preview. Slim records already carry a precomputed preview;
+        // only derive one from full text when present (legacy fallback path).
         const articlesWithPreview = paginatedArticles.map(a => ({
             ...a,
-            text_preview: a.text ? a.text.substring(0, 300) + '...' : ''
+            text_preview: a.text ? a.text.substring(0, 300) + '...' : (a.text_preview || '')
         }));
 
         return {
@@ -1414,36 +1583,30 @@ class StaticDataLoader {
      */
     async getArticle(articleId, datasetType = null) {
         const id = parseInt(articleId);
-        
-        // If dataset type is provided, try that first
-        if (datasetType) {
-            console.log(`🔍 Searching for article ${id} in ${datasetType} (provided hint)...`);
-            await this.loadSpecificDatasets([datasetType]);
-            const articles = this.data[datasetType] || [];
-            const article = articles.find(a => a.id === id);
-            if (article) {
-                console.log(`✅ Found article in ${datasetType}`);
-                return article;
-            }
-            console.log(`⚠️ Article not found in ${datasetType}, searching other datasets...`);
-        }
-        
-        // Try to find the article by loading datasets one at a time
-        // Start with opinions since that's the default
-        const datasetsToTry = ['opinions', 'recent_news', 'reporters']
-            .filter(ds => ds !== datasetType); // Skip the one we already tried
-        
-        for (const dataset of datasetsToTry) {
-            console.log(`🔍 Searching for article ${id} in ${dataset}...`);
-            await this.loadSpecificDatasets([dataset]);
-            const articles = this.data[dataset] || [];
-            const article = articles.find(a => a.id === id);
-            if (article) {
-                console.log(`✅ Found article in ${dataset}`);
-                return article;
+
+        // The id encodes its dataset: prefix = floor(id / 1e6) -> recent_news/opinions/reporters.
+        const byPrefix = { 1: 'recent_news', 2: 'opinions', 3: 'reporters' };
+        const guessed = byPrefix[Math.floor(id / 1000000)];
+        const order = [datasetType, guessed, 'recent_news', 'opinions', 'reporters']
+            .filter((d, i, a) => d && a.indexOf(d) === i);
+
+        for (const ds of order) {
+            try {
+                // Use the dataset if already in memory; otherwise stream its index
+                // (the index carries the complete record). Normal navigation comes
+                // from a card click, which hands the full record via sessionStorage,
+                // so this network path is only hit on cold/shared direct links.
+                const articles = this.data[ds] || await this.loadDataset(ds);
+                const article = articles.find(a => a.id === id);
+                if (article) {
+                    console.log(`✅ Loaded article ${id} from ${ds} index`);
+                    return article;
+                }
+            } catch (e) {
+                console.warn(`Index lookup failed for ${ds}:`, e);
             }
         }
-        
+
         console.warn(`❌ Article ${id} not found in any dataset`);
         return null;
     }
@@ -1544,6 +1707,21 @@ class StaticDataLoader {
      * Get dataset statistics
      */
     async getDatasetStats(datasetType, filterFn = null) {
+        // Unfiltered stats are precomputed at build time — fetch the tiny JSON
+        // instead of loading the whole index and crunching it client-side.
+        if (typeof filterFn !== 'function') {
+            try {
+                const version = await this.loadDataVersion();
+                const resp = await fetch(`/data/stats/${datasetType}_stats.json?v=${version}`, { cache: 'force-cache' });
+                if (resp.ok) return await resp.json();
+                console.warn(`Precomputed stats missing for ${datasetType} (${resp.status}), computing client-side`);
+            } catch (e) {
+                console.warn(`Precomputed stats fetch failed for ${datasetType}, computing client-side:`, e);
+            }
+        }
+
+        // Filtered (e.g. a single owner on publisher.html) or fallback: compute
+        // from the slim index, which carries every field the stats need.
         const articles = await this.loadDataset(datasetType);
 
         let validArticles = articles.filter(a =>

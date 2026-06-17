@@ -55,9 +55,9 @@
     <!-- Navigation -->
     <header class="bg-slate-900">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="flex items-center justify-between h-14">
+            <div class="flex flex-wrap items-center justify-between gap-x-4 gap-y-1 min-h-14 py-2">
                 <a href="/" class="text-white font-semibold text-sm">AI News Audit</a>
-                <nav class="flex items-center gap-6">
+                <nav class="flex flex-wrap items-center gap-x-4 gap-y-1.5 sm:gap-6">
                     <a href="/" class="text-slate-400 hover:text-white text-sm transition-colors">Search</a>
                     <a href="dataset.html" class="text-white text-sm font-medium">Statistics</a>
                     <a href="author.html" class="text-slate-400 hover:text-white text-sm transition-colors">Authors</a>
@@ -78,7 +78,7 @@
     <!-- Page header -->
     <div class="max-w-5xl mx-auto px-4 sm:px-6 lg:px-8 pt-14 pb-8">
         <p class="eyebrow mb-3">Statistics</p>
-        <h1 class="serif text-5xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" id="dataset-title" style="letter-spacing:-0.025em;">Dataset Analysis</h1>
+        <h1 class="serif text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" id="dataset-title" style="letter-spacing:-0.025em;">Dataset Analysis</h1>
         <p class="serif text-lg sm:text-xl italic text-slate-500 max-w-2xl" id="dataset-description">Comprehensive statistics and trends</p>
         <div class="gold-rule mt-6"></div>
     </div>
@@ -117,10 +117,6 @@
                             <button class="seg-btn active" data-mode="prediction">By prediction</button>
                             <button class="seg-btn" data-mode="publisher" data-only="opinions">By publisher</button>
                             <button class="seg-btn" data-mode="group" data-only="recent_news">Big 3 vs local</button>
-                        </div>
-                        <div id="timeseries-mix-toggle" class="seg-wrap hidden">
-                            <button class="seg-btn active" data-mix="actual">Actual mix</button>
-                            <button class="seg-btn" data-mix="fixed">Pre-update mix</button>
                         </div>
                     </div>
                 </div>
@@ -478,20 +474,10 @@
                       borderColor: '#f59e0b', backgroundColor: 'rgba(245,158,11,0.55)', tension: 0.35, fill: '-1', borderWidth: 2, pointRadius: 1, spanGaps: true }
                 ];
                 yTitle = 'AI + Mixed (%)';
-                titleEl.textContent = fixedMix ? 'AI & Mixed content over time (constant publisher mix)' : 'AI & Mixed content over time';
+                titleEl.textContent = 'AI & Mixed content over time';
                 subEl.textContent = fixedMix
                     ? 'Stacked AI + Mixed share, reweighted to the pre-update (pre-Sep 2025) Big-3-vs-local mix'
                     : 'Share of articles flagged AI (bottom) and Mixed (stacked on top), by month';
-            }
-
-            // The "Actual mix / Pre-update mix" toggle only applies to the recent_news
-            // by-prediction view (needs the per-group series to reweight).
-            const mixToggle = document.getElementById('timeseries-mix-toggle');
-            if (currentDataset === 'recent_news' && timeSeriesMode === 'prediction' && (data.time_series_by_group || []).length > 0) {
-                mixToggle.classList.remove('hidden');
-                mixToggle.querySelectorAll('.seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mix === predictionMix));
-            } else {
-                mixToggle.classList.add('hidden');
             }
 
             // Event markers — drawn only when the series spans the month in question.
@@ -852,14 +838,6 @@
             if (!btn || btn.dataset.mode === timeSeriesMode || !currentStats) return;
             timeSeriesMode = btn.dataset.mode;
             document.querySelectorAll('#timeseries-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mode === timeSeriesMode));
-            renderTimeSeries(currentStats);
-        });
-
-        document.getElementById('timeseries-mix-toggle').addEventListener('click', (e) => {
-            const btn = e.target.closest('.seg-btn');
-            if (!btn || btn.dataset.mix === predictionMix || !currentStats) return;
-            predictionMix = btn.dataset.mix;
-            document.querySelectorAll('#timeseries-mix-toggle .seg-btn').forEach(b => b.classList.toggle('active', b.dataset.mix === predictionMix));
             renderTimeSeries(currentStats);
         });
 

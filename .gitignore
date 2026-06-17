@@ -14,5 +14,11 @@
 *.tmp
 .cache/
 
-# Don't ignore the compressed data files (they're essential)
-# All .gz files in static_data/ should be committed
+# Served data artifacts (data/index/*.ndjson.gz, data/stats/*.json) ARE committed.
+#
+# The monolithic source datasets are the *build input* for build_static_data.py,
+# not served by the site. They're kept locally but NOT committed (they'd bloat the
+# repo by ~91MB). Re-run build_static_data.py after refreshing them.
+data/recent_news_data.json.gz
+data/opinions_data.json.gz
+data/reporters_data.json.gz
