@@ -80,6 +80,7 @@
         <p class="eyebrow mb-3">Statistics</p>
         <h1 class="serif text-4xl sm:text-6xl font-bold tracking-tight text-slate-900 mb-3" id="dataset-title" style="letter-spacing:-0.025em;">Dataset Analysis</h1>
         <p class="serif text-lg sm:text-xl italic text-slate-500 max-w-2xl" id="dataset-description">Comprehensive statistics and trends</p>
+        <p class="text-sm text-slate-400 mt-2 hidden" id="dataset-daterange"></p>
         <div class="gold-rule mt-6"></div>
     </div>
 
@@ -255,6 +256,19 @@
             return new Date(y, m - 1, 1).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
         }
 
+        // Show the span of months covered by the analysis, so "recent" is concrete.
+        function renderDateRange(data) {
+            const el = document.getElementById('dataset-daterange');
+            const months = (data.time_series || []).map(x => x.month).filter(Boolean).sort();
+            if (!months.length) { el.classList.add('hidden'); return; }
+            const first = monthLabel(months[0]);
+            const last = monthLabel(months[months.length - 1]);
+            el.textContent = first === last
+                ? `Analysis covers ${first}`
+                : `Analysis covers ${first} – ${last}`;
+            el.classList.remove('hidden');
+        }
+
         async function loadDataset(datasetType) {
             currentDataset = datasetType;
             // Opinions defaults to per-publisher; everything else to by-prediction.
@@ -274,6 +288,7 @@
             try {
                 const data = await window.dataLoader.getDatasetStats(datasetType);
                 currentStats = data;
+                renderDateRange(data);
                 await renderCharts(data);
                 document.getElementById('loading').classList.add('hidden');
                 document.getElementById('charts-container').classList.remove('hidden');
@@ -607,8 +622,7 @@
             // Collection-change caveat: NYT moved from RSS feeds to ProQuest in Nov 2025.
             const caveat = document.getElementById('ts-caveat');
             const caveatText = {
-                recent_news: 'Note: after the mid-September 2025 update, the Big 3 national papers (NYT, Washington Post, Wall Street Journal — collected via ProQuest) make up a much larger proportion of the corpus than before the update, while local-paper volume dropped sharply. Because the Big 3 use almost no AI, this composition shift drags the raw aggregate down. The "Pre-update mix" view reweights each month to the pre-update Big-3-vs-local proportion so the trend reflects real changes in AI use rather than the changed mix.',
-                opinions: 'Note: starting November 2025, New York Times opinion pieces are sourced from ProQuest rather than RSS feeds. Monthly NYT volume is similar across the change, but the set of captured articles shifted, which can affect comparisons across that boundary.'
+                recent_news: 'Note: after the mid-September 2025 update, the Big 3 national papers (NYT, Washington Post, Wall Street Journal — collected via ProQuest) make up a much larger proportion of the corpus than before the update, while local-paper volume dropped sharply. Because the Big 3 use almost no AI, this composition shift drags the raw aggregate down. The "Pre-update mix" view reweights each month to the pre-update Big-3-vs-local proportion so the trend reflects real changes in AI use rather than the changed mix.'
             };
             if (caveatText[currentDataset]) {
                 caveat.textContent = caveatText[currentDataset];
