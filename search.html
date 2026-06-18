@@ -136,6 +136,7 @@
                                     <option value="opinions">Opinions</option>
                                     <option value="reporters">Reporters</option>
                                 </select>
+                                <p id="dataset-info" class="hidden text-[11px] leading-snug text-gray-500 mt-2"></p>
                             </div>
                             <div>
                                 <label class="filter-label">Prediction</label>
@@ -480,6 +481,22 @@
         document.getElementById('search-input').addEventListener('keypress', (e) => { if (e.key === 'Enter') { currentPage = 1; searchArticles(); } });
         document.getElementById('apply-filters').addEventListener('click', () => { currentPage = 1; searchArticles(); });
 
+        // Short blurb + covered date range shown under the dataset dropdown so
+        // "Recent News" etc. carry their scope. Ranges track the analysis window.
+        const DATASET_INFO = {
+            recent_news: { desc: 'News articles from national & local U.S. papers.', range: 'Jun 2025 – Jun 2026' },
+            opinions:    { desc: 'Op-eds & editorials from the NYT, WSJ and Washington Post.', range: 'Aug 2022 – Jun 2026' },
+            reporters:   { desc: 'Articles attributed to named reporters.', range: 'Aug 2011 – Sep 2025' }
+        };
+
+        function renderDatasetInfo(datasetType) {
+            const el = document.getElementById('dataset-info');
+            const info = DATASET_INFO[datasetType];
+            if (!info) { el.classList.add('hidden'); el.textContent = ''; return; }
+            el.innerHTML = `${info.desc} <span class="text-gray-400">(${info.range})</span>`;
+            el.classList.remove('hidden');
+        }
+
         function resetFilters() {
             document.getElementById('search-input').value = '';
             document.getElementById('topic-filter').value = '';
@@ -500,11 +517,15 @@
             document.getElementById('max-ai-min-value').textContent = '0%';
             document.getElementById('max-ai-max-value').textContent = '100%';
             currentPage = 1;
+            renderDatasetInfo('');
             searchArticles();
         }
 
         document.getElementById('reset-filters').addEventListener('click', resetFilters);
         document.getElementById('main-reset-button').addEventListener('click', resetFilters);
+        document.getElementById('dataset-filter').addEventListener('change', function() {
+            renderDatasetInfo(this.value);
+        });
 
         document.getElementById('toggle-filters').addEventListener('click', () => {
             const content = document.getElementById('filters-content');
@@ -549,6 +570,7 @@
             if (aliasParam) document.getElementById('alias-filter').value = aliasParam;
             if (owner) document.getElementById('owner-filter').value = owner;
 
+            renderDatasetInfo(document.getElementById('dataset-filter').value);
             searchArticles();
         });
     </script>

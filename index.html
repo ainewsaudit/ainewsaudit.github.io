@@ -121,7 +121,9 @@
             
             currentPage = state.currentPage || 1;
             totalArticles = state.totalArticles || 0;
-            
+
+            renderDatasetInfo(document.getElementById('dataset-filter').value);
+
             return true;
         }
 
@@ -434,6 +436,7 @@
             document.getElementById('max-ai-max-value').textContent = '100%';
             currentPage = 1;
             clearSegments();
+            renderDatasetInfo('');
             searchArticles();
         }
 
@@ -448,6 +451,22 @@
 
             currentPage = 1;
             searchArticles();
+        }
+
+        // Short blurb + covered date range shown under the dataset selector so
+        // "Recent News" etc. carry their scope. Ranges track the analysis window.
+        const DATASET_INFO = {
+            recent_news: { desc: 'News articles from national & local U.S. papers.', range: 'Jun 2025 – Jun 2026' },
+            opinions:    { desc: 'Op-eds & editorials from the NYT, WSJ and Washington Post.', range: 'Aug 2022 – Jun 2026' },
+            reporters:   { desc: 'Articles attributed to named reporters.', range: 'Aug 2011 – Sep 2025' }
+        };
+
+        function renderDatasetInfo(datasetType) {
+            const el = document.getElementById('dataset-info');
+            const info = DATASET_INFO[datasetType];
+            if (!info) { el.classList.add('hidden'); el.textContent = ''; return; }
+            el.innerHTML = `${info.desc} <span class="text-gray-400">(${info.range})</span>`;
+            el.classList.remove('hidden');
         }
 
         function applyDatasetFilter(filterType) {
@@ -466,6 +485,7 @@
                 }
                 if (btn) btn.classList.add('active');
             }
+            renderDatasetInfo(document.getElementById('dataset-filter').value);
             currentPage = 1;
             searchArticles();
         }
@@ -603,7 +623,9 @@
             });
 
             console.log('✅ All event listeners set up successfully');
-            
+
+            renderDatasetInfo(document.getElementById('dataset-filter').value);
+
             if (shouldSearch) {
                 if (!historyState) {
                     currentPage = 1;
@@ -892,6 +914,7 @@
                                     <button id="filter-opinions" class="seg-btn seg-dataset">Opinions</button>
                                     <button id="filter-reporters" class="seg-btn seg-dataset">Reporters</button>
                                 </div>
+                                <p id="dataset-info" class="hidden text-[11px] leading-snug text-gray-500 mt-2"></p>
                             </div>
 
                             <hr class="border-gray-100">
