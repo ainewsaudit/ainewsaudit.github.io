@@ -13,8 +13,9 @@ For each dataset (recent_news, opinions, reporters) we emit:
   data/index/<dataset>_index.ndjson.gz
       The browse index (one COMPLETE record per line, gzipped). It powers
       browse/search, filtered stats, AND the article page — everything is small
-      because the public `text` field is only the first 20 words. Drops only the
-      duplicate `article_id` (identical to `url`) and the constant `dataset_type`.
+      because the public `text` field is only the first 20 words. The source link
+      is coalesced onto `url` (article_id is identical where both exist), then the
+      duplicate `article_id` and the constant `dataset_type` are dropped.
       Streamed + decompressed incrementally on the client so peak memory stays low.
 
 `id` is assigned exactly as the loader did (prefix * 1_000_000 + row index) so
@@ -38,7 +39,7 @@ DATASET_PREFIX = {"recent_news": 1, "opinions": 2, "reporters": 3}
 
 # The browse index carries the COMPLETE record — everything is small, because the
 # public `text` field is only the first 20 words of each article. We drop just
-# `article_id` (byte-for-byte identical to `url`) and `dataset_type` (constant per
+# `article_id` (coalesced onto `url` above) and `dataset_type` (constant per
 # file; the loader stamps it on load).
 INDEX_DROP_FIELDS = {"article_id", "dataset_type"}
 
@@ -418,6 +419,12 @@ def build_dataset(dataset_type, now):
     for i, a in enumerate(articles):
         a["dataset_type"] = dataset_type
         a["id"] = prefix * 1_000_000 + i
+        # Normalize the source link onto a single `url` field. recent_news carries
+        # both `url` and `article_id` (identical); opinions/reporters carry only
+        # `article_id`. Coalescing here lets us drop `article_id` from the index
+        # without losing the link for the ProQuest-sourced datasets.
+        if not a.get("url") and a.get("article_id"):
+            a["url"] = a["article_id"]
         for k in ("ai_likelihood", "avg_ai_likelihood", "max_ai_likelihood", "fraction_ai_content"):
             if k in a:
                 a[k] = to_num(a[k])

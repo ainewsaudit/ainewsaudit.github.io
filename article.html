@@ -453,11 +453,12 @@
                     document.getElementById('text-preview').textContent = getFirstWords(article.text, 20);
                 }
                 
-                if (article.article_id && article.article_id.startsWith('http')) {
-                    document.getElementById('original-link').href = article.article_id;
-                    document.getElementById('original-link').textContent = article.article_id;
+                const sourceLink = article.url || article.article_id;
+                if (sourceLink && sourceLink.startsWith('http')) {
+                    document.getElementById('original-link').href = sourceLink;
+                    document.getElementById('original-link').textContent = sourceLink;
                     document.getElementById('original-link-container').style.display = 'block';
-                    document.getElementById('read-full-link').href = article.article_id;
+                    document.getElementById('read-full-link').href = sourceLink;
                 }
 
                 renderDatasetMetadata(article);
